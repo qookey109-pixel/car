@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#061018">
-  <title>Car — Cannon Raycast Vehicle V0.1</title>
+  <title>Car — Cannon Raycast Vehicle V0.1 / Low-Poly Sport Coupe V3</title>
   <style>
     *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061018;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}canvas{display:block}
-    #hud{position:fixed;z-index:5;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));padding:10px 12px;border-radius:14px;background:rgba(3,8,13,.72);backdrop-filter:blur(10px);max-width:min(640px,calc(100vw - 20px));box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    #hud{position:fixed;z-index:5;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));padding:10px 12px;border-radius:14px;background:rgba(3,8,13,.72);backdrop-filter:blur(10px);max-width:min(680px,calc(100vw - 20px));box-shadow:0 10px 30px rgba(0,0,0,.3)}
     #hud h1{font-size:15px;margin:0 0 7px}.row{display:flex;gap:6px;flex-wrap:wrap}.chip{font-size:10px;padding:5px 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.07)}.good{color:#8affd6;border-color:rgba(83,255,205,.34)}.warn{color:#ffe17b;border-color:rgba(255,218,91,.36)}
     #help{font-size:10px;opacity:.78;margin-top:7px;line-height:1.45}
     #touch{position:fixed;z-index:8;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));pointer-events:none}.pad,.actions{pointer-events:auto;display:grid;gap:9px}.pad{grid-template-columns:repeat(2,64px)}.actions{grid-template-columns:repeat(2,70px);grid-template-rows:repeat(2,58px)}
@@ -25,7 +25,7 @@
 </head>
 <body>
   <div id="hud">
-    <h1>🏎️ Cannon Raycast Vehicle V0.1 — Low-Poly Sport Coupe</h1>
+    <h1>🏎️ Cannon Raycast Vehicle — Low-Poly Sport Coupe V3</h1>
     <div class="row">
       <span class="chip" id="speed">0 km/h</span>
       <span class="chip good" id="grounded">輪胎接地 0/4</span>
@@ -34,12 +34,12 @@
       <span class="chip" id="state">GRIP</span>
       <span class="chip" id="fps">FPS --</span>
     </div>
-    <div id="help">W/↑ 油門　S/↓ 煞車/倒車　A/D 轉向　Space 漂移　R 重置。低寬楔形車身 V2；只改視覺，不改 Raycast 物理基線。</div>
+    <div id="help">W/↑ 油門　S/↓ 煞車/倒車　A/D 轉向　Space 漂移　R 重置。V3 改為多截面立體車身殼、輪拱與完整跑車細節；Raycast 物理基線維持不變。</div>
   </div>
   <div id="touch">
     <div class="pad"><button data-action="left">◀</button><button data-action="right">▶</button></div>
     <div class="actions"><button class="drift" data-action="drift">DRIFT</button><button class="reset" data-action="reset">RESET</button><button class="brake" data-action="brake">BRAKE</button><button class="gas" data-action="gas">GAS</button></div>
   </div>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app-v3.js"></script>
 </body>
 </html>

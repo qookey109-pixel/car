@@ -1,36 +1,50 @@
-# Car／Neon Racer City Chase — V53 恢復候選
+# Car／Neon Racer City Chase — V53
 
-目前根目錄是已驗證雜湊的 V53 單檔候選：`index.html`（SHA-256 `ace6fc690ac39b5c205d61843aa2bc54ed0490df2fbb01a8ddbee98e7134668e`）。它是最新**可恢復候選**，不是已確認的 GitHub main。
+這個 Repository 是本專案目前的正式 GitHub 來源：`qookey109-pixel/car`。
+
+- Default branch：`main`
+- 目前主程式：`index.html`
+- 目前版本：Neon Racer City Chase V53
+- 技術：單檔 HTML + Canvas 偽 3D，手機橫向操作優先
 
 ## 啟動
 
-建議以本機伺服器啟動，避免 `file://` 下的 Service Worker 行為差異：
+建議用本機 HTTP Server 執行：
 
 ```sh
-cd /Users/qoo/Desktop/car
 python3 -m http.server 8011
 ```
 
-然後開啟 `http://127.0.0.1:8011/`。首次載入後可使用遊戲內的安全模式、快取清除與部署診斷工具。請另行在實體 iPhone Safari 與 Android Chrome 驗證；附件內的 V49／V53 Chromium 測試不能當作真機通過證據。
+然後開啟：
 
-## 目錄
+```text
+http://127.0.0.1:8011/
+```
 
-| 位置 | 內容 |
-|---|---|
-| `index.html` | V53 Canvas 偽 3D 主線候選。 |
-| `versions/local-webgl-v7.1-20260729/` | 更新前的 WebGL V7.1 完整快照，包含 IndexedDB 資料持久化層；不刪除。 |
-| `versions/neon-racer-v51/`、`versions/neon-racer-v52/` | 可比較的舊單檔版本。 |
-| `versions/legacy-pwa/` | V21、V22、V24、V26 的 PWA 歷史版本。 |
-| `recovered_sources/` | 歷史恢復來源；不得直接覆蓋主線。 |
-| `docs/` | Handoff、版本時間線、恢復報告、測試限制與匯入來源治理資料。 |
+## 目前保留功能
 
-## 已知資產缺口
+- 低位追尾第三人稱鏡頭
+- 路面導航線、路線小地圖與轉彎提示
+- 技巧分數、倍率與連段
+- 漂移、反打、擦身與氮氣計分
+- 速度表、檔位與氮氣量
+- 手機 DRIFT 與 N₂O 操作
+- V51～V52 延續的啟動修復、安全模式與診斷機制
 
-本次恢復沒有原始車圖、icons、manifest 與 14 個 WAV bytes。V53 對這些檔案有內建視覺與音效 fallback，但並不表示離線 PWA 或完整素材已恢復。不得以空白檔或舊版本資產冒充補齊；完整清單見 `docs/import-recovery/manifest/MISSING_OR_UNAVAILABLE.md`。
+## 專案整理
 
-## 更新原則
+2026-08-11 已將先前為資料恢復而放入 `main` 的歷史版本、recovered sources、import-recovery 文件移出主線，避免 Codex 或後續開發誤把舊版當成正式來源。
 
-- 不把 `versions/` 中任何檔案平鋪覆蓋根目錄。
-- 不把 V41、V48～V53 的已完成成果重做或回退。
-- V53 的程式／設定 key、cache 與 diagnostics 必須一起驗證，避免舊快取碰撞。
-- 真正正式 Repository、Git branch 與線上部署來源仍待確認。
+清理前完整狀態保留在：
+
+```text
+archive/pre-cleanup-20260811
+```
+
+因此 `main` 後續一律以目前 V53 與最新提交為準，不再從舊版本資料夾回推正式程式。
+
+## 驗證限制
+
+先前已有模組與瀏覽器測試證據，但仍不應把歷史 Chromium 模擬結果視為完整的實體 iPhone Safari／Android Chrome 驗證。
+
+更多目前狀態請看 `docs/PROJECT_STATUS.md`。

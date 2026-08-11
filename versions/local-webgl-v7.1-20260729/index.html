@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="screen-orientation" content="landscape" />
+  <title>全 3D 模型車高空賽道 V7.1</title>
+
+  <script>
+    (function(){
+      function apply(){
+        var w = window.innerWidth || document.documentElement.clientWidth || 0;
+        var h = window.innerHeight || document.documentElement.clientHeight || 0;
+        var portrait = h > w && w <= 820;
+        document.documentElement.style.setProperty('--app-height', h + 'px');
+        document.documentElement.classList.toggle('is-portrait-mobile', portrait);
+        document.documentElement.classList.toggle('is-landscape-mobile', !portrait && h <= 560 && w <= 1180);
+      }
+      function nudgeSafari(){ try { window.scrollTo(0, 1); } catch(e) {} }
+      apply();
+      nudgeSafari();
+      window.addEventListener('resize', apply, {passive:true});
+      window.addEventListener('orientationchange', function(){ setTimeout(apply, 80); setTimeout(nudgeSafari, 160); }, {passive:true});
+      window.addEventListener('touchstart', nudgeSafari, {passive:true, once:false});
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <canvas id="gameCanvas" aria-label="全 3D 賽車遊戲畫面"></canvas>
+
+    <section class="hud top-hud" aria-label="比賽資訊">
+      <div class="stat"><span class="label">速度</span><strong><span id="speedText">0</span><small> km/h</small></strong></div>
+      <div class="stat"><span class="label">名次</span><strong id="rankText">1/6</strong></div>
+      <div class="stat"><span class="label">圈數</span><strong id="lapText">1/3</strong></div>
+      <div class="stat"><span class="label">進度</span><strong id="progressText">0%</strong></div>
+      <div class="stat"><span class="label">時間</span><strong id="timeText">0:00.0</strong></div>
+      <div class="stat"><span class="label">最佳</span><strong id="bestText">--</strong></div>
+    </section>
+
+    <section class="status-row boost-only" aria-label="能量">
+      <div class="meter-wrap"><span>能量</span><div class="meter boost"><i id="boostBar"></i></div></div>
+    </section>
+
+    <section id="notice" class="notice">
+      <div class="notice-card">
+        <p class="eyebrow">RACING PLAYABLE V7.1</p>
+        <h1>橫式實戰 HUD 版</h1>
+        <p id="noticeText">這版把手機橫式 HUD、倒數、底部按鈕重新壓縮，Safari 工具列出現時也比較不會擋住賽道。</p>
+        <div class="notice-tips">
+          <span>橫式專用</span>
+          <span>實戰 HUD</span>
+          <span>強化 AI</span>
+        </div>
+        <div class="setup-grid">
+          <div>
+            <h2>選擇車色</h2>
+            <div class="garage" aria-label="選擇車色">
+              <button class="car-choice active" data-car="0" type="button"><i class="swatch classic"></i><span>白色</span></button>
+              <button class="car-choice" data-car="1" type="button"><i class="swatch sport"></i><span>黃色</span></button>
+              <button class="car-choice" data-car="2" type="button"><i class="swatch blue"></i><span>藍色</span></button>
+              <button class="car-choice" data-car="3" type="button"><i class="swatch black"></i><span>黑色</span></button>
+              <button class="car-choice" data-car="4" type="button"><i class="swatch red"></i><span>紅色</span></button>
+              <button class="car-choice" data-car="5" type="button"><i class="swatch green"></i><span>綠色</span></button>
+            </div>
+          </div>
+          <div>
+            <h2>比賽圈數</h2>
+            <div class="lap-select" aria-label="選擇比賽圈數">
+              <button class="lap-choice" data-laps="1" type="button">1 圈<small>快速測試</small></button>
+              <button class="lap-choice active" data-laps="3" type="button">3 圈<small>標準賽</small></button>
+              <button class="lap-choice" data-laps="5" type="button">5 圈<small>耐力賽</small></button>
+            </div>
+          </div>
+          <div>
+            <h2>比賽車數</h2>
+            <div class="race-select" aria-label="選擇比賽車數">
+              <button class="race-choice" data-cars="1" type="button">單人<small>練習</small></button>
+              <button class="race-choice" data-cars="3" type="button">3 台<small>小型賽</small></button>
+              <button class="race-choice active" data-cars="6" type="button">6 台<small>完整對戰</small></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="countdown" class="countdown" hidden aria-live="polite">3</section>
+
+    <section class="controls" aria-label="遊戲操作">
+      <button id="startBtn" class="control primary" type="button">啟動</button>
+      <button id="brakeBtn" class="control brake" type="button">煞車</button>
+      <button id="gasBtn" class="control gas" type="button">加速</button>
+    </section>
+
+    <section class="bottom-actions" aria-label="其他功能">
+      <button id="resetBtn" type="button">重置</button>
+      <button id="cameraBtn" type="button">視角：追尾</button>
+      <button id="soundBtn" type="button">音效：開</button>
+      <span id="fpsText">WebGL 3D</span>
+    </section>
+
+    <section id="webglError" class="webgl-error" hidden>
+      <strong>這台裝置目前無法啟動 WebGL。</strong>
+      <span>請改用 Chrome / Safari 最新版，或確認瀏覽器沒有關閉硬體加速。</span>
+    </section>
+    <section id="orientationGate" class="orientation-gate" aria-live="polite">
+      <div class="rotate-card">
+        <div class="rotate-icon">↻</div>
+        <strong>請將手機轉成橫式遊玩</strong>
+        <span>目前偵測到直式畫面。轉橫後才會顯示設定、HUD 與操作按鈕。iPhone 建議先關閉直向鎖定。</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/local-database.js"></script>
+  <script src="js/game3d.js"></script>
+</body>
+</html>

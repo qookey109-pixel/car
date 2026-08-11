@@ -1,0 +1,73 @@
+const CACHE_NAME = "neon-racer-v24";
+const CORE = [
+  "./",
+  "./index.html",
+  "./styles.css?v=24",
+  "./app.js?v=24",
+  "./js/config.js?v=24",
+  "./js/diagnostics.js?v=24",
+  "./js/game-loop.js?v=24",
+  "./js/gyro.js?v=24",
+  "./js/traffic-ai.js?v=24",
+  "./js/physics.js?v=24",
+  "./js/assets.js?v=24",
+  "./js/input.js?v=24",
+  "./manifest.webmanifest?v=24",
+  "./assets/player-car.png?v=24",
+  "./assets/player-car-blue.png?v=24",
+  "./assets/player-car-red.png?v=24",
+  "./assets/player-car-lime.png?v=24",
+  "./assets/player-car-purple.png?v=24",
+  "./icons/icon-192.png?v=24",
+  "./icons/icon-512.png?v=24",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
+];
+
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(CORE))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
+          return response;
+        })
+        .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      const network = fetch(event.request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
+  );
+});

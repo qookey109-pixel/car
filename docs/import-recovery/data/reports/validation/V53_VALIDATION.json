@@ -1,0 +1,20 @@
+{
+  "version": "53.0.0",
+  "singleFileCore": true,
+  "routeMap": true,
+  "skillChain": true,
+  "nitro": true,
+  "navigationPrompt": true,
+  "mobileButtons": true,
+  "racingLine": true,
+  "javascriptFilesChecked": 40,
+  "indexBytes": 259867,
+  "moduleTests": "passed",
+  "browserSmokeTest": {
+    "attempted": true,
+    "passed": false,
+    "physicalDevice": false,
+    "note": "Chromium 行動尺寸模擬，不是實體 iPhone Safari。",
+    "error": "Browser.new_context: Target page, context or browser has been closed"
+  }
+}

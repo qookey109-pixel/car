@@ -34,6 +34,8 @@
 
 車身視覺與 RaycastVehicle 物理解耦：本次只換 render mesh，沒有改 chassis、wheel points、suspension、engine force、steering 或 drift physics。
 
+視覺改版後 GitHub Actions `Raycast Vehicle Validation` Run #5 (`31466039371`) PASS，確認四輪接地、加速、轉向、DRIFT、手機雙觸點與 console-error Gate 沒有因車身重做而退化。
+
 ## 操作
 
 - `W / ↑`：油門

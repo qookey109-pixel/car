@@ -26,7 +26,7 @@ function fixture(){
 
 const browser=await chromium.launch({headless:true});
 const consoleErrors=[];
-const report={desktop:{},mobile:{},consoleErrors};
+const report={desktop:{},mobileLandscape:{},consoleErrors};
 
 async function boot(context){
   await context.addInitScript(data=>{window.__ARCADE_TEST_OSM__=data},fixture());
@@ -76,7 +76,7 @@ await desktop.close();
 const mobile=await browser.newContext({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
 const mobilePage=await boot(mobile);
 snap=await mobilePage.evaluate(()=>window.__ARCADE_LAB__.snapshot());
-if(snap.aiCount!==8)throw new Error(`mobile AI expected 8, got ${snap.aiCount}`);
+if(snap.aiCount!==12)throw new Error(`844x390 stress test expected 12 AI, got ${snap.aiCount}`);
 await mobilePage.evaluate(()=>{
   const gas=document.querySelector('[data-action="gas"]'),left=document.querySelector('[data-action="left"]');
   gas.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:11,pointerType:'touch'}));
@@ -86,8 +86,8 @@ await mobilePage.waitForTimeout(500);
 const active=await mobilePage.evaluate(()=>({gas:document.querySelector('[data-action="gas"]').classList.contains('active'),left:document.querySelector('[data-action="left"]').classList.contains('active'),snap:window.__ARCADE_LAB__.snapshot()}));
 if(!active.gas||!active.left)throw new Error('mobile multi-touch controls did not stay active together');
 if(active.snap.speedKmh<=0)throw new Error('mobile gas did not move vehicle');
-report.mobile.multiTouch=active.snap;
-await mobilePage.screenshot({path:`${OUT}/mobile.png`,fullPage:true});
+report.mobileLandscape.multiTouch=active.snap;
+await mobilePage.screenshot({path:`${OUT}/mobile-landscape.png`,fullPage:true});
 await mobile.close();
 
 if(consoleErrors.length)throw new Error(`browser console errors: ${consoleErrors.join(' | ')}`);

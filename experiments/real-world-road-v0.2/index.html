@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0c1118" />
+  <title>Car — Real World Road V0.2</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0c1118;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+    canvas{display:block}
+    #hud{position:fixed;z-index:5;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));max-width:min(520px,calc(100vw - 20px));padding:12px 13px;border-radius:15px;background:rgba(4,8,13,.68);backdrop-filter:blur(12px);box-shadow:0 8px 30px rgba(0,0,0,.28)}
+    #hud h1{font-size:15px;margin:0 0 8px;letter-spacing:.2px}
+    #hud .row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+    #hud input{width:108px;padding:8px;border-radius:8px;border:1px solid #3b4352;background:#151922;color:#fff}
+    #hud button{padding:8px 10px;border:0;border-radius:8px;background:#fff;color:#111;font-weight:800;cursor:pointer}
+    #status{font-size:12px;opacity:.94;margin-top:8px;line-height:1.45}
+    #telemetry{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;font-size:11px}
+    .chip{padding:5px 8px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07)}
+    .chip.good{border-color:rgba(67,255,191,.35);color:#8affd6}.chip.warn{border-color:rgba(255,204,74,.38);color:#ffe17b}.chip.bad{border-color:rgba(255,91,91,.38);color:#ff9d9d}
+    #help{font-size:11px;opacity:.7;margin-top:6px}
+    #speed{font-variant-numeric:tabular-nums}
+    #nitroWrap{position:fixed;z-index:6;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));width:156px;padding:10px 11px;border-radius:14px;background:rgba(4,8,13,.62);backdrop-filter:blur(10px)}
+    #nitroWrap .label{display:flex;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:.7px;margin-bottom:6px}
+    #nitroTrack{height:7px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden}
+    #nitroFill{height:100%;width:100%;background:linear-gradient(90deg,#2a8cff,#55deff);border-radius:inherit;transition:width .08s linear}
+    #touch{position:fixed;z-index:7;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));pointer-events:none}
+    .pad,.actions{pointer-events:auto}.pad{display:grid;grid-template-columns:repeat(2,64px);gap:10px}.actions{display:grid;grid-template-columns:repeat(2,70px);grid-template-rows:repeat(2,58px);gap:9px}
+    .pad button,.actions button{border:1px solid rgba(255,255,255,.26);border-radius:17px;background:rgba(17,22,31,.72);color:#fff;font-weight:900;touch-action:none;-webkit-tap-highlight-color:transparent;backdrop-filter:blur(8px)}
+    .pad button{height:94px;font-size:27px}.actions button{font-size:12px;letter-spacing:.5px}.actions .gas{border-color:rgba(83,255,213,.42);color:#92ffe4}.actions .brake{border-color:rgba(255,104,104,.42);color:#ffaaaa}.actions .drift{border-color:rgba(255,205,68,.48);color:#ffe172}.actions .nitro{border-color:rgba(56,175,255,.55);color:#7fd1ff}
+    .pad button.active,.actions button.active,.pad button:active,.actions button:active{transform:scale(.95);filter:brightness(1.2)}
+    #loading{position:fixed;z-index:20;inset:0;display:none;place-items:center;background:rgba(4,7,11,.5);font-size:17px;font-weight:800;backdrop-filter:blur(4px)}
+    #loading.show{display:grid}
+    @media (hover:hover) and (pointer:fine){#touch{opacity:.36}.pad button,.actions button{cursor:pointer}}
+    @media (max-width:760px){#hud{max-width:calc(100vw - 20px);padding:10px}#hud h1{font-size:13px}#help{display:none}#nitroWrap{top:auto;bottom:calc(13px + env(safe-area-inset-bottom));right:50%;transform:translateX(50%);width:130px}.pad{grid-template-columns:repeat(2,56px)}.pad button{width:56px;height:78px}.actions{grid-template-columns:repeat(2,60px);grid-template-rows:repeat(2,50px)}.actions button{font-size:10px}}
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <h1>🌏 Real World Road V0.2</h1>
+    <div class="row">
+      <label>Lat <input id="lat" value="25.033964" inputmode="decimal"></label>
+      <label>Lon <input id="lon" value="121.564468" inputmode="decimal"></label>
+      <button id="load">載入道路</button>
+    </div>
+    <div id="status">預設：台北 101 周邊 1.2 km。</div>
+    <div id="telemetry">
+      <span class="chip" id="speed">0 km/h</span>
+      <span class="chip good" id="surface">道路</span>
+      <span class="chip" id="roadDistance">中心線 -- m</span>
+      <span class="chip" id="slip">滑移 0°</span>
+    </div>
+    <div id="help">WASD / 方向鍵｜Space 漂移｜Shift / N 氮氣。V0.2：可駕駛道路過濾、車道線、離路判定與 V53 風格輸入。</div>
+  </div>
+
+  <div id="nitroWrap">
+    <div class="label"><span>N₂O</span><span id="nitroText">100%</span></div>
+    <div id="nitroTrack"><div id="nitroFill"></div></div>
+  </div>
+
+  <div id="touch">
+    <div class="pad">
+      <button data-action="left" aria-label="左轉">◀</button>
+      <button data-action="right" aria-label="右轉">▶</button>
+    </div>
+    <div class="actions">
+      <button class="drift" data-action="drift">DRIFT</button>
+      <button class="nitro" data-action="nitro">N₂O</button>
+      <button class="brake" data-action="brake">BRAKE</button>
+      <button class="gas" data-action="gas">GAS</button>
+    </div>
+  </div>
+
+  <div id="loading">正在載入 OpenStreetMap 道路…</div>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js';
+
+    const RADIUS_METERS = 1200;
+    const GRID_SIZE = 80;
+    const MAX_SEGMENTS = 9000;
+    const MAX_MARKINGS = 18000;
+    const DRIVABLE = new Set([
+      'motorway','motorway_link','trunk','trunk_link','primary','primary_link',
+      'secondary','secondary_link','tertiary','tertiary_link','unclassified',
+      'residential','living_street','service','road'
+    ]);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x9db7ca);
+    scene.fog = new THREE.Fog(0x9db7ca, 420, 1600);
+
+    const camera = new THREE.PerspectiveCamera(59, innerWidth / innerHeight, 0.1, 3200);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+
+    scene.add(new THREE.HemisphereLight(0xeaf6ff, 0x4a5a42, 2.15));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.45);
+    sun.position.set(-180, 320, 120);
+    scene.add(sun);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(3200, 3200),
+      new THREE.MeshLambertMaterial({ color: 0x789167 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.055;
+    scene.add(ground);
+
+    const roadGroup = new THREE.Group();
+    scene.add(roadGroup);
+
+    const car = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(2.15, 0.64, 4.35),
+      new THREE.MeshStandardMaterial({ color: 0xff4c2f, roughness: .5, metalness: .08 })
+    );
+    body.position.y = .72;
+    car.add(body);
+    const cabin = new THREE.Mesh(
+      new THREE.BoxGeometry(1.7, .57, 1.9),
+      new THREE.MeshStandardMaterial({ color: 0x172433, roughness: .22, metalness: .14 })
+    );
+    cabin.position.set(0, 1.21, -.18);
+    car.add(cabin);
+    for (const x of [-.93, .93]) for (const z of [-1.42, 1.42]) {
+      const wheel = new THREE.Mesh(
+        new THREE.CylinderGeometry(.41, .41, .25, 16),
+        new THREE.MeshStandardMaterial({ color: 0x151515, roughness: .85 })
+      );
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(x, .43, z);
+      car.add(wheel);
+    }
+    scene.add(car);
+
+    const input = { left:false, right:false, gas:false, brake:false, drift:false, nitro:false };
+    const keys = new Set();
+    const keyMap = new Map([
+      ['ArrowLeft','left'],['KeyA','left'],['ArrowRight','right'],['KeyD','right'],
+      ['ArrowUp','gas'],['KeyW','gas'],['ArrowDown','brake'],['KeyS','brake'],
+      ['Space','drift'],['ShiftLeft','nitro'],['ShiftRight','nitro'],['KeyN','nitro']
+    ]);
+
+    function syncInput() {
+      for (const action of Object.keys(input)) input[action] = false;
+      for (const code of keys) {
+        const action = keyMap.get(code);
+        if (action) input[action] = true;
+      }
+      for (const btn of document.querySelectorAll('[data-action].active')) input[btn.dataset.action] = true;
+    }
+
+    addEventListener('keydown', e => {
+      if (keyMap.has(e.code)) { e.preventDefault(); keys.add(e.code); syncInput(); }
+    });
+    addEventListener('keyup', e => {
+      if (keyMap.has(e.code)) { e.preventDefault(); keys.delete(e.code); syncInput(); }
+    });
+    addEventListener('blur', () => {
+      keys.clear();
+      document.querySelectorAll('[data-action]').forEach(b => b.classList.remove('active'));
+      syncInput();
+    });
+
+    document.querySelectorAll('[data-action]').forEach(btn => {
+      const on = e => { e.preventDefault(); btn.setPointerCapture?.(e.pointerId); btn.classList.add('active'); syncInput(); };
+      const off = e => { e.preventDefault(); btn.classList.remove('active'); syncInput(); };
+      btn.addEventListener('pointerdown', on);
+      btn.addEventListener('pointerup', off);
+      btn.addEventListener('pointercancel', off);
+      btn.addEventListener('lostpointercapture', off);
+    });
+
+    let mapOrigin = { lat: 25.033964, lon: 121.564468 };
+    let roadWayCount = 0;
+    let roadSegments = [];
+    let roadGrid = new Map();
+    let roadMesh = null;
+    let markingMesh = null;
+
+    const vehicle = {
+      heading: 0,
+      steer: 0,
+      velocity: new THREE.Vector2(),
+      nitroCharge: 1,
+      nitroActive: false,
+      surface: 'road'
+    };
+
+    const status = document.getElementById('status');
+    const loading = document.getElementById('loading');
+    const speedEl = document.getElementById('speed');
+    const surfaceEl = document.getElementById('surface');
+    const roadDistanceEl = document.getElementById('roadDistance');
+    const slipEl = document.getElementById('slip');
+    const nitroFill = document.getElementById('nitroFill');
+    const nitroText = document.getElementById('nitroText');
+
+    function llToLocal(lat, lon) {
+      const latRad = mapOrigin.lat * Math.PI / 180;
+      return new THREE.Vector2(
+        (lon - mapOrigin.lon) * 111320 * Math.cos(latRad),
+        -(lat - mapOrigin.lat) * 111320
+      );
+    }
+
+    function inferredLanes(tags={}) {
+      const parsed = Number.parseInt(String(tags.lanes || ''), 10);
+      if (Number.isFinite(parsed) && parsed > 0) return THREE.MathUtils.clamp(parsed, 1, 8);
+      const type = tags.highway || '';
+      if (['motorway','trunk'].includes(type)) return 4;
+      if (['primary','secondary'].includes(type)) return 2;
+      return 2;
+    }
+
+    function highwayWidth(tags={}) {
+      const lanes = inferredLanes(tags);
+      const type = tags.highway || '';
+      const laneWidth = ['motorway','trunk','primary'].includes(type) ? 3.45 : 3.15;
+      const minimum = ({motorway:11,trunk:10,primary:8,secondary:7,tertiary:6,residential:5.7,service:4.2,living_street:4.5}[type] || 5.2);
+      return Math.max(minimum, lanes * laneWidth);
+    }
+
+    function isDrivableWay(way) {
+      const t = way.tags || {};
+      if (!DRIVABLE.has(t.highway)) return false;
+      if (t.motor_vehicle === 'no' || t.motorcar === 'no') return false;
+      if (t.access === 'no' || t.access === 'private') return false;
+      return Array.isArray(way.nodes) && way.nodes.length >= 2;
+    }
+
+    function clearRoads() {
+      roadGroup.clear();
+      roadMesh?.geometry.dispose(); roadMesh?.material.dispose();
+      markingMesh?.geometry.dispose(); markingMesh?.material.dispose();
+      roadMesh = null; markingMesh = null;
+      roadSegments = []; roadGrid = new Map(); roadWayCount = 0;
+    }
+
+    function gridKey(ix, iz) { return `${ix},${iz}`; }
+
+    function indexSegment(segment) {
+      const margin = segment.width * .5 + 4;
+      const minX = Math.floor((Math.min(segment.ax, segment.bx) - margin) / GRID_SIZE);
+      const maxX = Math.floor((Math.max(segment.ax, segment.bx) + margin) / GRID_SIZE);
+      const minZ = Math.floor((Math.min(segment.az, segment.bz) - margin) / GRID_SIZE);
+      const maxZ = Math.floor((Math.max(segment.az, segment.bz) + margin) / GRID_SIZE);
+      for (let ix=minX; ix<=maxX; ix++) for (let iz=minZ; iz<=maxZ; iz++) {
+        const key = gridKey(ix,iz);
+        if (!roadGrid.has(key)) roadGrid.set(key, []);
+        roadGrid.get(key).push(segment);
+      }
+    }
+
+    function segmentNearest(px, pz, s) {
+      const vx = s.bx - s.ax, vz = s.bz - s.az;
+      const lenSq = vx*vx + vz*vz || 1;
+      const t = THREE.MathUtils.clamp(((px-s.ax)*vx + (pz-s.az)*vz) / lenSq, 0, 1);
+      const x = s.ax + vx*t, z = s.az + vz*t;
+      const dx = px-x, dz = pz-z;
+      return { distance: Math.hypot(dx,dz), x, z, t, segment:s };
+    }
+
+    function nearestRoad(px, pz) {
+      const ix = Math.floor(px / GRID_SIZE), iz = Math.floor(pz / GRID_SIZE);
+      let candidates = [];
+      for (let radius=1; radius<=2 && candidates.length===0; radius++) {
+        for (let x=ix-radius; x<=ix+radius; x++) for (let z=iz-radius; z<=iz+radius; z++) {
+          const list = roadGrid.get(gridKey(x,z));
+          if (list) candidates.push(...list);
+        }
+      }
+      if (!candidates.length) return null;
+      let best = null;
+      const seen = new Set();
+      for (const s of candidates) {
+        if (seen.has(s.id)) continue;
+        seen.add(s.id);
+        const hit = segmentNearest(px,pz,s);
+        if (!best || hit.distance < best.distance) best = hit;
+      }
+      return best;
+    }
+
+    function laneOffsets(segment) {
+      const { lanes, width, oneWay } = segment;
+      const offsets = [];
+      if (oneWay) {
+        for (let i=1;i<lanes;i++) offsets.push(-width/2 + width*i/lanes);
+      } else {
+        offsets.push(0);
+        if (lanes >= 4) {
+          const laneWidth = width / lanes;
+          for (let i=1; i<lanes/2; i++) offsets.push(i*laneWidth, -i*laneWidth);
+        }
+      }
+      return offsets;
+    }
+
+    function buildRoads(osm) {
+      clearRoads();
+      const nodes = new Map();
+      for (const e of osm.elements || []) if (e.type === 'node') nodes.set(e.id, e);
+
+      let id = 0;
+      for (const way of osm.elements || []) {
+        if (way.type !== 'way' || !isDrivableWay(way)) continue;
+        const width = highwayWidth(way.tags);
+        const lanes = inferredLanes(way.tags);
+        const oneWay = ['yes','1','true'].includes(String(way.tags?.oneway || '').toLowerCase()) || way.tags?.junction === 'roundabout';
+        let added = false;
+        for (let i=1; i<way.nodes.length && roadSegments.length<MAX_SEGMENTS; i++) {
+          const na = nodes.get(way.nodes[i-1]), nb = nodes.get(way.nodes[i]);
+          if (!na || !nb) continue;
+          const a = llToLocal(na.lat,na.lon), b = llToLocal(nb.lat,nb.lon);
+          if (a.distanceToSquared(b) < .04) continue;
+          const segment = { id:id++, ax:a.x, az:a.y, bx:b.x, bz:b.y, width, lanes, oneWay, highway:way.tags.highway };
+          roadSegments.push(segment); indexSegment(segment); added = true;
+        }
+        if (added) roadWayCount++;
+      }
+
+      const roadGeo = new THREE.BoxGeometry(1, .045, 1);
+      const roadMat = new THREE.MeshLambertMaterial({ color: 0x34373b });
+      roadMesh = new THREE.InstancedMesh(roadGeo, roadMat, roadSegments.length);
+      roadMesh.frustumCulled = false;
+      const matrix = new THREE.Matrix4();
+      const pos = new THREE.Vector3(), scale = new THREE.Vector3(), quat = new THREE.Quaternion();
+      const yAxis = new THREE.Vector3(0,1,0);
+      const markSpecs = [];
+
+      roadSegments.forEach((s, index) => {
+        const dx=s.bx-s.ax, dz=s.bz-s.az, len=Math.hypot(dx,dz);
+        const angle=Math.atan2(dx,dz);
+        pos.set((s.ax+s.bx)/2, .01, (s.az+s.bz)/2);
+        quat.setFromAxisAngle(yAxis, angle);
+        scale.set(s.width, 1, len);
+        matrix.compose(pos,quat,scale);
+        roadMesh.setMatrixAt(index,matrix);
+
+        const ux=dx/len, uz=dz/len, nx=-uz, nz=ux;
+        for (const offset of laneOffsets(s)) {
+          for (let d=4; d<len-1 && markSpecs.length<MAX_MARKINGS; d+=9) {
+            const dashLen=Math.min(4, len-d);
+            if (dashLen <= .4) continue;
+            const cx=s.ax+ux*(d+dashLen/2)+nx*offset;
+            const cz=s.az+uz*(d+dashLen/2)+nz*offset;
+            markSpecs.push({x:cx,z:cz,angle,len:dashLen});
+          }
+        }
+      });
+      roadMesh.instanceMatrix.needsUpdate = true;
+      roadGroup.add(roadMesh);
+
+      const markGeo = new THREE.BoxGeometry(.13,.025,1);
+      const markMat = new THREE.MeshBasicMaterial({ color:0xf0eee3 });
+      markingMesh = new THREE.InstancedMesh(markGeo,markMat,markSpecs.length);
+      markingMesh.frustumCulled = false;
+      markSpecs.forEach((m,index) => {
+        pos.set(m.x,.05,m.z); quat.setFromAxisAngle(yAxis,m.angle); scale.set(1,1,m.len);
+        matrix.compose(pos,quat,scale); markingMesh.setMatrixAt(index,matrix);
+      });
+      markingMesh.instanceMatrix.needsUpdate = true;
+      roadGroup.add(markingMesh);
+      return { segmentCount:roadSegments.length, markingCount:markSpecs.length };
+    }
+
+    function spawnOnRoad() {
+      const hit = nearestRoad(0,0);
+      vehicle.velocity.set(0,0); vehicle.steer=0; vehicle.nitroCharge=1; vehicle.nitroActive=false;
+      if (!hit) { car.position.set(0,0,0); vehicle.heading=0; return; }
+      car.position.set(hit.x,0,hit.z);
+      const s=hit.segment;
+      vehicle.heading=Math.atan2(s.bx-s.ax, s.bz-s.az);
+      car.rotation.y=vehicle.heading;
+    }
+
+    async function fetchOverpass(query) {
+      const endpoints = [
+        'https://overpass-api.de/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter'
+      ];
+      let lastError = null;
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint, {
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+            body:'data='+encodeURIComponent(query)
+          });
+          if (!res.ok) throw new Error(`${endpoint} HTTP ${res.status}`);
+          return await res.json();
+        } catch (err) { lastError = err; }
+      }
+      throw lastError || new Error('Overpass unavailable');
+    }
+
+    async function loadRoads() {
+      const lat = Number(document.getElementById('lat').value);
+      const lon = Number(document.getElementById('lon').value);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        status.textContent='⚠️ 請輸入有效的 Lat / Lon。'; return;
+      }
+      mapOrigin={lat,lon}; loading.classList.add('show');
+      status.textContent='正在抓取可駕駛道路…';
+      const query=`[out:json][timeout:28];way[highway](around:${RADIUS_METERS},${lat},${lon});(._;>;);out body;`;
+      try {
+        const osm=await fetchOverpass(query);
+        const built=buildRoads(osm); spawnOnRoad();
+        status.innerHTML=`✅ ${roadWayCount} 條可駕駛 OSM ways｜${built.segmentCount} segments｜${built.markingCount} 車道線標記`;
+      } catch (err) {
+        console.error(err);
+        status.textContent=`⚠️ 道路載入失敗：${String(err?.message || err)}`;
+      } finally { loading.classList.remove('show'); }
+    }
+
+    document.getElementById('load').addEventListener('click', loadRoads);
+
+    const clock = new THREE.Clock();
+    const camTarget = new THREE.Vector3();
+    const forward2 = new THREE.Vector2();
+    const desiredVel = new THREE.Vector2();
+
+    function updateVehicle(dt) {
+      syncInput();
+      const currentSpeed = vehicle.velocity.length();
+      const hit = nearestRoad(car.position.x, car.position.z);
+      const edge = hit ? hit.distance - hit.segment.width*.5 : Infinity;
+      const onRoad = edge <= .3;
+      const onShoulder = !onRoad && edge <= 2.7;
+      vehicle.surface = onRoad ? 'road' : (onShoulder ? 'shoulder' : 'offroad');
+
+      const surfaceGrip = onRoad ? 1 : (onShoulder ? .64 : .34);
+      const surfaceAccel = onRoad ? 1 : (onShoulder ? .72 : .42);
+      const surfaceTopSpeed = onRoad ? 49 : (onShoulder ? 31 : 18);
+
+      const requestedNitro = input.nitro && !input.brake && vehicle.nitroCharge > .025 && currentSpeed > 4;
+      vehicle.nitroActive = requestedNitro && vehicle.surface === 'road';
+      if (vehicle.nitroActive) vehicle.nitroCharge=Math.max(0,vehicle.nitroCharge-dt*.22);
+      else vehicle.nitroCharge=Math.min(1,vehicle.nitroCharge+dt*.075);
+      const nitroAccel=vehicle.nitroActive ? 1.48 : 1;
+      const nitroTop=vehicle.nitroActive ? 1.18 : 1;
+
+      const steerTarget=(input.left?-1:0)+(input.right?1:0);
+      vehicle.steer=THREE.MathUtils.lerp(vehicle.steer,steerTarget,1-Math.pow(.001,dt));
+
+      forward2.set(Math.sin(vehicle.heading),Math.cos(vehicle.heading));
+      const forwardSpeed=vehicle.velocity.dot(forward2);
+      const speedPct=THREE.MathUtils.clamp(Math.abs(forwardSpeed)/(49*nitroTop),0,1);
+
+      if (input.gas) {
+        const accel=(22*(1-speedPct*.45))*surfaceAccel*nitroAccel;
+        vehicle.velocity.addScaledVector(forward2,accel*dt);
+      }
+
+      if (input.brake && !input.drift) {
+        if (forwardSpeed > 1) vehicle.velocity.multiplyScalar(Math.max(0,1-3.5*dt));
+        else vehicle.velocity.addScaledVector(forward2,-10.5*dt);
+      }
+
+      const driftActive=input.drift && currentSpeed>8 && vehicle.surface!=='offroad';
+      if (input.drift && !driftActive) vehicle.velocity.multiplyScalar(Math.max(0,1-1.9*dt));
+
+      const steerSpeed=THREE.MathUtils.clamp(currentSpeed/9,0,1);
+      const reverseSign=forwardSpeed < -1 ? -1 : 1;
+      const yawRate=(driftActive ? 1.72 : 1.12)*steerSpeed*(.78+.22*surfaceGrip);
+      vehicle.heading += vehicle.steer*yawRate*dt*reverseSign;
+
+      forward2.set(Math.sin(vehicle.heading),Math.cos(vehicle.heading));
+      const signedForward=vehicle.velocity.dot(forward2);
+      desiredVel.copy(forward2).multiplyScalar(signedForward);
+      const traction=(driftActive ? 1.15 : 5.2)*surfaceGrip;
+      vehicle.velocity.lerp(desiredVel,THREE.MathUtils.clamp(traction*dt,0,1));
+
+      const linearDrag=onRoad ? .12 : (onShoulder ? .72 : 1.65);
+      vehicle.velocity.multiplyScalar(Math.exp(-linearDrag*dt));
+
+      const maxAllowed=surfaceTopSpeed*nitroTop;
+      if (vehicle.velocity.length()>maxAllowed) vehicle.velocity.setLength(maxAllowed);
+      if (forwardSpeed < -9 && vehicle.velocity.length()>9) vehicle.velocity.setLength(9);
+      if (vehicle.velocity.length()<.025 && !input.gas && !input.brake) vehicle.velocity.set(0,0);
+
+      car.position.x += vehicle.velocity.x*dt;
+      car.position.z += vehicle.velocity.y*dt;
+      car.rotation.y=vehicle.heading;
+
+      const finalSpeed=vehicle.velocity.length();
+      forward2.set(Math.sin(vehicle.heading),Math.cos(vehicle.heading));
+      const vnorm=finalSpeed>.1 ? vehicle.velocity.clone().normalize() : forward2;
+      const dot=THREE.MathUtils.clamp(forward2.dot(vnorm),-1,1);
+      const cross=forward2.x*vnorm.y-forward2.y*vnorm.x;
+      const slipDeg=Math.atan2(cross,dot)*180/Math.PI;
+
+      speedEl.textContent=`${Math.round(finalSpeed*3.6)} km/h`;
+      surfaceEl.textContent=onRoad?'道路':(onShoulder?'路肩':'離路');
+      surfaceEl.className=`chip ${onRoad?'good':(onShoulder?'warn':'bad')}`;
+      roadDistanceEl.textContent=hit?`中心線 ${hit.distance.toFixed(1)} m`:'中心線 -- m';
+      slipEl.textContent=`滑移 ${Math.round(Math.abs(slipDeg))}°${driftActive?' DRIFT':''}`;
+      const nitroPct=Math.round(vehicle.nitroCharge*100);
+      nitroFill.style.width=`${nitroPct}%`; nitroText.textContent=`${nitroPct}%`;
+      return { finalSpeed, slipDeg, driftActive };
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt=Math.min(clock.getDelta(),.04);
+      const state=updateVehicle(dt);
+      const cameraDistance=vehicle.nitroActive?12.5:10.8;
+      const follow=new THREE.Vector3(
+        car.position.x-Math.sin(vehicle.heading)*cameraDistance,
+        5.2+Math.min(state.finalSpeed*.015,.75),
+        car.position.z-Math.cos(vehicle.heading)*cameraDistance
+      );
+      camera.position.lerp(follow,1-Math.pow(.002,dt));
+      camera.fov=THREE.MathUtils.lerp(camera.fov,vehicle.nitroActive?66:59,1-Math.pow(.01,dt));
+      camera.updateProjectionMatrix();
+      camTarget.set(car.position.x,1.0,car.position.z);
+      camera.lookAt(camTarget);
+      renderer.render(scene,camera);
+    }
+
+    addEventListener('resize',()=>{
+      camera.aspect=innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth,innerHeight);
+    });
+
+    camera.position.set(0,5,-10);
+    animate();
+    loadRoads();
+  </script>
+</body>
+</html>

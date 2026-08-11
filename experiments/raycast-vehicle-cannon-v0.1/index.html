@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#061018">
-  <title>Car — Cannon Raycast Vehicle / Low-Poly Sport Coupe V4</title>
+  <title>Car — Cannon Raycast Vehicle / Low-Poly Sport Coupe V5</title>
   <style>
     *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061018;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}canvas{display:block}
     #hud{position:fixed;z-index:5;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));padding:10px 12px;border-radius:14px;background:rgba(3,8,13,.72);backdrop-filter:blur(10px);max-width:min(700px,calc(100vw - 20px));box-shadow:0 10px 30px rgba(0,0,0,.3)}
@@ -18,11 +18,11 @@
 </head>
 <body>
   <div id="hud">
-    <h1>🏎️ Cannon Raycast Vehicle — Low-Poly Sport Coupe V4</h1>
+    <h1>🏎️ Cannon Raycast Vehicle — Low-Poly Sport Coupe V5</h1>
     <div class="row"><span class="chip" id="speed">0 km/h</span><span class="chip good" id="grounded">輪胎接地 0/4</span><span class="chip" id="slip">滑移 0°</span><span class="chip" id="suspension">懸吊 0%</span><span class="chip" id="state">GRIP</span><span class="chip" id="fps">FPS --</span></div>
-    <div id="help">W/↑ 油門　S/↓ 煞車/倒車　A/D 轉向　Space 漂移　R 重置。V4：更完整輪拱深度、JDM 車頭/車尾、車門切線、輪圈輻條、煞車與接地陰影；Raycast 物理基線維持不變。</div>
+    <div id="help">V5：更深輪拱、立體投射式燈殼、前後保桿進氣層次、胎紋/輪圈、底盤與排氣細節；Raycast 物理沿用已驗證 V4 基線。W/↑ 油門、S/↓ 煞車、A/D 轉向、Space 漂移、R 重置。</div>
   </div>
   <div id="touch"><div class="pad"><button data-action="left">◀</button><button data-action="right">▶</button></div><div class="actions"><button class="drift" data-action="drift">DRIFT</button><button class="reset" data-action="reset">RESET</button><button class="brake" data-action="brake">BRAKE</button><button class="gas" data-action="gas">GAS</button></div></div>
-  <script type="module" src="./app-v4.js"></script>
+  <script type="module" src="./app-v5.js"></script>
 </body>
 </html>

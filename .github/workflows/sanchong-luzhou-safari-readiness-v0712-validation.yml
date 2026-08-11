@@ -1,0 +1,31 @@
+name: Sanchong Luzhou Safari Readiness V0712 Validation
+on:
+  push:
+    branches:
+      - feature/real-world-raycast-v0.7.1.2-safari-readiness
+  pull_request:
+    paths:
+      - 'experiments/real-world-raycast-v0.7-sanchong-luzhou-city/**'
+      - 'experiments/real-world-raycast-v0.7.1-sanchong-luzhou-streetscape/**'
+      - 'tests/sanchong-luzhou-safari-readiness-v0712-validation.mjs'
+      - '.github/workflows/sanchong-luzhou-safari-readiness-v0712-validation.yml'
+jobs:
+  chromium-sanchong-luzhou-safari-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 8013 > /tmp/car-http.log 2>&1 &
+          sleep 2
+      - name: Run Safari slow-city readiness smoke
+        run: node tests/sanchong-luzhou-safari-readiness-v0712-validation.mjs

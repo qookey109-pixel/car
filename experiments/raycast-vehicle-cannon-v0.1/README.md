@@ -18,6 +18,22 @@
 - chase camera
 - desktop + mobile multi-touch controls
 
+## 車身視覺 V2
+
+依使用者指定，舊版方盒車身已淘汰。現在改成自製、game-ready 的低多邊形跑車語言，不直接搬用外部商店模型檔：
+
+- 低、寬、楔形 sports coupe 比例
+- 斜前擋、側窗、後窗
+- 前低後高的 hood / rear deck 輪廓
+- 前後保桿與 front splitter
+- 側裙與外擴 fender 視覺
+- 後尾翼
+- 發光前燈與尾燈
+- 12-sided low-poly 輪胎與 8-sided 金屬輪圈
+- flat-shaded 車漆 / 玻璃 / trim 材質
+
+車身視覺與 RaycastVehicle 物理解耦：本次只換 render mesh，沒有改 chassis、wheel points、suspension、engine force、steering 或 drift physics。
+
 ## 操作
 
 - `W / ↑`：油門
@@ -39,17 +55,19 @@
 - drift front frictionSlip: `3.3`
 - max engine force: about `6200 N` per driven wheel setting
 - speed-sensitive steering: about `0.48 → 0.17 rad`
+- drift entry threshold: `18 km/h`
 
 ## 驗證原則
 
-V0.1 先驗證：
+V0.1 驗證：
 
 1. 車身會受重力下落並由四輪射線懸吊支撐。
 2. 四輪可保持接地。
-3. 油門可推動真剛體車身。
+3. 油門可推動真剛體車身，而且前進方向與視覺車頭一致。
 4. 前輪 steering 可改變航向。
 5. DRIFT 模式可改變後輪抓地與車身滑移。
 6. 手機橫式 GAS + LEFT 可同時保持輸入。
 7. Browser console error 必須為 0。
+8. 視覺改版不得改變既有 physics baseline。
 
-這不是最終賽車物理。若 V0.1 Browser Lab 通過，下一階段才會加入真實 OSM 道路 mesh、坡度、護欄、AI traffic 與更完整的輪胎 slip-angle 調校。
+這不是最終賽車物理。下一階段才會加入真實 OSM 道路 mesh、坡度、護欄、AI traffic 與更完整的輪胎 slip-angle 調校。

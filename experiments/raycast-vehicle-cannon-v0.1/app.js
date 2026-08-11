@@ -74,13 +74,65 @@ const wheelPoints=[[-.88,-.08,-1.45],[.88,-.08,-1.45],[-.88,-.08,1.45],[.88,-.08
 for(const p of wheelPoints)vehicle.addWheel({...wheelOptions,chassisConnectionPointLocal:new CANNON.Vec3(...p)});
 vehicle.addToWorld(world);
 
+function polyPrism({frontZ,rearZ,frontY,rearY,frontHalfW,rearHalfW,bottomY=0}){
+  const p=[
+    -frontHalfW,bottomY,frontZ, frontHalfW,bottomY,frontZ,
+    -rearHalfW,bottomY,rearZ, rearHalfW,bottomY,rearZ,
+    -frontHalfW,frontY,frontZ, frontHalfW,frontY,frontZ,
+    -rearHalfW,rearY,rearZ, rearHalfW,rearY,rearZ
+  ];
+  const idx=[0,1,5,0,5,4,2,6,7,2,7,3,0,4,6,0,6,2,1,3,7,1,7,5,4,5,7,4,7,6,0,2,3,0,3,1];
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();return g;
+}
+function panel(points,material){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points.flat(),3));g.setIndex([0,1,2,0,2,3]);g.computeVertexNormals();const m=new THREE.Mesh(g,material);m.castShadow=true;return m}
+
 const chassisMesh=new THREE.Group();
-const bodyMesh=new THREE.Mesh(new THREE.BoxGeometry(1.9,.6,4.0),new THREE.MeshStandardMaterial({color:0x31a7ff,roughness:.32,metalness:.55}));bodyMesh.position.y=.12;bodyMesh.castShadow=true;chassisMesh.add(bodyMesh);
-const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.45,.48,1.7),new THREE.MeshStandardMaterial({color:0x142536,roughness:.18,metalness:.55}));cabin.position.set(0,.56,.15);cabin.castShadow=true;chassisMesh.add(cabin);
-const nose=new THREE.Mesh(new THREE.BoxGeometry(1.5,.15,.7),new THREE.MeshStandardMaterial({color:0x8fe1ff,emissive:0x163948,emissiveIntensity:.6}));nose.position.set(0,.16,-1.82);chassisMesh.add(nose);scene.add(chassisMesh);
+const paint=new THREE.MeshStandardMaterial({color:0x2b91ff,roughness:.34,metalness:.48,flatShading:true});
+const paintDark=new THREE.MeshStandardMaterial({color:0x1468b8,roughness:.4,metalness:.42,flatShading:true});
+const glass=new THREE.MeshStandardMaterial({color:0x0b1c2a,roughness:.12,metalness:.52,transparent:true,opacity:.88,flatShading:true});
+const trim=new THREE.MeshStandardMaterial({color:0x11161c,roughness:.62,metalness:.34,flatShading:true});
+const lamp=new THREE.MeshStandardMaterial({color:0xc7efff,emissive:0x5ed8ff,emissiveIntensity:1.25,roughness:.18,metalness:.1,flatShading:true});
+const tailLamp=new THREE.MeshStandardMaterial({color:0xff414c,emissive:0xb51019,emissiveIntensity:1.15,roughness:.28,flatShading:true});
+
+const lowerBody=new THREE.Mesh(polyPrism({frontZ:-2.08,rearZ:2.03,frontY:.28,rearY:.38,frontHalfW:.92,rearHalfW:.98,bottomY:-.2}),paint);
+lowerBody.castShadow=true;chassisMesh.add(lowerBody);
+const hood=new THREE.Mesh(polyPrism({frontZ:-2.02,rearZ:-.55,frontY:.34,rearY:.55,frontHalfW:.82,rearHalfW:.9,bottomY:.22}),paint);
+hood.castShadow=true;chassisMesh.add(hood);
+const rearDeck=new THREE.Mesh(polyPrism({frontZ:.72,rearZ:1.98,frontY:.47,rearY:.36,frontHalfW:.88,rearHalfW:.9,bottomY:.25}),paintDark);
+rearDeck.castShadow=true;chassisMesh.add(rearDeck);
+const cabinShell=new THREE.Mesh(polyPrism({frontZ:-.58,rearZ:1.12,frontY:.88,rearY:.7,frontHalfW:.66,rearHalfW:.72,bottomY:.38}),paintDark);
+cabinShell.castShadow=true;chassisMesh.add(cabinShell);
+
+const windshield=panel([[-.625,.43,-.62],[.625,.43,-.62],[.56,.84,-.47],[-.56,.84,-.47]],glass);chassisMesh.add(windshield);
+const rearGlass=panel([[-.58,.73,1.08],[.58,.73,1.08],[.68,.45,1.18],[-.68,.45,1.18]],glass);chassisMesh.add(rearGlass);
+for(const side of [-1,1]){
+  const s=side;
+  const sideGlass=panel([[s*.665,.45,-.48],[s*.63,.83,-.4],[s*.69,.7,.98],[s*.72,.45,1.08]],glass);chassisMesh.add(sideGlass);
+  const skirt=new THREE.Mesh(new THREE.BoxGeometry(.12,.18,2.9),trim);skirt.position.set(s*1.0,-.08,.12);skirt.castShadow=true;chassisMesh.add(skirt);
+  const mirror=new THREE.Mesh(new THREE.BoxGeometry(.22,.12,.34),paintDark);mirror.position.set(s*.92,.62,-.38);mirror.rotation.y=s*.16;mirror.castShadow=true;chassisMesh.add(mirror);
+}
+
+const frontBumper=new THREE.Mesh(new THREE.BoxGeometry(1.82,.18,.22),trim);frontBumper.position.set(0,-.05,-2.08);frontBumper.castShadow=true;chassisMesh.add(frontBumper);
+const frontSplitter=new THREE.Mesh(new THREE.BoxGeometry(2.02,.08,.48),trim);frontSplitter.position.set(0,-.19,-1.93);frontSplitter.castShadow=true;chassisMesh.add(frontSplitter);
+const rearBumper=new THREE.Mesh(new THREE.BoxGeometry(1.9,.2,.24),trim);rearBumper.position.set(0,-.03,2.02);rearBumper.castShadow=true;chassisMesh.add(rearBumper);
+for(const x of [-.56,.56]){const h=new THREE.Mesh(new THREE.BoxGeometry(.47,.16,.08),lamp);h.position.set(x,.18,-2.095);h.rotation.z=x<0?-.05:.05;chassisMesh.add(h)}
+for(const x of [-.62,.62]){const t=new THREE.Mesh(new THREE.BoxGeometry(.44,.14,.075),tailLamp);t.position.set(x,.18,2.105);chassisMesh.add(t)}
+
+for(const [x,z] of [[-.88,-1.45],[.88,-1.45],[-.88,1.45],[.88,1.45]]){
+  const fender=new THREE.Mesh(new THREE.BoxGeometry(.22,.16,.92),paintDark);fender.position.set(x>0?1.0:-1.0,.19,z);fender.castShadow=true;chassisMesh.add(fender);
+}
+const spoilerWing=new THREE.Mesh(new THREE.BoxGeometry(1.72,.09,.38),trim);spoilerWing.position.set(0,.75,1.77);spoilerWing.rotation.x=-.08;spoilerWing.castShadow=true;chassisMesh.add(spoilerWing);
+for(const x of [-.57,.57]){const strut=new THREE.Mesh(new THREE.BoxGeometry(.08,.34,.09),trim);strut.position.set(x,.56,1.72);strut.castShadow=true;chassisMesh.add(strut)}
+scene.add(chassisMesh);
 
 const wheelMeshes=[];
-for(let i=0;i<4;i++){const group=new THREE.Group();const tire=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.25,20),new THREE.MeshStandardMaterial({color:0x111315,roughness:.72,metalness:.15}));tire.rotation.z=Math.PI/2;tire.castShadow=true;group.add(tire);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.27,16),new THREE.MeshStandardMaterial({color:0x9aa7b2,roughness:.35,metalness:.8}));hub.rotation.z=Math.PI/2;group.add(hub);wheelMeshes.push(group);scene.add(group)}
+for(let i=0;i<4;i++){
+  const group=new THREE.Group();
+  const tire=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.27,12),new THREE.MeshStandardMaterial({color:0x0b0d10,roughness:.82,metalness:.06,flatShading:true}));tire.rotation.z=Math.PI/2;tire.castShadow=true;group.add(tire);
+  const rim=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.285,8),new THREE.MeshStandardMaterial({color:0xb7c2ca,roughness:.24,metalness:.88,flatShading:true}));rim.rotation.z=Math.PI/2;group.add(rim);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.3,8),new THREE.MeshStandardMaterial({color:0x2d3942,roughness:.32,metalness:.75,flatShading:true}));hub.rotation.z=Math.PI/2;group.add(hub);
+  wheelMeshes.push(group);scene.add(group);
+}
 
 const controls={gas:false,brake:false,left:false,right:false,drift:false};
 let ready=false,driftState='GRIP',fps=0,frameCount=0,fpsClock=performance.now();
@@ -111,4 +163,4 @@ let last=performance.now();
 function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.05);last=now;updateVehicleInput(dt);world.step(1/60,dt,4);syncVisuals();updateCamera(dt);renderer.render(scene,camera);frameCount++;if(now-fpsClock>=500){fps=Math.round(frameCount*1000/(now-fpsClock));frameCount=0;fpsClock=now}updateHud();ready=true}
 requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5))});
-window.__RAYCAST_LAB__={snapshot,reset:resetCar,setControls:(next)=>Object.assign(controls,next),versions:{three:'0.185.0',cannon:'0.20.0'}};
+window.__RAYCAST_LAB__={snapshot,reset:resetCar,setControls:(next)=>Object.assign(controls,next),versions:{three:'0.185.0',cannon:'0.20.0',visual:'low-poly-wedge-v2'}};

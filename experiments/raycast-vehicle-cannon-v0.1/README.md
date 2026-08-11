@@ -65,7 +65,7 @@ V5 沒有更改 chassis mass、wheel points、suspension、engine force、steeri
 
 ## Browser Gameplay Validation
 
-V5 validated run: **Run #23 `31470470206` — PASS**.
+V5 validated run: **Run #23 `31470470206` — PASS**。
 
 驗證包含：
 
@@ -98,7 +98,9 @@ GitHub Actions headless FPS 數字不作為實機 FPS 結論；實體手機效�
 正式首頁 V53 保持不動。
 
 - V4：`https://qookey109-pixel.github.io/car/preview/raycast-v4/`
-- V5：發布後使用 `https://qookey109-pixel.github.io/car/preview/raycast-v5/`
+- V5：`https://qookey109-pixel.github.io/car/preview/raycast-v5/`
+
+V5 Pages 使用通過 Run #23 的程式 commit `2edc84d78d2e96592c61bbe428a0c298a57e6353` 固定載入，避免預覽與驗證版本漂移。
 
 ## 尚未驗證
 

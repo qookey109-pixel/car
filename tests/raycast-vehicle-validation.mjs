@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 
 const BASE='http://127.0.0.1:8011/experiments/raycast-vehicle-cannon-v0.1/';
 const OUT='artifacts/raycast-vehicle-validation';
-const EXPECTED_VISUAL='LowPolySportCoupeV4';
+const EXPECTED_VISUAL='LowPolySportCoupeV5';
 await fs.mkdir(OUT,{recursive:true});
 
 const browser=await chromium.launch({headless:true});
@@ -23,11 +23,13 @@ async function boot(context){
 const desktop=await browser.newContext({viewport:{width:1280,height:720}});
 const page=await boot(desktop);
 let snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
+const details=await page.evaluate(()=>window.__RAYCAST_LAB__.visualDetails||null);
 if(snap.visualVersion!==EXPECTED_VISUAL)throw new Error(`expected ${EXPECTED_VISUAL}, got ${snap.visualVersion}`);
+if(!details?.underbody||details?.tires!=='14-block-tread'||details?.headlamps!=='volumetric-projector')throw new Error(`V5 visual detail layer missing: ${JSON.stringify(details)}`);
 if(snap.wheels!==4)throw new Error(`expected 4 raycast wheels, got ${snap.wheels}`);
 if(snap.grounded<3)throw new Error(`vehicle did not settle on wheels: ${snap.grounded}/4`);
 if(snap.chassisY<0.5||snap.chassisY>2.2)throw new Error(`unexpected chassis ride height: ${snap.chassisY}`);
-report.desktop.settled=snap;
+report.desktop.settled={...snap,visualDetails:details};
 
 const startZ=snap.position.z;
 await page.keyboard.down('KeyW');

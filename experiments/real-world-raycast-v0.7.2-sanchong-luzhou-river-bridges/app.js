@@ -49,8 +49,8 @@ function polygonForWay(way){return(way.geometry||[]).slice(0,-1).map(p=>llToLoca
 function pointInPolygon(x,z,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const xi=poly[i].x,zi=poly[i].z,xj=poly[j].x,zj=poly[j].z;const hit=((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi||1e-9)+xi);if(hit)inside=!inside}return inside}
 function pointSegmentDistance(px,pz,s){const l2=s.dx*s.dx+s.dz*s.dz||1,t=clamp(((px-s.ax)*s.dx+(pz-s.az)*s.dz)/l2,0,1),x=s.ax+s.dx*t,z=s.az+s.dz*t;return Math.hypot(px-x,pz-z)}
 function bridgeTouchesWater(s){
-  const samples=[0,.25,.5,.75,1];
-  for(const t of samples){const x=s.ax+s.dx*t,z=s.az+s.dz*t;if(waterPolygons.some(poly=>pointInPolygon(x,z,poly)))return true;for(const w of waterSegments){if(Math.abs(x-w.mx)>w.len*.6+w.width+80||Math.abs(z-w.mz)>w.len*.6+w.width+80)continue;if(pointSegmentDistance(x,z,w)<w.width*.5+18)return true}}
+  const steps=Math.max(8,Math.ceil(s.len/55));
+  for(let i=0;i<=steps;i++){const t=i/steps,x=s.ax+s.dx*t,z=s.az+s.dz*t;if(waterPolygons.some(poly=>pointInPolygon(x,z,poly)))return true;for(const w of waterSegments){if(Math.abs(x-w.mx)>w.len*.6+w.width+80||Math.abs(z-w.mz)>w.len*.6+w.width+80)continue;if(pointSegmentDistance(x,z,w)<w.width*.5+18)return true}}
   return false;
 }
 function buildWaterArea(way,waterMat){

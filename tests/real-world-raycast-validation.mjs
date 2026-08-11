@@ -12,8 +12,8 @@ async function boot(context){
   page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text())});
   page.on('pageerror',err=>errors.push(String(err)));
   await page.goto(BASE,{waitUntil:'networkidle',timeout:45000});
-  await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__?.snapshot().ready===true,{timeout:15000});
-  await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().grounded>=3,{timeout:10000});
+  await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__?.snapshot().ready===true,null,{timeout:15000});
+  await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().grounded>=3,null,{timeout:10000});
   return page;
 }
 
@@ -28,11 +28,18 @@ if(s.surface!=='road')throw new Error(`spawn must start on road, got ${s.surface
 report.desktop.boot=s;
 
 await page.keyboard.down('KeyW');
-await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().speedKmh>=18,{timeout:3500,polling:50});
-s=await page.evaluate(()=>window.__REAL_WORLD_RAYCAST__.snapshot());
+const accelSamples=[];
+let reached18=false;
+for(let i=0;i<32;i++){
+  await page.waitForTimeout(125);
+  s=await page.evaluate(()=>window.__REAL_WORLD_RAYCAST__.snapshot());
+  if(i%4===0)accelSamples.push(s);
+  if(s.speedKmh>=18){reached18=true;break}
+}
+if(!reached18)throw new Error(`failed to reach 18 km/h: ${JSON.stringify({final:s,samples:accelSamples})}`);
 if(s.surface!=='road')throw new Error(`acceleration left road unexpectedly: ${s.surface}`);
 if(s.grounded<3)throw new Error(`lost wheel contact on OSM road: ${s.grounded}`);
-report.desktop.acceleration=s;
+report.desktop.acceleration={...s,samples:accelSamples};
 
 await page.keyboard.down('KeyA');
 await page.waitForTimeout(900);
@@ -41,18 +48,18 @@ if(Math.abs(turned.position.x)<.12)throw new Error(`steering lateral movement to
 report.desktop.steering=turned;
 
 await page.keyboard.down('Space');
-await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().driftState==='DRIFT',{timeout:2000});
+await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().driftState==='DRIFT',null,{timeout:2000});
 const drift=await page.evaluate(()=>window.__REAL_WORLD_RAYCAST__.snapshot());
 if(drift.grounded<2)throw new Error(`drift unstable: grounded=${drift.grounded}`);
 report.desktop.drift=drift;
 await page.keyboard.up('Space');await page.keyboard.up('KeyA');await page.keyboard.up('KeyW');
 
 await page.evaluate(()=>window.__REAL_WORLD_RAYCAST__.teleport(150,150));
-await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().surface==='offroad',{timeout:1500});
+await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().surface==='offroad',null,{timeout:1500});
 const offroad=await page.evaluate(()=>window.__REAL_WORLD_RAYCAST__.snapshot());
 report.desktop.offroad=offroad;
 await page.evaluate(()=>window.__REAL_WORLD_RAYCAST__.spawn());
-await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().surface==='road',{timeout:1500});
+await page.waitForFunction(()=>window.__REAL_WORLD_RAYCAST__.snapshot().surface==='road',null,{timeout:1500});
 await page.screenshot({path:`${OUT}/desktop.png`,fullPage:true});
 await desktop.close();
 

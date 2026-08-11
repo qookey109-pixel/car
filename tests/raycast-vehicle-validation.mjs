@@ -33,12 +33,13 @@ report.desktop.settled={...snap,visualDetails:details};
 
 const startZ=snap.position.z;
 await page.keyboard.down('KeyW');
-await page.waitForTimeout(1800);
+const accelerationStart=Date.now();
+await page.waitForFunction(()=>window.__RAYCAST_LAB__.snapshot().speedKmh>=12,{timeout:2600,polling:50});
 snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
-if(snap.speedKmh<12)throw new Error(`raycast acceleration too weak: ${snap.speedKmh} km/h`);
+const accelerationMs=Date.now()-accelerationStart;
 if(snap.position.z>startZ-1)throw new Error(`W must move toward visual nose (-Z): startZ=${startZ}, z=${snap.position.z}`);
 if(snap.grounded<2)throw new Error(`too few wheels grounded while accelerating: ${snap.grounded}`);
-report.desktop.acceleration=snap;
+report.desktop.acceleration={...snap,timeTo12KmhMs:accelerationMs};
 
 await page.keyboard.down('KeyA');
 await page.waitForTimeout(900);

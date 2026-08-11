@@ -124,7 +124,7 @@ async function loadCity(){
 }
 
 const baseSnapshot=baseReal.snapshot.bind(baseReal);
-baseReal.snapshot=()=>({...baseSnapshot(),worldCityReady:cityReady,worldCitySource:citySource,worldCityBuildingCount:cityBuildings,worldCityRawBuildingCount:cityRawBuildings,worldCityRadius:CITY_RADIUS,worldCityQueryRadius:cityQueryRadius,worldCityOrigin:{lat:mapOrigin.lat,lon:mapOrigin.lon},worldCityUrbanBlanket:false,worldCityVersion:'SanchongLuzhouCityV0711Aligned'});
+baseReal.snapshot=()=>({...baseSnapshot(),worldCityReady:cityReady,worldCitySource:citySource,worldCityBuildingCount:cityBuildings,worldCityRawBuildingCount:cityRawBuildings,worldCityRadius:CITY_RADIUS,worldCityQueryRadius:cityQueryRadius,worldCityOrigin:{lat:mapOrigin.lat,lon:mapOrigin.lon},worldCityUrbanBlanket:false,worldCityVersion:'SanchongLuzhouCityV07',worldCityAlignmentVersion:'SanchongLuzhouCityAlignmentV0711'});
 window.__CITY_LAYER__={snapshot:()=>baseReal.snapshot(),reload:loadCity};
 document.getElementById('loadRoads').addEventListener('click',()=>setTimeout(loadCity,100));
 loadCity();

@@ -24,7 +24,7 @@ export const ARCADE_TUNE = Object.freeze({
   roadDrag: 0.105,
   shoulderDrag: 0.78,
   offroadDrag: 1.72,
-  driftChargeRate: 0.68,
+  driftChargeRate: 4.2,
   driftChargeAngleRef: 32,
   driftChargeSpeedRef: 26,
   nitroDurationSec: 1.55,

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-// V0.7 city layer, alignment-hardened in descendant V0.7.1.1.
+// V0.7 city layer, alignment-hardened in descendant V0.7.1.1 and Safari-readiness hardened in V0.7.1.2.
 // Road / V5 physics stay owned by V0.6.
 let capturedScene=null;
 const originalSceneAdd=THREE.Scene.prototype.add;
@@ -17,7 +17,7 @@ const CITY_RADIUS=1400,SECONDARY_RADIUS=1050,MAX_BUILDINGS=2600,SHADOW_RADIUS=43
 const ROAD_READY_TIMEOUT=70000,REQUEST_TIMEOUT=14000;
 const cityGroup=new THREE.Group();cityGroup.name='SanchongLuzhouCityLayerV07';scene.add(cityGroup);
 const el={city:document.getElementById('city'),citySource:document.getElementById('citySource'),cityStatus:document.getElementById('cityStatus'),lat:document.getElementById('lat'),lon:document.getElementById('lon')};
-let mapOrigin={lat:25.0731,lon:121.4810},cityReady=false,citySource='--',cityBuildings=0,cityRawBuildings=0,cityQueryRadius=CITY_RADIUS;
+let mapOrigin={lat:25.0731,lon:121.4810},cityReady=false,citySource='--',cityBuildings=0,cityRawBuildings=0,cityQueryRadius=CITY_RADIUS,cityLoadPromise=null;
 
 function llToLocal(lat,lon){const latRad=mapOrigin.lat*Math.PI/180;return{x:(lon-mapOrigin.lon)*111320*Math.cos(latRad),z:-(lat-mapOrigin.lat)*111320}}
 function numberFromTag(v){if(v==null)return NaN;const m=String(v).replace(',','.').match(/-?\d+(?:\.\d+)?/);return m?Number(m[0]):NaN}
@@ -107,6 +107,11 @@ function renderCityStatus(){
   el.city.textContent=`建築 ${cityBuildings}`;el.city.className=`chip ${cityReady?'good':'warn'}`;el.citySource.textContent=`城市 ${citySource}`;
   el.cityStatus.textContent=`City Layer：${cityBuildings} 棟建築（OSM footprint／高度推估；query ${cityQueryRadius}m；道路完成後才載入；無全域灰底）。`;
 }
+function publishCityReady(){
+  window.dispatchEvent(new CustomEvent('car:city-ready',{detail:{source:citySource,buildingCount:cityBuildings,origin:{...mapOrigin}}}));
+  const street=window.__STREETSCAPE__;
+  try{if(street?.snapshot?.().worldStreetscapeSource==='fallback')queueMicrotask(()=>street.reload?.())}catch{}
+}
 async function loadCity(){
   const fixture=new URLSearchParams(location.search).get('fixture')==='1';cityReady=false;el.city.textContent='建築等待道路';el.city.className='chip warn';clearCity();
   try{
@@ -121,10 +126,13 @@ async function loadCity(){
     const entries=fixtureBuildings();cityRawBuildings=entries.length;cityQueryRadius=0;buildCity(entries);citySource='fallback';cityReady=true;renderCityStatus();
     el.cityStatus.textContent=`City Layer：live 建築載入失敗，已切 deterministic fallback（${err.message}）。`;console.warn(err);
   }
+  publishCityReady();
+  return baseReal.snapshot();
 }
 
 const baseSnapshot=baseReal.snapshot.bind(baseReal);
-baseReal.snapshot=()=>({...baseSnapshot(),worldCityReady:cityReady,worldCitySource:citySource,worldCityBuildingCount:cityBuildings,worldCityRawBuildingCount:cityRawBuildings,worldCityRadius:CITY_RADIUS,worldCityQueryRadius:cityQueryRadius,worldCityOrigin:{lat:mapOrigin.lat,lon:mapOrigin.lon},worldCityUrbanBlanket:false,worldCityVersion:'SanchongLuzhouCityV07',worldCityAlignmentVersion:'SanchongLuzhouCityAlignmentV0711'});
-window.__CITY_LAYER__={snapshot:()=>baseReal.snapshot(),reload:loadCity};
-document.getElementById('loadRoads').addEventListener('click',()=>setTimeout(loadCity,100));
-loadCity();
+baseReal.snapshot=()=>({...baseSnapshot(),worldCityReady:cityReady,worldCitySource:citySource,worldCityBuildingCount:cityBuildings,worldCityRawBuildingCount:cityRawBuildings,worldCityRadius:CITY_RADIUS,worldCityQueryRadius:cityQueryRadius,worldCityOrigin:{lat:mapOrigin.lat,lon:mapOrigin.lon},worldCityUrbanBlanket:false,worldCityVersion:'SanchongLuzhouCityV07',worldCityAlignmentVersion:'SanchongLuzhouCityAlignmentV0712'});
+function startCityLoad(){cityLoadPromise=loadCity();return cityLoadPromise}
+window.__CITY_LAYER__={snapshot:()=>baseReal.snapshot(),reload:startCityLoad,whenReady:()=>cityReady?Promise.resolve(baseReal.snapshot()):(cityLoadPromise||startCityLoad())};
+document.getElementById('loadRoads').addEventListener('click',()=>setTimeout(startCityLoad,100));
+await startCityLoad();

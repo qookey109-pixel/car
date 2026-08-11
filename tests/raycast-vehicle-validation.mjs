@@ -32,7 +32,7 @@ await page.keyboard.down('KeyW');
 await page.waitForTimeout(1800);
 snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
 if(snap.speedKmh<12)throw new Error(`raycast acceleration too weak: ${snap.speedKmh} km/h`);
-if(Math.abs(snap.position.z-startZ)<1)throw new Error(`chassis did not translate enough: startZ=${startZ}, z=${snap.position.z}`);
+if(snap.position.z>startZ-1)throw new Error(`W must move toward visual nose (-Z): startZ=${startZ}, z=${snap.position.z}`);
 if(snap.grounded<2)throw new Error(`too few wheels grounded while accelerating: ${snap.grounded}`);
 report.desktop.acceleration=snap;
 

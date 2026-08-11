@@ -1,0 +1,39 @@
+name: Raycast Vehicle Validation
+
+on:
+  push:
+    branches:
+      - feature/raycast-vehicle-cannon-v0.1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-raycast-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Start local HTTP server
+        run: |
+          python3 -m http.server 8011 > /tmp/car-http.log 2>&1 &
+          echo $! > /tmp/car-http.pid
+          sleep 2
+      - name: Run RaycastVehicle gameplay smoke
+        run: node tests/raycast-vehicle-validation.mjs
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: raycast-vehicle-validation
+          path: artifacts/raycast-vehicle-validation/
+          if-no-files-found: warn

@@ -1,0 +1,35 @@
+name: Sanchong Luzhou River Performance V0722 Validation
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/real-world-raycast-v0.7.2.2-sanchong-luzhou-river-performance/**'
+      - 'tests/sanchong-luzhou-river-performance-v0722-validation.mjs'
+      - '.github/workflows/sanchong-luzhou-river-performance-v0722-validation.yml'
+      - 'experiments/real-world-raycast-v0.7.2-sanchong-luzhou-river-bridges/**'
+  workflow_dispatch:
+
+jobs:
+  chromium-sanchong-luzhou-river-performance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 8011 > /tmp/car-http.log 2>&1 &
+          sleep 2
+      - name: Run V0.7.2 regression
+        run: node tests/sanchong-luzhou-river-bridges-v072-validation.mjs
+      - name: Run V0.7.2.1 visual regression
+        run: node tests/sanchong-luzhou-river-bridge-visual-v0721-validation.mjs
+      - name: Run V0.7.2.2 river performance smoke
+        run: node tests/sanchong-luzhou-river-performance-v0722-validation.mjs

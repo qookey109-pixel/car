@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 
 const BASE='http://127.0.0.1:8011/experiments/raycast-vehicle-cannon-v0.1/';
 const OUT='artifacts/raycast-vehicle-validation';
+const EXPECTED_VISUAL='LowPolySportCoupeV4';
 await fs.mkdir(OUT,{recursive:true});
 
 const browser=await chromium.launch({headless:true});
@@ -22,6 +23,7 @@ async function boot(context){
 const desktop=await browser.newContext({viewport:{width:1280,height:720}});
 const page=await boot(desktop);
 let snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
+if(snap.visualVersion!==EXPECTED_VISUAL)throw new Error(`expected ${EXPECTED_VISUAL}, got ${snap.visualVersion}`);
 if(snap.wheels!==4)throw new Error(`expected 4 raycast wheels, got ${snap.wheels}`);
 if(snap.grounded<3)throw new Error(`vehicle did not settle on wheels: ${snap.grounded}/4`);
 if(snap.chassisY<0.5||snap.chassisY>2.2)throw new Error(`unexpected chassis ride height: ${snap.chassisY}`);
@@ -61,6 +63,8 @@ await desktop.close();
 
 const mobile=await browser.newContext({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
 const mobilePage=await boot(mobile);
+const mobileVersion=await mobilePage.evaluate(()=>window.__RAYCAST_LAB__.snapshot().visualVersion);
+if(mobileVersion!==EXPECTED_VISUAL)throw new Error(`mobile expected ${EXPECTED_VISUAL}, got ${mobileVersion}`);
 const gasBox=await mobilePage.locator('[data-action="gas"]').boundingBox();
 const leftBox=await mobilePage.locator('[data-action="left"]').boundingBox();
 if(!gasBox||!leftBox)throw new Error('mobile raycast controls are not visible');

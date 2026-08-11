@@ -1,0 +1,41 @@
+name: Real World Raycast Validation
+
+on:
+  push:
+    branches:
+      - feature/real-world-raycast-v0.5
+  pull_request:
+    paths:
+      - 'experiments/real-world-raycast-v0.5/**'
+      - 'experiments/raycast-vehicle-cannon-v0.1/**'
+      - 'tests/real-world-raycast-validation.mjs'
+      - '.github/workflows/real-world-raycast-validation.yml'
+
+jobs:
+  chromium-real-world-raycast:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Start local HTTP server
+        run: |
+          python3 -m http.server 8011 > /tmp/car-http.log 2>&1 &
+          echo $! > /tmp/car-http.pid
+          sleep 2
+      - name: Run OSM Raycast gameplay smoke
+        run: node tests/real-world-raycast-validation.mjs
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-world-raycast-validation
+          path: artifacts/real-world-raycast-validation/
+          if-no-files-found: warn

@@ -60,7 +60,7 @@ if(snap.driftCharge<=0)throw new Error('drift charge did not increase');
 report.desktop.drift=snap;
 await page.waitForTimeout(950);
 const charged=await page.evaluate(()=>window.__ARCADE_LAB__.snapshot());
-if(charged.driftCharge<0.03&&charged.nitroTokens<1)throw new Error(`drift charge too slow: ${charged.driftCharge}`);
+if(charged.driftCharge<0.20&&charged.nitroTokens<1)throw new Error(`arcade drift charge target missed: ${charged.driftCharge}`);
 report.desktop.charge=charged;
 await page.keyboard.up('Space');await page.keyboard.up('KeyA');await page.keyboard.up('KeyW');
 

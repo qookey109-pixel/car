@@ -139,12 +139,12 @@ function updateVehicleInput(dt){
   vehicle.setSteeringValue(steering,0);vehicle.setSteeringValue(steering,1);
 
   const forwardFactor=clamp(1-speed/178,.16,1);
-  const engineForce=controls.gas?-6200*forwardFactor:0;
+  const engineForce=controls.gas?6200*forwardFactor:0;
   vehicle.applyEngineForce(engineForce,2);vehicle.applyEngineForce(engineForce,3);
 
   let brake=0;
   if(controls.brake){
-    if(speed<4&&!controls.gas){vehicle.applyEngineForce(2600,2);vehicle.applyEngineForce(2600,3)}else brake=42;
+    if(speed<4&&!controls.gas){vehicle.applyEngineForce(-2600,2);vehicle.applyEngineForce(-2600,3)}else brake=42;
   }
   for(let i=0;i<4;i++)vehicle.setBrake(brake,i);
 

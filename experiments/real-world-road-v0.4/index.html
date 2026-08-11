@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Car — Real World Road V0.4 Chunk Streaming Lab</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1119;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}canvas{display:block}
+#hud{position:fixed;z-index:5;left:12px;top:12px;width:min(520px,calc(100vw - 24px));padding:12px 14px;border-radius:15px;background:rgba(4,8,13,.75);backdrop-filter:blur(12px)}h1{font-size:15px;margin:0 0 8px}.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}input{width:110px;padding:7px;border-radius:8px;border:1px solid #3d4552;background:#151a23;color:#fff}button{padding:8px 10px;border:0;border-radius:8px;background:#fff;color:#111;font-weight:800}.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chip{font-size:11px;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13)}#list{margin-top:8px;max-height:145px;overflow:auto;font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;color:#bfe7ff}#help{margin-top:7px;font-size:11px;opacity:.72}
+</style>
+</head>
+<body>
+<div id="hud">
+<h1>🌏 Real World Road V0.4 — Chunk Streaming Lab</h1>
+<div class="row"><label>Lat <input id="lat" value="25.033964"></label><label>Lon <input id="lon" value="121.564468"></label><button id="reset">重新定位</button></div>
+<div class="chips"><span class="chip" id="pos">位置</span><span class="chip" id="chunk">Chunk</span><span class="chip" id="ready">Ready 0</span><span class="chip" id="loading">Loading 0</span><span class="chip" id="segments">Segments 0</span></div>
+<div id="list">等待道路資料…</div>
+<div id="help">WASD / 方向鍵移動。此頁只驗證 3×3 Chunk Streaming、快取、取消與 LRU；不做交通規則，也不取代 V0.3 可駕駛版本。</div>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js';
+import {RoadChunkStreamer} from './streaming-core.js';
+const $=id=>document.getElementById(id);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9db7ca);scene.fog=new THREE.Fog(0x9db7ca,500,2600);
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,5000);camera.position.set(0,850,650);camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x53654c,2));
+const ground=new THREE.GridHelper(8000,80,0x31485a,0x253642);ground.position.y=-.2;scene.add(ground);
+const marker=new THREE.Mesh(new THREE.CylinderGeometry(16,16,5,16),new THREE.MeshBasicMaterial({color:0xff573d}));marker.position.y=3;scene.add(marker);
+const roadGroup=new THREE.Group();scene.add(roadGroup);
+const streamer=new RoadChunkStreamer({chunkMeters:900,radius:1,maxResident:12,onChunk:()=>scheduleRebuild()});
+let base={lat:25.033964,lon:121.564468},x=0,z=0,lastUpdate=0,rebuildQueued=false;
+const keys=new Set();addEventListener('keydown',e=>{keys.add(e.code);if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault()});addEventListener('keyup',e=>keys.delete(e.code));
+function reset(){base={lat:Number($('lat').value),lon:Number($('lon').value)};if(!Number.isFinite(base.lat)||!Number.isFinite(base.lon))return;streamer.chunks.forEach(c=>c.controller?.abort());streamer.chunks.clear();streamer.setOrigin(base.lat,base.lon);x=z=0;roadGroup.clear();streamer.update(base.lat,base.lon).then(updateHud)}
+$('reset').onclick=reset;
+function currentLL(){return streamer.metersToLL(x,z)}
+function scheduleRebuild(){if(rebuildQueued)return;rebuildQueued=true;requestAnimationFrame(()=>{rebuildQueued=false;rebuildRoads();updateHud(streamer.snapshot())})}
+function rebuildRoads(){while(roadGroup.children.length){const o=roadGroup.children.pop();o.geometry?.dispose();o.material?.dispose()}
+ const segs=[];for(const c of streamer.chunks.values())if(c.state==='ready')segs.push(...c.segments);const max=Math.min(segs.length,14000);if(!max)return;
+ const geo=new THREE.BoxGeometry(1,.08,1),mat=new THREE.MeshLambertMaterial({color:0x363a3f}),mesh=new THREE.InstancedMesh(geo,mat,max),m=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3(),axis=new THREE.Vector3(0,1,0);
+ for(let i=0;i<max;i++){const a=segs[i],dx=a.bx-a.ax,dz=a.bz-a.az,len=Math.hypot(dx,dz);p.set((a.ax+a.bx)/2,0,(a.az+a.bz)/2);q.setFromAxisAngle(axis,Math.atan2(dx,dz));s.set(a.width,1,len);m.compose(p,q,s);mesh.setMatrixAt(i,m)}mesh.instanceMatrix.needsUpdate=true;mesh.frustumCulled=false;roadGroup.add(mesh)}
+function updateHud(s=streamer.snapshot()){const c=streamer.chunkForMeters(x,z),ll=currentLL();$('pos').textContent=`${ll.lat.toFixed(5)}, ${ll.lon.toFixed(5)}`;$('chunk').textContent=`Chunk ${c.ix},${c.iz}`;$('ready').textContent=`Ready ${s.ready}`;$('loading').textContent=`Loading ${s.loading}`;$('segments').textContent=`Segments ${s.segments}`;$('list').textContent=s.chunks.map(v=>`${v.key.padEnd(8)} ${v.state.padEnd(7)} ways=${v.ways} seg=${v.segments}${v.error?' ⚠ '+v.error:''}`).join('\n')||'等待道路資料…'}
+let last=performance.now();async function tick(now){requestAnimationFrame(tick);const dt=Math.min((now-last)/1000,.05);last=now;const speed=170;let dx=0,dz=0;if(keys.has('KeyW')||keys.has('ArrowUp'))dz-=1;if(keys.has('KeyS')||keys.has('ArrowDown'))dz+=1;if(keys.has('KeyA')||keys.has('ArrowLeft'))dx-=1;if(keys.has('KeyD')||keys.has('ArrowRight'))dx+=1;const len=Math.hypot(dx,dz)||1;x+=dx/len*speed*dt;z+=dz/len*speed*dt;marker.position.set(x,3,z);camera.position.lerp(new THREE.Vector3(x,850,z+650),.08);camera.lookAt(x,0,z);if(now-lastUpdate>850){lastUpdate=now;const ll=currentLL();streamer.update(ll.lat,ll.lon).then(updateHud)}renderer.render(scene,camera)}
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+reset();requestAnimationFrame(tick);
+</script>
+</body>
+</html>

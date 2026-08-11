@@ -15,8 +15,8 @@ function roadWays(){
 }
 function buildingWays(){
   const out=[];let id=1000;
-  const latStep=0.00125,lonStep=0.00145;
-  for(let gx=-6;gx<=6;gx++)for(let gz=-5;gz<=5;gz++){
+  const latStep=0.00110,lonStep=0.00125;
+  for(let gx=-7;gx<=7;gx++)for(let gz=-6;gz<=6;gz++){
     if(Math.abs(gx)<=1||Math.abs(gz)<=1)continue;
     const lat=ORIGIN.lat+gz*latStep,lon=ORIGIN.lon+gx*lonStep,w=.00018+(Math.abs(gx)%3)*.000025,d=.00016+(Math.abs(gz)%3)*.000025;
     out.push({type:'way',id:id++,tags:{building:'residential','building:levels':String(3+(id%7))},geometry:[

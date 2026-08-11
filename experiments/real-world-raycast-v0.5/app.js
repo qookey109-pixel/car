@@ -21,7 +21,7 @@ CANNON.RaycastVehicle.prototype.addToWorld=nativeVehicleAddToWorld;
 const scene=capturedScene,world=capturedWorld,vehicle=capturedVehicle,chassis=vehicle?.chassisBody;
 if(!scene||!world||!vehicle||!chassis)throw new Error('RealWorldRaycastV05 failed to capture V5 Raycast runtime');
 
-// Remove V5 lab scenery while preserving lights and all vehicle Groups.
+// Replace only the V5 lab scenery. Vehicle groups, lights and validated RaycastVehicle remain untouched.
 for(const obj of [...scene.children])if(obj.isMesh){scene.remove(obj);obj.geometry?.dispose?.();if(Array.isArray(obj.material))obj.material.forEach(m=>m.dispose?.());else obj.material?.dispose?.()}
 for(const body of [...world.bodies])if(body.mass===0)world.removeBody(body);
 
@@ -68,11 +68,9 @@ function buildMeshes(){
 function segmentDirection(s){const dx=s.bx-s.ax,dz=s.bz-s.az,l=Math.hypot(dx,dz)||1;return{x:dx/l,z:dz/l}}
 function spawnOnRoad(){const q=nearestRoad(0,30)||nearestRoad(0,0);if(!q)return;const d=segmentDirection(q.segment),yaw=Math.atan2(-d.x,-d.z);chassis.position.set(q.x,1.25,q.z);chassis.quaternion.setFromEuler(0,yaw,0);chassis.velocity.setZero();chassis.angularVelocity.setZero();chassis.force.setZero();chassis.torque.setZero();vehicle.applyEngineForce(0,2);vehicle.applyEngineForce(0,3);for(let i=0;i<4;i++){vehicle.setBrake(0,i);vehicle.setSteeringValue(0,i)}}
 
-const baseApplyEngine=vehicle.applyEngineForce.bind(vehicle);let accelScale=1;
-vehicle.applyEngineForce=(force,index)=>baseApplyEngine(force*accelScale,index);
-
-function updateSurface(now){const dt=Math.min((now-lastNow)/1000,.05);lastNow=now;const q=nearestRoad(chassis.position.x,chassis.position.z);surfaceInfo=q;if(!q){surface='offroad';accelScale=.25}else{const edge=q.distance-q.segment.width*.5;if(edge<=.35){surface='road';accelScale=1}else if(edge<=3){surface='shoulder';accelScale=.62}else{surface='offroad';accelScale=.28}}
-  const drag=surface==='road'?0:surface==='shoulder'?Math.exp(-1.0*dt):Math.exp(-2.9*dt);chassis.velocity.x*=drag;chassis.velocity.z*=drag;if(surface==='offroad')chassis.angularVelocity.y*=Math.exp(-1.1*dt);
+function updateSurface(now){const dt=Math.min((now-lastNow)/1000,.05);lastNow=now;const q=nearestRoad(chassis.position.x,chassis.position.z);surfaceInfo=q;if(!q){surface='offroad'}else{const edge=q.distance-q.segment.width*.5;if(edge<=.35)surface='road';else if(edge<=3)surface='shoulder';else surface='offroad'}
+  // Do not wrap or scale RaycastVehicle engine force. Offroad behavior is additive drag only.
+  const drag=surface==='road'?1:surface==='shoulder'?Math.exp(-1.0*dt):Math.exp(-2.9*dt);chassis.velocity.x*=drag;chassis.velocity.z*=drag;if(surface==='offroad')chassis.angularVelocity.y*=Math.exp(-1.1*dt);
   el.surface.textContent=surface==='road'?'道路':surface==='shoulder'?'路肩':'離路';el.surface.className=`chip ${surface==='road'?'good':surface==='shoulder'?'warn':'bad'}`;el.roadDistance.textContent=`中心線 ${q?q.distance.toFixed(1):'--'} m`;el.source.textContent=`OSM ${sourceMode}`;
 }
 

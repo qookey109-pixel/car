@@ -6,6 +6,7 @@ import * as THREE from 'three';
 const RIVER_VIEW={lat:25.0734,lon:121.4685};
 const params=new URLSearchParams(location.search);
 const viewMode=params.get('view')==='river'?'river':'city';
+const fixtureMode=params.get('fixture')==='1';
 if(viewMode==='river'){
   const lat=document.getElementById('lat'),lon=document.getElementById('lon');
   if(lat)lat.value=String(RIVER_VIEW.lat);
@@ -24,7 +25,11 @@ const river=window.__RIVER_BRIDGES__;
 if(!scene||!baseReal||!river)throw new Error('SanchongLuzhouV0722 failed to attach to V0.7.2.1 runtime');
 
 const RENDER_RADIUS=viewMode==='river'?1750:1900;
-const BUDGET={water:110,waterHighlight:55,bank:180,levee:180,bridgeDeck:96,bridgeRail:192,bridgePier:160,waterArea:10};
+// Live keeps the visual budget used for Safari. Fixture intentionally uses a much
+// smaller deterministic budget so CI actually exercises the LOD/reordering path.
+const LIVE_BUDGET={water:110,waterHighlight:55,bank:180,levee:180,bridgeDeck:96,bridgeRail:192,bridgePier:160,waterArea:10};
+const FIXTURE_BUDGET={water:5,waterHighlight:4,bank:8,levee:8,bridgeDeck:3,bridgeRail:6,bridgePier:20,waterArea:1};
+const BUDGET=fixtureMode?FIXTURE_BUDGET:LIVE_BUDGET;
 const shared={
   water:new THREE.MeshLambertMaterial({color:0x2f91ae,emissive:0x082a35,emissiveIntensity:.12}),
   waterHighlight:new THREE.MeshBasicMaterial({color:0xa0e2ed,transparent:true,opacity:.14,depthWrite:false}),
@@ -77,7 +82,7 @@ function optimizeGeo(){
 
 optimizeGeo();
 const priorSnapshot=baseReal.snapshot.bind(baseReal);
-baseReal.snapshot=()=>({...priorSnapshot(),worldRiverPerformanceReady:perfReady,worldRiverPerformanceVersion:'SanchongLuzhouRiverPerformanceV0722',worldRiverViewMode:viewMode,worldRiverViewCenter:{...RIVER_VIEW},worldRiverRenderRadius:RENDER_RADIUS,worldRiverRenderBefore:renderBefore,worldRiverRenderVisible:renderVisible,worldRiverRenderStats:JSON.parse(JSON.stringify(renderStats))});
+baseReal.snapshot=()=>({...priorSnapshot(),worldRiverPerformanceReady:perfReady,worldRiverPerformanceVersion:'SanchongLuzhouRiverPerformanceV0722',worldRiverViewMode:viewMode,worldRiverViewCenter:{...RIVER_VIEW},worldRiverRenderRadius:RENDER_RADIUS,worldRiverRenderBudgetProfile:fixtureMode?'fixture-exercise':'live-safari',worldRiverRenderBefore:renderBefore,worldRiverRenderVisible:renderVisible,worldRiverRenderStats:JSON.parse(JSON.stringify(renderStats))});
 window.__RIVER_PERF__={snapshot:()=>baseReal.snapshot(),optimize:optimizeGeo,riverView:{...RIVER_VIEW}};
 
 function goView(mode){const u=new URL(location.href);if(mode==='river')u.searchParams.set('view','river');else u.searchParams.delete('view');location.href=u.toString()}

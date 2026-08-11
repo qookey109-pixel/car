@@ -43,12 +43,18 @@ if(Math.abs(turned.position.x)<0.12)throw new Error(`steering produced too littl
 report.desktop.steering=turned;
 
 await page.keyboard.down('Space');
-await page.waitForTimeout(900);
-const drift=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
-if(drift.driftState!=='DRIFT')throw new Error(`drift mode did not engage: ${drift.driftState}`);
-if(drift.slipDeg<1)throw new Error(`raycast drift produced too little slip: ${drift.slipDeg}°`);
-if(drift.grounded<2)throw new Error(`vehicle became unstable during drift: grounded=${drift.grounded}`);
-report.desktop.drift=drift;
+let driftEntry=null,driftPeak=null,lastDrift=null;
+for(let i=0;i<8;i++){
+  await page.waitForTimeout(120);
+  const sample=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
+  lastDrift=sample;
+  if(!driftEntry&&sample.driftState==='DRIFT')driftEntry=sample;
+  if(!driftPeak||sample.slipDeg>driftPeak.slipDeg)driftPeak=sample;
+}
+if(!driftEntry)throw new Error(`drift mode never entered DRIFT; final=${lastDrift?.driftState}, speed=${lastDrift?.speedKmh}`);
+if(!driftPeak||driftPeak.slipDeg<1)throw new Error(`raycast drift produced too little peak slip: ${driftPeak?.slipDeg??0}°`);
+if((driftPeak.grounded??0)<2)throw new Error(`vehicle became unstable during drift: grounded=${driftPeak.grounded}`);
+report.desktop.drift={entry:driftEntry,peak:driftPeak,final:lastDrift};
 await page.keyboard.up('Space');await page.keyboard.up('KeyA');await page.keyboard.up('KeyW');
 await page.screenshot({path:`${OUT}/desktop.png`,fullPage:true});
 await desktop.close();

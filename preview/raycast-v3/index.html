@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#061018">
+  <title>Car 3D Preview — Low-Poly Sport Coupe V3</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061018;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}canvas{display:block}
+    #hud{position:fixed;z-index:5;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));padding:10px 12px;border-radius:14px;background:rgba(3,8,13,.72);backdrop-filter:blur(10px);max-width:min(680px,calc(100vw - 20px));box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    #hud h1{font-size:15px;margin:0 0 7px}.row{display:flex;gap:6px;flex-wrap:wrap}.chip{font-size:10px;padding:5px 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.07)}.good{color:#8affd6;border-color:rgba(83,255,205,.34)}.warn{color:#ffe17b;border-color:rgba(255,218,91,.36)}
+    #help{font-size:10px;opacity:.78;margin-top:7px;line-height:1.45}
+    #touch{position:fixed;z-index:8;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));pointer-events:none}.pad,.actions{pointer-events:auto;display:grid;gap:9px}.pad{grid-template-columns:repeat(2,64px)}.actions{grid-template-columns:repeat(2,70px);grid-template-rows:repeat(2,58px)}
+    #touch button{border:1px solid rgba(255,255,255,.24);border-radius:17px;background:rgba(14,20,29,.76);color:#fff;font-weight:900;touch-action:none;-webkit-tap-highlight-color:transparent;backdrop-filter:blur(8px)}.pad button{height:92px;font-size:26px}.actions button{font-size:10px;letter-spacing:.5px}.gas{color:#9bffe8!important;border-color:rgba(76,255,211,.42)!important}.brake{color:#ffaaaa!important;border-color:rgba(255,112,112,.42)!important}.drift{color:#ffe27b!important;border-color:rgba(255,215,83,.44)!important}.reset{color:#9fd6ff!important;border-color:rgba(90,175,255,.44)!important}button.active,button:active{transform:scale(.95);filter:brightness(1.2)}
+    @media(max-width:760px){#hud h1{font-size:12px}#help{font-size:9px}.pad{grid-template-columns:repeat(2,56px)}.pad button{width:56px;height:78px}.actions{grid-template-columns:repeat(2,60px);grid-template-rows:repeat(2,50px)}.actions button{font-size:9px}}
+  </style>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","cannon-es":"https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"}}</script>
+</head>
+<body>
+  <div id="hud">
+    <h1>🏎️ 3D Preview — Low-Poly Sport Coupe V3</h1>
+    <div class="row"><span class="chip" id="speed">0 km/h</span><span class="chip good" id="grounded">輪胎接地 0/4</span><span class="chip" id="slip">滑移 0°</span><span class="chip" id="suspension">懸吊 0%</span><span class="chip" id="state">GRIP</span><span class="chip" id="fps">FPS --</span></div>
+    <div id="help">這是 V3 真 3D Raycast Vehicle 預覽，不是 V53 Canvas 首頁。W/↑ 油門、S/↓ 煞車、A/D 轉向、Space 漂移、R 重置。</div>
+  </div>
+  <div id="touch"><div class="pad"><button data-action="left">◀</button><button data-action="right">▶</button></div><div class="actions"><button class="drift" data-action="drift">DRIFT</button><button class="reset" data-action="reset">RESET</button><button class="brake" data-action="brake">BRAKE</button><button class="gas" data-action="gas">GAS</button></div></div>
+  <script type="module" src="https://cdn.jsdelivr.net/gh/qookey109-pixel/car@ef87bef06ff08daf285e41608763a9c422956d4d/experiments/raycast-vehicle-cannon-v0.1/app-v3.js"></script>
+</body>
+</html>

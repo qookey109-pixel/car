@@ -75,7 +75,10 @@ function buildWater(ways){
 }
 function buildBridges(ways){
   rawBridgeWayCount=ways.length;const segments=[],keptWays=new Set();
-  for(const way of ways.slice(0,MAX_BRIDGE_WAYS)){for(const s of segmentData(way)){const item={...s,width:roadWidth(way.tags),wayId:way.id};if(bridgeTouchesWater(item)){segments.push(item);keptWays.add(way.id)}}}
+  for(const way of ways.slice(0,MAX_BRIDGE_WAYS)){
+    const waySegments=segmentData(way).map(s=>({...s,width:roadWidth(way.tags),wayId:way.id}));
+    if(waySegments.some(bridgeTouchesWater)){keptWays.add(way.id);segments.push(...waySegments)}
+  }
   bridgeWayCount=keptWays.size;if(!segments.length)return;
   const deckMat=new THREE.MeshStandardMaterial({color:0x303234,roughness:.90,metalness:.04});const railMat=new THREE.MeshStandardMaterial({color:0xc3c6c2,roughness:.74,metalness:.16});const pierMat=new THREE.MeshStandardMaterial({color:0x858983,roughness:.96});
   const deck=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),deckMat,segments.length),rail=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),railMat,segments.length*2);deck.userData.geoRole='bridgeDeck';rail.userData.geoRole='bridgeRail';const d=new THREE.Object3D();let ri=0;const pierItems=[];

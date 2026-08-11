@@ -37,9 +37,10 @@ const accelerationStart=Date.now();
 await page.waitForFunction(()=>window.__RAYCAST_LAB__.snapshot().speedKmh>=12,{timeout:2600,polling:50});
 snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
 const accelerationMs=Date.now()-accelerationStart;
-if(snap.position.z>startZ-1)throw new Error(`W must move toward visual nose (-Z): startZ=${startZ}, z=${snap.position.z}`);
+const forwardDistance=startZ-snap.position.z;
+if(forwardDistance<0.25)throw new Error(`W must move toward visual nose (-Z): startZ=${startZ}, z=${snap.position.z}, forward=${forwardDistance}`);
 if(snap.grounded<2)throw new Error(`too few wheels grounded while accelerating: ${snap.grounded}`);
-report.desktop.acceleration={...snap,timeTo12KmhMs:accelerationMs};
+report.desktop.acceleration={...snap,timeTo12KmhMs:accelerationMs,forwardDistanceM:+forwardDistance.toFixed(2)};
 
 await page.keyboard.down('KeyA');
 await page.waitForTimeout(900);

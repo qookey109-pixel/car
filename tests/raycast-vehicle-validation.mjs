@@ -25,7 +25,7 @@ const page=await boot(desktop);
 let snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
 const details=await page.evaluate(()=>window.__RAYCAST_LAB__.visualDetails||null);
 if(snap.visualVersion!==EXPECTED_VISUAL)throw new Error(`expected ${EXPECTED_VISUAL}, got ${snap.visualVersion}`);
-if(!details?.underbody||details?.tires!=='14-block-tread'||details?.headlamps!=='volumetric-projector')throw new Error(`V5 visual detail layer missing: ${JSON.stringify(details)}`);
+if(!details?.underbody||details?.tires!=='14-block-tread'||details?.headlamps!=='volumetric-projector'||details?.wheelDetailBatching!=='instanced')throw new Error(`V5 visual detail layer missing: ${JSON.stringify(details)}`);
 if(snap.wheels!==4)throw new Error(`expected 4 raycast wheels, got ${snap.wheels}`);
 if(snap.grounded<3)throw new Error(`vehicle did not settle on wheels: ${snap.grounded}/4`);
 if(snap.chassisY<0.5||snap.chassisY>2.2)throw new Error(`unexpected chassis ride height: ${snap.chassisY}`);
@@ -36,17 +36,23 @@ await page.keyboard.down('KeyW');
 const accelerationStart=Date.now();
 await page.waitForFunction(()=>window.__RAYCAST_LAB__.snapshot().speedKmh>=12,{timeout:2600,polling:50});
 snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
-const accelerationMs=Date.now()-accelerationStart;
+const timeTo12KmhMs=Date.now()-accelerationStart;
 const forwardDistance=startZ-snap.position.z;
 if(forwardDistance<0.25)throw new Error(`W must move toward visual nose (-Z): startZ=${startZ}, z=${snap.position.z}, forward=${forwardDistance}`);
 if(snap.grounded<2)throw new Error(`too few wheels grounded while accelerating: ${snap.grounded}`);
-report.desktop.acceleration={...snap,timeTo12KmhMs:accelerationMs,forwardDistanceM:+forwardDistance.toFixed(2)};
 
+await page.waitForFunction(()=>window.__RAYCAST_LAB__.snapshot().speedKmh>=25,{timeout:3500,polling:50});
+snap=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
+const timeTo25KmhMs=Date.now()-accelerationStart;
+report.desktop.acceleration={...snap,timeTo12KmhMs,timeTo25KmhMs,forwardDistanceAt12M:+forwardDistance.toFixed(2)};
+
+const steerStartX=snap.position.x;
 await page.keyboard.down('KeyA');
 await page.waitForTimeout(900);
 const turned=await page.evaluate(()=>window.__RAYCAST_LAB__.snapshot());
-if(Math.abs(turned.position.x)<0.12)throw new Error(`steering produced too little lateral movement: x=${turned.position.x}`);
-report.desktop.steering=turned;
+const lateralMovement=Math.abs(turned.position.x-steerStartX);
+if(lateralMovement<0.12)throw new Error(`steering at >=25 km/h produced too little lateral movement: startX=${steerStartX}, x=${turned.position.x}, delta=${lateralMovement}`);
+report.desktop.steering={...turned,lateralMovementM:+lateralMovement.toFixed(2)};
 
 await page.keyboard.down('Space');
 let driftEntry=null,driftPeak=null,lastDrift=null;

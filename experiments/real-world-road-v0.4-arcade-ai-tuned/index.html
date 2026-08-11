@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#071018">
+  <title>Car — Real World Road V0.4 Arcade + AI Tuned</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071018;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}canvas{display:block}
+    #hud{position:fixed;z-index:5;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));max-width:min(620px,calc(100vw - 20px));padding:11px 12px;border-radius:15px;background:rgba(3,8,13,.72);backdrop-filter:blur(12px);box-shadow:0 10px 32px rgba(0,0,0,.28)}
+    #hud h1{font-size:15px;margin:0 0 7px}.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}#hud input{width:108px;padding:7px;border-radius:8px;border:1px solid #3b4352;background:#151922;color:#fff}#hud button{padding:8px 10px;border:0;border-radius:8px;background:#fff;color:#111;font-weight:850;cursor:pointer}#status{font-size:12px;opacity:.93;margin-top:7px;line-height:1.4}#telemetry{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;font-size:10px}.chip{padding:5px 8px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07)}.good{border-color:rgba(67,255,191,.35);color:#8affd6}.warn{border-color:rgba(255,204,74,.38);color:#ffe17b}.bad{border-color:rgba(255,91,91,.38);color:#ff9d9d}.drift{border-color:rgba(255,205,68,.48);color:#ffe172}
+    #gauges{position:fixed;z-index:6;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));width:178px;padding:10px 11px;border-radius:14px;background:rgba(4,8,13,.68);backdrop-filter:blur(10px)}.gaugeLabel{display:flex;justify-content:space-between;font-size:10px;font-weight:900;letter-spacing:.6px;margin:5px 0}.track{height:7px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden}.fill{height:100%;border-radius:inherit;transition:width .06s linear}#driftFill{width:0;background:linear-gradient(90deg,#ffb52a,#ffe66f)}#nitroFill{width:0;background:linear-gradient(90deg,#2a8cff,#55deff)}
+    #touch{position:fixed;z-index:7;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));pointer-events:none}.pad,.actions{pointer-events:auto}.pad{display:grid;grid-template-columns:repeat(2,64px);gap:10px}.actions{display:grid;grid-template-columns:repeat(2,70px);grid-template-rows:repeat(2,58px);gap:9px}.pad button,.actions button{border:1px solid rgba(255,255,255,.26);border-radius:17px;background:rgba(17,22,31,.74);color:#fff;font-weight:900;touch-action:none;-webkit-tap-highlight-color:transparent;backdrop-filter:blur(8px)}.pad button{height:94px;font-size:27px}.actions button{font-size:11px;letter-spacing:.45px}.actions .gas{border-color:rgba(83,255,213,.42);color:#92ffe4}.actions .brake{border-color:rgba(255,104,104,.42);color:#ffaaaa}.actions .drift{border-color:rgba(255,205,68,.48);color:#ffe172}.actions .nitro{border-color:rgba(56,175,255,.55);color:#7fd1ff}.pad button.active,.actions button.active,.pad button:active,.actions button:active{transform:scale(.95);filter:brightness(1.2)}
+    #loading{position:fixed;z-index:20;inset:0;display:none;place-items:center;background:rgba(4,7,11,.5);font-size:17px;font-weight:850;backdrop-filter:blur(4px)}#loading.show{display:grid}#toast{position:fixed;z-index:30;left:50%;top:25%;transform:translate(-50%,-8px);padding:9px 15px;border-radius:999px;background:rgba(4,8,13,.82);border:1px solid rgba(255,226,112,.35);font-weight:950;color:#ffe172;opacity:0;transition:.18s;pointer-events:none}#toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:760px){#hud{max-width:calc(100vw - 20px);padding:9px}#hud h1{font-size:12px}#status{font-size:10px}#gauges{top:auto;bottom:calc(13px + env(safe-area-inset-bottom));right:50%;transform:translateX(50%);width:150px}.pad{grid-template-columns:repeat(2,56px)}.pad button{width:56px;height:78px}.actions{grid-template-columns:repeat(2,60px);grid-template-rows:repeat(2,50px)}.actions button{font-size:9px}}
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <h1>🏎️ Real World Road V0.4 — Arcade + AI Tuned</h1>
+    <div class="row">
+      <label>Lat <input id="lat" value="25.033964" inputmode="decimal"></label>
+      <label>Lon <input id="lon" value="121.564468" inputmode="decimal"></label>
+      <button id="load">載入道路</button>
+    </div>
+    <div id="status">預設：台北 101 周邊 1.2 km。</div>
+    <div id="telemetry">
+      <span class="chip" id="speed">0 km/h</span>
+      <span class="chip good" id="surface">道路</span>
+      <span class="chip" id="slip">滑移 0°</span>
+      <span class="chip" id="driftState">GRIP</span>
+      <span class="chip" id="aiCount">AI 0</span>
+      <span class="chip" id="ruleCount">標示 0</span>
+      <span class="chip" id="fps">FPS --</span>
+      <span class="chip good" id="collision">邊界正常</span>
+    </div>
+  </div>
+  <div id="gauges">
+    <div class="gaugeLabel"><span>DRIFT CHARGE</span><span id="driftText">0%</span></div><div class="track"><div class="fill" id="driftFill"></div></div>
+    <div class="gaugeLabel"><span>N₂O</span><span id="nitroText">×0</span></div><div class="track"><div class="fill" id="nitroFill"></div></div>
+  </div>
+  <div id="touch">
+    <div class="pad"><button data-action="left">◀</button><button data-action="right">▶</button></div>
+    <div class="actions"><button class="drift" data-action="drift">DRIFT</button><button class="nitro" data-action="nitro">N₂O</button><button class="brake" data-action="brake">BRAKE</button><button class="gas" data-action="gas">GAS</button></div>
+  </div>
+  <div id="loading">正在載入 OpenStreetMap 道路…</div><div id="toast">N₂O +1</div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

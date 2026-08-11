@@ -1,0 +1,31 @@
+name: Sanchong Luzhou Road Detail Validation
+on:
+  push:
+    branches:
+      - feature/real-world-raycast-v0.6-road-detail
+  pull_request:
+    paths:
+      - 'experiments/real-world-raycast-v0.6-sanchong-luzhou/**'
+      - 'experiments/raycast-vehicle-cannon-v0.1/**'
+      - 'tests/sanchong-luzhou-road-detail-validation.mjs'
+      - '.github/workflows/sanchong-luzhou-road-detail-validation.yml'
+jobs:
+  chromium-sanchong-luzhou:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 8011 > /tmp/car-http.log 2>&1 &
+          sleep 2
+      - name: Run Sanchong Luzhou gameplay smoke
+        run: node tests/sanchong-luzhou-road-detail-validation.mjs

@@ -28,18 +28,28 @@ V0.4 延續 V0.3 的道路邊界／護欄方向，加入第一版真正的 Arcad
 - 桌面：WASD / 方向鍵、Space DRIFT、Shift / N N₂O
 - 手機：LEFT / RIGHT / GAS / BRAKE / DRIFT / N₂O
 
-## 明確不做
+## 道路規則資料：可以顯示，但不強制玩家遵守
 
-本 Prototype 不實作基礎交通規則：
+本專案是 Arcade Racing，不做真實交通執法。OSM 中若有相關資料，可以在後續版本讀取並做成場景標示／HUD 提示：
 
-- 不做紅綠燈 / 交通號誌
-- 不做速限
-- 不做單行道限制
-- 不做停讓 / 路權
-- 不做 turn restrictions
-- 不做真實交通法規 AI
+- 紅綠燈 / 交通號誌：可以做視覺物件與燈號顯示
+- `maxspeed`：可以顯示速限牌或 HUD 資訊
+- `oneway`：可以顯示道路方向箭頭
+- `stop` / `give_way`：可以顯示停止牌、讓路牌、停止線／讓路線
+- turn restrictions：可以顯示禁止左轉、禁止右轉等標誌
+- 路權 / 優先道路：可以作為道路資訊或視覺標示
 
-目前 AI 車流只是用來讓 OSM 真實道路開始有車輛活動，驗證遊戲性與效能。
+### 重要：只標示，不限制賽車
+
+- 速限牌 **不會改變玩家最高速**
+- 超過 OSM `maxspeed` **不會自動煞車或降速**
+- 單行道箭頭 **不會阻止玩家逆向行駛**
+- 紅燈 **不會鎖油門或強制停車**
+- STOP / GIVE WAY **不會強制停讓**
+- turn restriction **不會禁止玩家轉彎**
+- AI 車流目前也不需要遵守真實交通法規
+
+這些資料的用途是增加真實世界道路辨識度與場景感，不取代 Arcade Racing 的自由駕駛與高速玩法。
 
 ## 啟動
 
@@ -49,10 +59,12 @@ python3 -m http.server 8011
 
 開啟：
 
-`/experiments/real-world-road-v0.4/`
+`/experiments/real-world-road-v0.4-arcade-ai/`
 
 ## 尚未完成
 
+- OSM 速限牌 / 單行箭頭 / STOP / GIVE WAY / traffic signals 的視覺標示
+- turn restriction 標誌視覺化
 - AI 車型與性格差異
 - 更穩定的複雜路口 graph traversal
 - 玩家 / AI 更完整的 arcade collision response

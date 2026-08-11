@@ -1,10 +1,10 @@
 # Cannon Raycast Vehicle V0.1 Lab
 
-平行實驗，不修改根目錄 V53，也不取代既有 `real-world-road-v0.4-arcade-ai`。
+平行實驗，不修改根目錄 V53，也不取代既有 Real World Road / Arcade + AI Lab。
 
 ## 目的
 
-驗證 `Three.js + cannon-es RaycastVehicle` 是否比目前自訂 Arcade 車輛模型更適合作為後續 3D 賽車物理底座。
+驗證 `Three.js + cannon-es RaycastVehicle` 是否適合作為後續 3D 賽車物理底座，同時建立可在手機瀏覽器運行的低多邊形正式車模方向。
 
 ## 技術基線
 
@@ -18,35 +18,37 @@
 - chase camera
 - desktop + mobile multi-touch controls
 
-## 車身視覺 V4
+## Low-Poly Sport Coupe V5
 
-V3 已改成真正 volumetric low-poly 車身，V4 再針對「追尾視角仍容易扁平」繼續改善。外觀方向維持低多邊形跑車語言，但使用自製 Three.js 幾何，不直接複製或內嵌外部商店模型。
+V5 保留 V4 已驗證的 volumetric 車身與 Raycast 物理，改用「視覺疊加層」繼續補正式遊戲車模細節，避免為了外觀重寫物理核心。
 
-- 9 段 longitudinal body cross-sections，拉長前鼻並加強前後葉子板體積
-- 5 段 roof cross-sections，降低車頂並強化 coupe roofline
-- 暗色 inner wheel wells + 外擴 wheel-arch trim，讓輪胎與車身有真正的深度層次
-- 車門 skin、門縫、門把與側裙
-- hood crease、雙 hood vents、前格柵與格柵直柵
-- JDM-style rear dark garnish、雙尾燈、rear diffuser
-- 側進氣口、後視鏡、A/B/C pillars
-- 6-spoke low-poly wheels、brake disc / caliper
-- 雙排氣與尾翼
-- clearcoat paint、ACES tone mapping、rim / fill light
-- procedural contact shadow，讓車身在道路上有接地重量感
-- 更低、更近、略帶側偏移 chase camera
-- `visualVersion = LowPolySportCoupeV4`
+- V4 的 9 段 body cross-sections + 5 段 coupe roof 保留
+- deeper recessed inner wheel wells
+- body-color outer wheel-arch lip + carbon inner lip
+- 更明顯前後 fender shoulder
+- front center intake / brake ducts / canards
+- hood power bulge + crease lines
+- 立體 projector headlamp lens + internal light core
+- volumetric rear lamp lens
+- deeper rear bumper / diffuser / license recess / tow hook
+- side skirt / aero blade / shoulder crease
+- 可見 underbody、中心結構、rear hardware 與 exhaust routing
+- rim outer ring + hub + wheel nuts
+- 每輪 14 段 low-poly tire tread
+- wheel nuts / tread blocks 使用 `THREE.InstancedMesh` 批次化，降低重複細節 draw calls
+- `visualVersion = LowPolySportCoupeV5`
 
-車身視覺與 RaycastVehicle 物理解耦：V4 沒有改 chassis mass、wheel points、suspension、engine force、steering、frictionSlip 或 drift entry threshold。
+V5 沒有更改 chassis mass、wheel points、suspension、engine force、steering、frictionSlip 或 drift entry threshold。
 
 ## 操作
 
 - `W / ↑`：油門
 - `S / ↓`：煞車，低速時倒車
 - `A / D`：轉向
-- `Space`：Arcade drift assist（降低後輪 frictionSlip + 輕量 handbrake/yaw assist）
+- `Space`：Arcade drift assist
 - `R`：重置
 
-## V0.1 物理參數
+## 物理基線
 
 - chassis mass: `900 kg`
 - wheel radius: `0.36 m`
@@ -63,27 +65,40 @@ V3 已改成真正 volumetric low-poly 車身，V4 再針對「追尾視角仍�
 
 ## Browser Gameplay Validation
 
-最新 V4 validation：Run #15 `31468470267` — **PASS**。
+V5 validated run: **Run #23 `31470470206` — PASS**.
 
 驗證包含：
 
-1. `visualVersion` 必須是 `LowPolySportCoupeV4`，避免快取或舊版誤測。
-2. 車身會受重力下落並由四輪射線懸吊支撐。
-3. 四輪可保持接地。
-4. 油門可推動真剛體車身，而且前進方向與視覺車頭一致。
-5. 前輪 steering 可改變航向。
-6. DRIFT 必須實際進入 `DRIFT` state，並產生 slip。
-7. 漂移期間至少兩輪保持接地。
-8. 844×390 mobile landscape GAS + LEFT 真雙觸點 PASS。
-9. Browser console error 必須為 0。
+1. `visualVersion === LowPolySportCoupeV5`。
+2. V5 detail contract：underbody、14-block tread、volumetric projector、Instanced wheel detail 都必須存在。
+3. 4/4 Raycast wheels 建立並可落地支撐車身。
+4. W 必須朝視覺車頭 `-Z` 前進。
+5. 加速必須在 state-based Gate 內達 12 km/h，再達 25 km/h。
+6. steering 在至少 25 km/h 的可比較速度下驗證，不用低速瞬間偏移冒充轉向能力。
+7. DRIFT 必須實際進入 `DRIFT` state 並產生 slip。
+8. 漂移期間至少兩輪保持接地。
+9. 844×390 mobile landscape GAS + LEFT 真雙觸點 PASS。
+10. Browser console error = 0。
+
+Run #23 實測摘要：
+
+- 4/4 wheels grounded
+- time to 12 km/h: `1154 ms`
+- time to 25 km/h: `2220 ms`
+- steering sample: `36 km/h`, lateral movement `0.50 m / 0.9 s`, slip `7.6°`
+- drift entry: `39 km/h`, 4/4 grounded
+- drift sample reached `48 km/h`
+- mobile GAS + LEFT sample: `18 km/h`, 4/4 grounded
+- console errors: `0`
+
+GitHub Actions headless FPS 數字不作為實機 FPS 結論；實體手機效能仍需另外驗證。
 
 ## Pages 預覽
 
-正式首頁 V53 保持不動。3D Raycast V4 使用獨立預覽入口：
+正式首頁 V53 保持不動。
 
-`https://qookey109-pixel.github.io/car/preview/raycast-v3/`
-
-網址名稱暫時保留 `raycast-v3`，避免既有書籤失效，但頁面內容已更新為 V4，頁面標題與 HUD 會明確顯示 `Low-Poly Sport Coupe V4`。
+- V4：`https://qookey109-pixel.github.io/car/preview/raycast-v4/`
+- V5：發布後使用 `https://qookey109-pixel.github.io/car/preview/raycast-v5/`
 
 ## 尚未驗證
 
@@ -95,4 +110,4 @@ V3 已改成真正 volumetric low-poly 車身，V4 再針對「追尾視角仍�
 - AI Traffic
 - 更完整 tyre slip-angle curve
 
-下一階段建議把 V4 車身與 Raycast 物理接進真實 OSM 道路，並做 PR #3 Arcade Controller vs PR #4 RaycastVehicle 的 A/B 遊玩比較。
+下一階段：把 V5 車身 + Raycast 物理接到真實 OSM 道路，並與 PR #3 Arcade Controller 做 A/B 遊玩比較。

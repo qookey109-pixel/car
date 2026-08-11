@@ -77,14 +77,19 @@ const mobile=await browser.newContext({viewport:{width:844,height:390},isMobile:
 const mobilePage=await boot(mobile);
 snap=await mobilePage.evaluate(()=>window.__ARCADE_LAB__.snapshot());
 if(snap.aiCount!==12)throw new Error(`844x390 stress test expected 12 AI, got ${snap.aiCount}`);
-await mobilePage.evaluate(()=>{
-  const gas=document.querySelector('[data-action="gas"]'),left=document.querySelector('[data-action="left"]');
-  gas.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:11,pointerType:'touch'}));
-  left.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:12,pointerType:'touch'}));
-});
-await mobilePage.waitForTimeout(500);
+const gasBox=await mobilePage.locator('[data-action="gas"]').boundingBox();
+const leftBox=await mobilePage.locator('[data-action="left"]').boundingBox();
+if(!gasBox||!leftBox)throw new Error('mobile controls are not visible');
+const cdp=await mobile.newCDPSession(mobilePage);
+const points=[
+  {x:leftBox.x+leftBox.width/2,y:leftBox.y+leftBox.height/2,id:11,radiusX:8,radiusY:8,force:1},
+  {x:gasBox.x+gasBox.width/2,y:gasBox.y+gasBox.height/2,id:12,radiusX:8,radiusY:8,force:1}
+];
+await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:points});
+await mobilePage.waitForTimeout(650);
 const active=await mobilePage.evaluate(()=>({gas:document.querySelector('[data-action="gas"]').classList.contains('active'),left:document.querySelector('[data-action="left"]').classList.contains('active'),snap:window.__ARCADE_LAB__.snapshot()}));
-if(!active.gas||!active.left)throw new Error('mobile multi-touch controls did not stay active together');
+await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+if(!active.gas||!active.left)throw new Error('real mobile multi-touch controls did not stay active together');
 if(active.snap.speedKmh<=0)throw new Error('mobile gas did not move vehicle');
 report.mobileLandscape.multiTouch=active.snap;
 await mobilePage.screenshot({path:`${OUT}/mobile-landscape.png`,fullPage:true});

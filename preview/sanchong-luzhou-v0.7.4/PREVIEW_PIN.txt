@@ -1,0 +1,3 @@
+V0.7.4 validated experiment head: 083688c349369ca31c84bcc86b45ca52b3f3b3aa
+Preview shell commit containing this file's sibling index.html: 29e91d92aa842e55e043617ba7499b1f55b65466
+Purpose: trigger legacy GitHub Pages to advance to the V0.7.4 preview shell without modifying V53 main/index.html.

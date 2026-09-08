@@ -108,6 +108,8 @@ async function runDesktop(browser){
     return{snapshot:s,camera:{fov:g.camera.fov,position:g.camera.position.toArray()},quality:{requested:g.quality.requested,effective:g.quality.effective,rendererName:g.quality.rendererName,softwareRenderer:g.quality.softwareRenderer},renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles},city:g.city.stats};
   });
   fs.writeFileSync('test-results/metrics.json',JSON.stringify(metrics,null,2));
+  if(metrics.city.facadeFaces!==4||metrics.city.windows<1500)throw new Error(`Four-sided facade contract failed: ${JSON.stringify(metrics.city)}`);
+  if(metrics.quality.softwareRenderer&&(metrics.renderer.calls>60||metrics.renderer.triangles>110000))throw new Error(`Software render budget exceeded: ${JSON.stringify(metrics.renderer)}`);
   if(errors.length)throw new Error(errors.join('\n'));
   await page.close();
   return driving.s;

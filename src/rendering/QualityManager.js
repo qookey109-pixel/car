@@ -22,8 +22,9 @@ export class QualityManager{
 
   _sync(){
     const dpr=Math.min(window.devicePixelRatio||1,this.effective==='high'?1.6:this.effective==='medium'?1.25:1);
-    const qualityScale=this.effective==='low'?(this.softwareRenderer?.68:.82):1;const scale=this.resolution*qualityScale;
-    this.renderer.setPixelRatio(Math.max(.6,dpr*scale));
+    const qualityScale=this.effective==='low'?(this.softwareRenderer?.45:.82):1;const scale=this.resolution*qualityScale;
+    const minRatio=this.softwareRenderer?.45:.6;
+    this.renderer.setPixelRatio(Math.max(minRatio,dpr*scale));
     this.renderer.shadowMap.enabled=this.shadows&&this.effective!=='low';
     if(this.world?.sun){this.world.sun.castShadow=this.renderer.shadowMap.enabled;const size=this.effective==='high'?1024:this.effective==='medium'?768:512;this.world.sun.shadow.mapSize.set(size,size)}
     if(this.bloomPass){this.bloomPass.enabled=this.bloom&&this.effective!=='low';this.bloomPass.strength=this.effective==='high'?.5:.34}

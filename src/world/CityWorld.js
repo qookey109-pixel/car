@@ -59,14 +59,15 @@ export class CityWorld{
 
   _buildings(){
     const bodyGeo=new THREE.BoxGeometry(1,1,1);
-    const bodyMat=new THREE.MeshLambertMaterial({color:0xffffff,vertexColors:true,emissive:0x23384b,emissiveIntensity:.58});
-    const windowGeo=new THREE.BoxGeometry(1,.15,.055);const windowMat=new THREE.MeshBasicMaterial({color:0x91e0ff,transparent:true,opacity:.88});
+    const bodyMat=new THREE.MeshLambertMaterial({color:0xffffff,vertexColors:true,emissive:0x2b4257,emissiveIntensity:.7});
+    const windowGeo=new THREE.BoxGeometry(1,.15,.055);const windowMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,opacity:.9});
     const signGeo=new THREE.BoxGeometry(1,1,.08);const signMat=new THREE.MeshBasicMaterial({color:0xff5fb8,transparent:true,opacity:.95});
     const shopGeo=new THREE.BoxGeometry(1,1,.07);const shopMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,opacity:.88});
     const roofGeo=new THREE.BoxGeometry(1,1,1);const roofMat=new THREE.MeshLambertMaterial({color:0x66737d,emissive:0x15212a,emissiveIntensity:.24});
     const records=[],windows=[],signs=[],shops=[],roofs=[];const r=this.rand;
     const centers=[-150,-90,-30,30,90,150];
     const palette=[0xd4d0c2,0xc3d0d2,0xd9c8b4,0xb6cbc4,0xd3beb8,0xb9c1cb,0xd5cbbf,0xb0bec9];
+    const windowPalette=[0x91e0ff,0xbcecff,0x7fcfff,0xffd28b,0xffe5b0];
     const shopPalette=[0xffc46b,0x6ce7ff,0xff70bb,0xa0ffba,0xff8a69];
     const nearestRoad=v=>Math.min(...this.roadPositions.map(p=>Math.abs(v-p)));
     let minRoadClearance=Infinity;
@@ -81,19 +82,30 @@ export class CityWorld{
         minRoadClearance=Math.min(minRoadClearance,nearestRoad(x)-w*.5,nearestRoad(z)-d*.5);
         records.push({x,z,w,d,h,color:palette[Math.floor(r()*palette.length)]});
         const floors=Math.max(2,Math.min(8,Math.floor(h/5)));
-        for(let f=1;f<=floors;f++)if(r()>.18){const y=2.2+f*(h/(floors+1));windows.push({x,y,z:z-d/2-.055,w:w*.72,rot:0});if(r()>.42)windows.push({x:x+w/2+.055,y,z,w:d*.68,rot:Math.PI/2})}
-        if(r()>.42)signs.push({x:x+(r()-.5)*w*.5,y:3.1+r()*5,z:z-d/2-.12,w:2.2+r()*3.8,h:1+r()*2.1});
-        if(r()>.28)shops.push({x,y:1.45,z:z-d/2-.09,w:w*.72,h:2.15,color:shopPalette[Math.floor(r()*shopPalette.length)]});
+        for(let f=1;f<=floors;f++)if(r()>.18){
+          const y=2.2+f*(h/(floors+1));
+          const zColor=windowPalette[Math.floor(r()*windowPalette.length)],xColor=windowPalette[Math.floor(r()*windowPalette.length)];
+          windows.push({x,y,z:z-d/2-.055,w:w*.72,rot:0,color:zColor},{x,y,z:z+d/2+.055,w:w*.72,rot:0,color:zColor});
+          if(r()>.42)windows.push({x:x+w/2+.055,y,z,w:d*.68,rot:Math.PI/2,color:xColor},{x:x-w/2-.055,y,z,w:d*.68,rot:Math.PI/2,color:xColor});
+        }
+        if(r()>.42){
+          const sx=x+(r()-.5)*w*.5,sy=3.1+r()*5,sw=2.2+r()*3.8,sh=1+r()*2.1;
+          signs.push({x:sx,y:sy,z:z-d/2-.12,w:sw,h:sh},{x:sx,y:sy,z:z+d/2+.12,w:sw,h:sh});
+        }
+        if(r()>.28){
+          const color=shopPalette[Math.floor(r()*shopPalette.length)];
+          shops.push({x,y:1.45,z:z-d/2-.09,w:w*.72,h:2.15,color},{x,y:1.45,z:z+d/2+.09,w:w*.72,h:2.15,color});
+        }
         if(r()>.48)roofs.push({x:x+(r()-.5)*w*.25,y:h+.45,z:z+(r()-.5)*d*.25,w:2.5+r()*4,h:.9+r()*1.3,d:2.2+r()*3.5});
       }
     }
     const bInst=new THREE.InstancedMesh(bodyGeo,bodyMat,records.length);const dmy=new THREE.Object3D();const col=new THREE.Color();
     records.forEach((b,i)=>{dmy.position.set(b.x,b.h/2,b.z);dmy.scale.set(b.w,b.h,b.d);dmy.rotation.set(0,0,0);dmy.updateMatrix();bInst.setMatrixAt(i,dmy.matrix);bInst.setColorAt(i,col.setHex(b.color));this._buildingCollider(b)});bInst.castShadow=false;bInst.receiveShadow=true;bInst.instanceMatrix.needsUpdate=true;bInst.instanceColor.needsUpdate=true;this.group.add(bInst);this.cameraOccluders.push(bInst);
-    const wInst=new THREE.InstancedMesh(windowGeo,windowMat,windows.length);windows.forEach((w,i)=>{dmy.position.set(w.x,w.y,w.z);dmy.scale.set(w.w,1,1);dmy.rotation.set(0,w.rot,0);dmy.updateMatrix();wInst.setMatrixAt(i,dmy.matrix)});wInst.instanceMatrix.needsUpdate=true;this.group.add(wInst);
+    const wInst=new THREE.InstancedMesh(windowGeo,windowMat,windows.length);windows.forEach((w,i)=>{dmy.position.set(w.x,w.y,w.z);dmy.scale.set(w.w,1,1);dmy.rotation.set(0,w.rot,0);dmy.updateMatrix();wInst.setMatrixAt(i,dmy.matrix);wInst.setColorAt(i,col.setHex(w.color))});wInst.instanceMatrix.needsUpdate=true;wInst.instanceColor.needsUpdate=true;this.group.add(wInst);
     const sInst=new THREE.InstancedMesh(signGeo,signMat,signs.length);signs.forEach((s,i)=>{dmy.position.set(s.x,s.y,s.z);dmy.scale.set(s.w,s.h,1);dmy.rotation.set(0,0,0);dmy.updateMatrix();sInst.setMatrixAt(i,dmy.matrix)});sInst.instanceMatrix.needsUpdate=true;this.group.add(sInst);
     const shInst=new THREE.InstancedMesh(shopGeo,shopMat,shops.length);shops.forEach((s,i)=>{dmy.position.set(s.x,s.y,s.z);dmy.scale.set(s.w,s.h,1);dmy.rotation.set(0,0,0);dmy.updateMatrix();shInst.setMatrixAt(i,dmy.matrix);shInst.setColorAt(i,col.setHex(s.color))});shInst.instanceMatrix.needsUpdate=true;shInst.instanceColor.needsUpdate=true;this.group.add(shInst);
     const roofInst=new THREE.InstancedMesh(roofGeo,roofMat,roofs.length);roofs.forEach((s,i)=>{dmy.position.set(s.x,s.y,s.z);dmy.scale.set(s.w,s.h,s.d);dmy.rotation.set(0,0,0);dmy.updateMatrix();roofInst.setMatrixAt(i,dmy.matrix)});roofInst.instanceMatrix.needsUpdate=true;roofInst.castShadow=false;this.group.add(roofInst);
-    this.stats={buildings:records.length,windows:windows.length,signs:signs.length,shopfronts:shops.length,rooftops:roofs.length,minBuildingRoadClearance:Number(minRoadClearance.toFixed(2))};
+    this.stats={buildings:records.length,windows:windows.length,signs:signs.length,shopfronts:shops.length,rooftops:roofs.length,facadeFaces:4,minBuildingRoadClearance:Number(minRoadClearance.toFixed(2))};
   }
 
   _buildingCollider(b){const body=new CANNON.Body({mass:0,shape:new CANNON.Box(new CANNON.Vec3(b.w*.5,b.h*.5,b.d*.5)),position:new CANNON.Vec3(b.x,b.h*.5,b.z)});this.physics.addBody(body);this.staticBodies.push(body)}

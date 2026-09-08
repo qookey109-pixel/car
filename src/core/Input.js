@@ -8,7 +8,7 @@ export class Input{
     document.querySelectorAll('[data-control]').forEach(btn=>{
       const key=btn.dataset.control;
       const set=v=>{this.touch[key]=v;btn.classList.toggle('active',v)};
-      btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture?.(e.pointerId);set(true)});
+      btn.addEventListener('pointerdown',e=>{e.preventDefault();set(true);try{btn.setPointerCapture?.(e.pointerId)}catch{}});
       ['pointerup','pointercancel','lostpointercapture','pointerleave'].forEach(type=>btn.addEventListener(type,e=>{e.preventDefault();set(false)}));
     });
   }

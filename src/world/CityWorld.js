@@ -17,7 +17,12 @@ export class CityWorld{
   _ground(){
     const groundMat=new THREE.MeshStandardMaterial({color:0x0c151e,roughness:.9,metalness:.05});
     const ground=new THREE.Mesh(new THREE.PlaneGeometry(720,720),groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.02;ground.receiveShadow=true;this.group.add(ground);
-    const physMat=new CANNON.Material('asphalt');this.groundBody=new CANNON.Body({mass:0,material:physMat,shape:new CANNON.Plane()});this.groundBody.quaternion.setFromEuler(-Math.PI/2,0,0);this.physics.addBody(this.groundBody);
+    // RaycastVehicle wheel rays are unreliable against rotated CANNON.Plane bodies.
+    // Keep the visual plane, but use a thin axis-aligned box as the physical road surface.
+    const physMat=new CANNON.Material('asphalt');
+    const groundShape=new CANNON.Box(new CANNON.Vec3(360,.1,360));
+    this.groundBody=new CANNON.Body({mass:0,material:physMat,shape:groundShape,position:new CANNON.Vec3(0,-.1,0)});
+    this.physics.addBody(this.groundBody);
   }
 
   _roads(){

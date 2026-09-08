@@ -1,0 +1,79 @@
+name: V0.8.0 f3cabc Render Cost Breakdown
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-f3cabc
+    paths:
+      - .github/workflows/v080-f3cabc-cost-breakdown.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  breakdown:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout exact validated candidate
+        uses: actions/checkout@v6
+        with:
+          ref: f3cabcbd15d2b9118328b2774f9c08036dcd7b33
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare cost probe
+        run: |
+          cat > tests/f3-render-cost.tmp.mjs <<'EOF'
+          import {chromium} from '@playwright/test';
+          import fs from 'node:fs';
+          fs.mkdirSync('test-results/f3-render-cost',{recursive:true});
+          const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+          try{
+            const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
+            await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+            await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+            await page.click('#startGame');await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+            const result=await page.evaluate(()=>{
+              const g=window.__NEON_RACER__.game,v=g.vehicle;
+              g.state='paused';g.quality.apply({quality:'low',resolution:1,bloom:false,shadows:false});
+              v.reset({x:0,y:1.2,z:150},0);
+              const masks=g.city.staticBodies.map(b=>b.collisionFilterMask);g.city.staticBodies.forEach(b=>{b.collisionFilterMask=0});
+              v.setInput({throttle:1,steer:0,handbrake:false,nitro:true});
+              for(let i=0;i<480;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt)}
+              v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});v._syncVisuals();g._camera(1/60);g.effects.update(1/60,v,g.camera);
+              const measure=()=>{g.renderer.info.reset();g._render();const r=g.renderer.info.render;return{calls:r.calls,triangles:r.triangles}};
+              const baseline=measure();
+              const hide=(label,obj)=>{const was=obj.visible;obj.visible=false;const after=measure();obj.visible=was;return{label,type:obj.type,name:obj.name||'',deltaCalls:baseline.calls-after.calls,deltaTriangles:baseline.triangles-after.triangles,after}};
+              const top=[
+                hide('city',g.city.group),hide('car',v.visualRoot),hide('challenges',g.challenges.group),hide('particles',g.effects.points),hide('speed-lines',g.effects.speedLines),
+                ...v.wheelInstances.map((o,i)=>hide(`wheel-batch-${i}`,o))
+              ];
+              const carChildren=v.visualRoot.children.filter(o=>o.isMesh||o.isLight||o.isGroup).map((o,i)=>hide(`car-${i}`,o));
+              const cityChildren=g.city.group.children.map((o,i)=>hide(`city-${i}`,o));
+              g.city.staticBodies.forEach((b,i)=>{b.collisionFilterMask=masks[i]});
+              return{baseline,speedKmh:v.speedKmh,top:top.sort((a,b)=>b.deltaCalls-a.deltaCalls),carChildren:carChildren.sort((a,b)=>b.deltaCalls-a.deltaCalls),cityChildren:cityChildren.sort((a,b)=>b.deltaCalls-a.deltaCalls)};
+            });
+            fs.writeFileSync('test-results/f3-render-cost/breakdown.json',JSON.stringify(result,null,2));
+            await page.screenshot({path:'test-results/f3-render-cost/frame.png',animations:'disabled'});
+            console.log(JSON.stringify({baseline:result.baseline,speedKmh:result.speedKmh,top:result.top,car:result.carChildren.slice(0,30),city:result.cityChildren.slice(0,30)},null,2));
+          }finally{await browser.close()}
+          EOF
+      - name: Start preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/f3-cost.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/f3-cost.log; exit 1
+      - name: Run breakdown
+        run: node tests/f3-render-cost.tmp.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v080-f3-render-cost
+          path: test-results/f3-render-cost/
+          if-no-files-found: ignore
+          retention-days: 14

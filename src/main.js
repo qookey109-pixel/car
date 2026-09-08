@@ -1,4 +1,5 @@
 import './styles.css';
+import './replay.css';
 import {Game} from './core/Game.js';
 
 const app=document.getElementById('app');
@@ -15,8 +16,12 @@ window.__NEON_RACER__={
     drifting:game.vehicle.isDrifting,
     challengeIndex:game.challenges.challengeIndex,
     challengeId:game.challenges.current?.id||null,
+    routeIndex:game.challenges.routeIndex,
+    routeName:game.challenges.routeName,
     score:Math.round(game.challenges.score),
     completed:game.challenges.completed,
+    records:{...game.records},
+    recovery:{flipTimer:game.flipTimer,cooldown:game.recoveryCooldown},
     quality:{requested:game.quality.requested,effective:game.quality.effective},
     city:game.city.stats,
     renderer:{calls:game.renderer.info.render.calls,triangles:game.renderer.info.render.triangles}

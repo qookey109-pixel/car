@@ -1,0 +1,76 @@
+name: V0.8.0 WebKit Acceptance
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-76e9378
+    paths:
+      - .github/workflows/v080-webkit-acceptance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact validated V0.8.0 candidate
+        uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Static smoke
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Prepare WebKit smoke from validated browser contract
+        run: |
+          cp tests/browser-smoke.mjs tests/browser-smoke-webkit.tmp.mjs
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tests/browser-smoke-webkit.tmp.mjs')
+          s = p.read_text()
+          s = s.replace("import {chromium} from '@playwright/test';", "import {webkit as chromium} from '@playwright/test';")
+          s = s.replace("chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']})", "chromium.launch({headless:true})")
+          p.write_text(s)
+          PY
+          grep -q "webkit as chromium" tests/browser-smoke-webkit.tmp.mjs
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v080-webkit-vite.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-v080-webkit-vite.log
+          exit 1
+
+      - name: WebKit game-loop acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/browser-smoke-webkit.tmp.mjs
+
+      - name: Upload WebKit QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v080-webkit-qa-76e9378
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

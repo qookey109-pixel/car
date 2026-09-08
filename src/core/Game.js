@@ -85,9 +85,15 @@ export class Game{
   _restoreSettings(){let s={quality:'auto',resolution:1,bloom:true,shadows:true,motion:true};try{s={...s,...JSON.parse(localStorage.getItem('neon-racer-settings')||'{}')}}catch{}this.hud.setSettings(s);this.applySettings(s)}
 
   _collision(event){
-    const now=performance.now();if(now-this.lastCollisionAt<220)return;this.lastCollisionAt=now;
-    const impact=Math.min(1,this.vehicle.velocity.length()/22);if(impact<.14)return;
-    this.audio.impact(impact);this.cameraImpulse=Math.min(.55,this.cameraImpulse+.12*impact);this.challenges.combo=1;if(impact>.4)this.hud.toast('碰撞 · Combo Reset')
+    const obstacle=event?.body;
+    if(!obstacle||!this.city.staticBodies.includes(obstacle))return;
+    const now=performance.now();if(now-this.lastCollisionAt<220)return;
+    const normalImpact=Math.abs(event.contact?.getImpactVelocityAlongNormal?.()||0);
+    if(normalImpact<2.4)return;
+    this.lastCollisionAt=now;
+    const impact=clamp((normalImpact-2.4)/13.6,0,1);
+    this.audio.impact(Math.max(.18,impact));this.cameraImpulse=Math.min(.55,this.cameraImpulse+.1+.14*impact);this.challenges.combo=1;
+    if(normalImpact>6)this.hud.toast('碰撞 · Combo Reset')
   }
 
   _tick(){

@@ -1,0 +1,52 @@
+name: V0.8.0 Safari Stability Preview
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-safari-stability-aedf54c
+    paths:
+      - .github/workflows/v080-safari-stability-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: v080-safari-stability-preview
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout validated Safari stability source
+        uses: actions/checkout@v6
+        with:
+          ref: aedf54c22e3f66c16cb4aa06a9dff4030bebbea1
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Build exact validated candidate
+        run: npm run build
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: v080-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Safari stability candidate
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -33,20 +33,32 @@ async function runDesktop(browser){
     for(let i=0;i<180;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt)}
     v._syncVisuals();
     v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
-    for(let i=0;i<8;i++)g._camera(1/60);
     const s=api.snapshot(),body=v.chassisBody;
     const wheels=v.vehicle.wheelInfos.map((w,i)=>({i,isInContact:Boolean(w.isInContact),suspensionLength:w.suspensionLength,engineForce:w.engineForce,brake:w.brake,frictionSlip:w.frictionSlip}));
     return {
       s,start,end:{x:body.position.x,y:body.position.y,z:body.position.z},
       velocity:{x:body.velocity.x,y:body.velocity.y,z:body.velocity.z,length:body.velocity.length()},
-      wheels,engineForce:v.engineForce,camera:g.camera.position.toArray(),fov:g.camera.fov,
-      challenge:g.challenges.current?.id,rendererName:g.quality.rendererName
+      wheels,engineForce:v.engineForce,challenge:g.challenges.current?.id,rendererName:g.quality.rendererName
     };
   });
   fs.writeFileSync('test-results/physics-diagnostics.json',JSON.stringify(driving,null,2));
   if(!(driving.s.speedKmh>5))throw new Error(`Deterministic vehicle acceleration failed: ${JSON.stringify(driving)}`);
-  if(!driving.camera.every(Number.isFinite)||!Number.isFinite(driving.fov))throw new Error(`Camera became non-finite: ${JSON.stringify(driving)}`);
+  if(!(driving.end.z<driving.start.z-5))throw new Error(`Forward drive moved away from first checkpoint: ${JSON.stringify({start:driving.start,end:driving.end,velocity:driving.velocity})}`);
   if(driving.challenge!=='sprint')throw new Error(`Unexpected initial challenge ${driving.challenge}`);
+
+  const composition=await page.evaluate(()=>{
+    const g=window.__NEON_RACER__.game,v=g.vehicle;
+    v.reset({x:0,y:1.2,z:24},0);g.cameraYaw=0;g.cameraPitch=.13;g._lookTarget=null;g._lastSafeCamera=null;
+    v.setInput({throttle:.48,steer:.08,handbrake:false,nitro:false});
+    for(let i=0;i<55;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt)}
+    v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});v._syncVisuals();
+    for(let i=0;i<30;i++)g._camera(1/60);
+    g.hud.update(v,g.challenges);g._render();
+    const p=v.visualRoot.position.clone().project(g.camera);
+    return{ndc:[p.x,p.y,p.z],camera:g.camera.position.toArray(),fov:g.camera.fov,speed:v.speedKmh,position:{x:v.position.x,y:v.position.y,z:v.position.z}};
+  });
+  if(!composition.camera.every(Number.isFinite)||!Number.isFinite(composition.fov))throw new Error(`Camera became non-finite: ${JSON.stringify(composition)}`);
+  if(!(Math.abs(composition.ndc[0])<.82&&Math.abs(composition.ndc[1])<.82&&composition.ndc[2]>-1&&composition.ndc[2]<1))throw new Error(`Player car not framed by driving camera: ${JSON.stringify(composition)}`);
   await shot(page,'test-results/desktop-driving.png');
 
   await page.evaluate(()=>{window.__NEON_RACER__.game.state='running'});

@@ -24,6 +24,22 @@ async function runDesktop(browser){
   await page.keyboard.up('KeyW');
   if(!inputWired)throw new Error('Keyboard W input did not reach Input system');
 
+  const collisionContract=await page.evaluate(()=>{
+    const g=window.__NEON_RACER__.game;
+    const impact=g.audio.impact,toast=g.hud.toast;
+    g.audio.impact=()=>{};g.hud.toast=()=>{};
+    try{
+      g.challenges.combo=3.5;g.lastCollisionAt=-1000;
+      g._collision({body:g.city.groundBody,contact:{getImpactVelocityAlongNormal:()=>12}});
+      const groundKeepsCombo=g.challenges.combo===3.5;
+      g.lastCollisionAt=-1000;
+      g._collision({body:g.city.staticBodies[0],contact:{getImpactVelocityAlongNormal:()=>9}});
+      const obstacleResetsCombo=g.challenges.combo===1;
+      return{groundKeepsCombo,obstacleResetsCombo,obstacleCount:g.city.staticBodies.length};
+    }finally{g.audio.impact=impact;g.hud.toast=toast;g.challenges.combo=1}
+  });
+  if(!collisionContract.groundKeepsCombo||!collisionContract.obstacleResetsCombo)throw new Error(`Collision filtering contract failed: ${JSON.stringify(collisionContract)}`);
+
   const driving=await page.evaluate(()=>{
     const api=window.__NEON_RACER__,g=api.game,v=g.vehicle;
     g.state='paused';

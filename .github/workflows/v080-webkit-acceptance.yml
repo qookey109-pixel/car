@@ -14,7 +14,7 @@ permissions:
 jobs:
   webkit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 22
     steps:
       - name: Checkout exact validated V0.8.0 candidate
         uses: actions/checkout@v6
@@ -38,18 +38,62 @@ jobs:
       - name: Install WebKit
         run: npx playwright install --with-deps webkit
 
-      - name: Prepare WebKit smoke from validated browser contract
+      - name: Prepare WebKit contracts from exact validated tests
         run: |
-          cp tests/browser-smoke.mjs tests/browser-smoke-webkit.tmp.mjs
           python - <<'PY'
           from pathlib import Path
-          p = Path('tests/browser-smoke-webkit.tmp.mjs')
-          s = p.read_text()
-          s = s.replace("import {chromium} from '@playwright/test';", "import {webkit as chromium} from '@playwright/test';")
-          s = s.replace("chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']})", "chromium.launch({headless:true})")
-          p.write_text(s)
+          import re
+          for src in ['browser-smoke.mjs','objective-compass-smoke.mjs','audio-feel-smoke.mjs']:
+              p = Path('tests') / src
+              out = Path('tests') / src.replace('.mjs','-webkit.tmp.mjs')
+              s = p.read_text()
+              s = s.replace("import {chromium} from '@playwright/test';", "import {webkit as chromium} from '@playwright/test';")
+              s = re.sub(r"chromium\.launch\(\{headless:true,args:\[[^\]]*\]\}\)", "chromium.launch({headless:true})", s)
+              out.write_text(s)
           PY
           grep -q "webkit as chromium" tests/browser-smoke-webkit.tmp.mjs
+          grep -q "webkit as chromium" tests/objective-compass-smoke-webkit.tmp.mjs
+          grep -q "webkit as chromium" tests/audio-feel-smoke-webkit.tmp.mjs
+
+      - name: Prepare WebKit frame pacing diagnostic
+        run: |
+          cat > tests/webkit-frame-pacing.tmp.mjs <<'EOF'
+          import {webkit} from '@playwright/test';
+          import fs from 'node:fs';
+          const base=process.env.BASE_URL||'http://127.0.0.1:4173/';
+          fs.mkdirSync('test-results/webkit-frame-pacing',{recursive:true});
+          const browser=await webkit.launch({headless:true});
+          try{
+            const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(e.message));
+            page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+            await page.goto(base,{waitUntil:'networkidle'});
+            await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+            await page.click('#startGame');
+            await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+            await page.keyboard.down('KeyW');
+            await page.waitForTimeout(600);
+            const sample=await page.evaluate(()=>new Promise(resolve=>{
+              const deltas=[];let last=performance.now(),start=last,frames=0;
+              const tick=now=>{
+                deltas.push(now-last);last=now;frames++;
+                if(now-start>=5000){
+                  const sorted=deltas.slice(1).sort((a,b)=>a-b);
+                  const pct=p=>sorted[Math.min(sorted.length-1,Math.floor(sorted.length*p))]||0;
+                  resolve({frames,elapsedMs:now-start,avgFps:frames/((now-start)/1000),p50Ms:pct(.50),p95Ms:pct(.95),p99Ms:pct(.99),maxMs:sorted.at(-1)||0,snapshot:window.__NEON_RACER__.snapshot()});
+                }else requestAnimationFrame(tick);
+              };
+              requestAnimationFrame(tick);
+            }));
+            await page.keyboard.up('KeyW');
+            fs.writeFileSync('test-results/webkit-frame-pacing/frame-pacing.json',JSON.stringify(sample,null,2));
+            await page.screenshot({path:'test-results/webkit-frame-pacing/mobile-driving.png',animations:'disabled'});
+            if(errors.length)throw new Error(errors.join('\n'));
+            if(!(sample.avgFps>20&&sample.p95Ms<80))throw new Error(`WebKit frame pacing sanity failed: ${JSON.stringify(sample)}`);
+            console.log(`WebKit frame pacing PASS · ${sample.avgFps.toFixed(1)} FPS · p95 ${sample.p95Ms.toFixed(1)} ms`);
+          }finally{await browser.close()}
+          EOF
 
       - name: Start production preview
         run: |
@@ -65,6 +109,21 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/browser-smoke-webkit.tmp.mjs
+
+      - name: WebKit objective compass acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/objective-compass-smoke-webkit.tmp.mjs
+
+      - name: WebKit audio graph acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/audio-feel-smoke-webkit.tmp.mjs
+
+      - name: WebKit frame pacing sanity
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/webkit-frame-pacing.tmp.mjs
 
       - name: Upload WebKit QA evidence
         if: always()

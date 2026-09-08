@@ -6,6 +6,7 @@ import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 
 const app=document.getElementById('app');
 const game=new Game(app);
+game.audio.attachVehicle(game.vehicle);
 const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
   version:'0.8.0',
@@ -27,6 +28,7 @@ window.__NEON_RACER__={
     records:{...game.records},
     recovery:{flipTimer:game.flipTimer,cooldown:game.recoveryCooldown},
     navigation:compass.snapshot(),
+    audio:game.audio.snapshot(),
     quality:{requested:game.quality.requested,effective:game.quality.effective},
     city:game.city.stats,
     renderer:{calls:game.renderer.info.render.calls,triangles:game.renderer.info.render.triangles}

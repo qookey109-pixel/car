@@ -7,8 +7,11 @@ export class Effects{
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(this.positions,3));
     this.points=new THREE.Points(geo,new THREE.PointsMaterial({color:0x7beeff,size:.42,sizeAttenuation:true,transparent:true,opacity:.8,depthWrite:false,blending:THREE.AdditiveBlending}));
     this.points.frustumCulled=false;scene.add(this.points);
-    this.speedLines=new THREE.Group();const mat=new THREE.LineBasicMaterial({color:0x7defff,transparent:true,opacity:.12});
-    for(let i=0;i<20;i++){const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-1)]);const l=new THREE.Line(g,mat.clone());l.visible=false;this.speedLines.add(l)}scene.add(this.speedLines)
+
+    this.speedLineCount=20;this.speedLinePositions=new Float32Array(this.speedLineCount*2*3);
+    const speedGeo=new THREE.BufferGeometry();speedGeo.setAttribute('position',new THREE.BufferAttribute(this.speedLinePositions,3));
+    const speedMat=new THREE.LineBasicMaterial({color:0x7defff,transparent:true,opacity:.12});
+    this.speedLines=new THREE.LineSegments(speedGeo,speedMat);this.speedLines.visible=false;this.speedLines.frustumCulled=false;scene.add(this.speedLines);
   }
   burst(position,velocity,intensity=1,color){
     if(color)this.points.material.color.set(color);
@@ -19,6 +22,17 @@ export class Effects{
     for(let i=0;i<this.capacity;i++){if(this.life[i]<=0)continue;this.life[i]-=dt;const o=i*3;this.positions[o]+=this.velocity[i].x*dt;this.positions[o+1]+=this.velocity[i].y*dt;this.positions[o+2]+=this.velocity[i].z*dt;this.velocity[i].y-=1.4*dt;if(this.life[i]<=0)this.positions[o+1]=-999}this.points.geometry.attributes.position.needsUpdate=true;
     if(vehicle.isDrifting)this.burst(vehicle.position,vehicle.velocity,vehicle.driftIntensity*.7,0xffd36e);
     if(vehicle.nitroActive)this.burst(vehicle.position,vehicle.velocity,.45,0x69f5ff);
-    const active=vehicle.speedKmh>105||vehicle.nitroActive;this.speedLines.visible=active;if(active){const f=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);this.speedLines.position.copy(camera.position);this.speedLines.children.forEach((l,i)=>{l.visible=true;l.position.set((i%5-2)*3+(Math.random()-.5),((i/5|0)-1.5)*2.2+(Math.random()-.5),-4-Math.random()*8);l.scale.z=3+vehicle.speedKmh/55;l.material.opacity=.07+Math.min(.16,vehicle.speedKmh/900)})}
+    const active=vehicle.speedKmh>105||vehicle.nitroActive;this.speedLines.visible=active;
+    if(active){
+      this.speedLines.position.copy(camera.position);
+      const length=3+vehicle.speedKmh/55;
+      for(let i=0;i<this.speedLineCount;i++){
+        const x=(i%5-2)*3+(Math.random()-.5),y=((i/5|0)-1.5)*2.2+(Math.random()-.5),z=-4-Math.random()*8,o=i*6;
+        this.speedLinePositions[o]=x;this.speedLinePositions[o+1]=y;this.speedLinePositions[o+2]=z;
+        this.speedLinePositions[o+3]=x;this.speedLinePositions[o+4]=y;this.speedLinePositions[o+5]=z-length;
+      }
+      this.speedLines.geometry.attributes.position.needsUpdate=true;
+      this.speedLines.material.opacity=.07+Math.min(.16,vehicle.speedKmh/900);
+    }
   }
 }

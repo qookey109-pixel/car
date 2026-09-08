@@ -1,0 +1,75 @@
+name: V0.8.0 WebKit Controls Acceptance
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-99d6475
+    paths:
+      - .github/workflows/v080-webkit-controls-acceptance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - name: Checkout exact validated candidate
+        uses: actions/checkout@v6
+        with:
+          ref: 99d64758aff5feccca49f7d78e0e2556995c718e
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps webkit
+      - name: Prepare WebKit contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          for src in ['browser-smoke.mjs','objective-compass-smoke.mjs','audio-feel-smoke.mjs','control-direction-smoke.mjs']:
+              p=Path('tests')/src
+              out=Path('tests')/src.replace('.mjs','-webkit.tmp.mjs')
+              s=p.read_text()
+              s=s.replace("import {chromium} from '@playwright/test';","import {webkit as chromium} from '@playwright/test';")
+              s=re.sub(r"chromium\.launch\(\{headless:true,args:\[[^\]]*\]\}\)","chromium.launch({headless:true})",s)
+              out.write_text(s)
+          PY
+          grep -q "webkit as chromium" tests/control-direction-smoke-webkit.tmp.mjs
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/v080-webkit-controls.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/v080-webkit-controls.log
+          exit 1
+      - name: WebKit game loop
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/browser-smoke-webkit.tmp.mjs
+      - name: WebKit steering and reverse
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/control-direction-smoke-webkit.tmp.mjs
+      - name: WebKit objective compass
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/objective-compass-smoke-webkit.tmp.mjs
+      - name: WebKit audio graph
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/audio-feel-smoke-webkit.tmp.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v080-webkit-controls-qa-99d6475
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

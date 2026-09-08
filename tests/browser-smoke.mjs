@@ -18,9 +18,6 @@ async function runDesktop(browser){
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
 
-  // Browser input wiring is a separate gate from physics throughput. SwiftShader can
-  // block requestAnimationFrame for seconds, so wall-clock acceleration is not a
-  // deterministic physics assertion.
   await page.keyboard.down('KeyW');
   await page.waitForTimeout(120);
   const inputWired=await page.evaluate(()=>window.__NEON_RACER__.game.input.keys.has('KeyW'));
@@ -31,15 +28,23 @@ async function runDesktop(browser){
     const api=window.__NEON_RACER__,g=api.game,v=g.vehicle;
     g.state='paused';
     v.reset({x:0,y:1.2,z:24},0);
+    const start={x:v.position.x,y:v.position.y,z:v.position.z};
     v.setInput({throttle:1,steer:0,handbrake:false,nitro:false});
     for(let i=0;i<180;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt)}
     v._syncVisuals();
     v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
     for(let i=0;i<8;i++)g._camera(1/60);
-    const s=api.snapshot();
-    return {s,camera:g.camera.position.toArray(),fov:g.camera.fov,challenge:g.challenges.current?.id,rendererName:g.quality.rendererName};
+    const s=api.snapshot(),body=v.chassisBody;
+    const wheels=v.vehicle.wheelInfos.map((w,i)=>({i,isInContact:Boolean(w.isInContact),suspensionLength:w.suspensionLength,engineForce:w.engineForce,brake:w.brake,frictionSlip:w.frictionSlip}));
+    return {
+      s,start,end:{x:body.position.x,y:body.position.y,z:body.position.z},
+      velocity:{x:body.velocity.x,y:body.velocity.y,z:body.velocity.z,length:body.velocity.length()},
+      wheels,engineForce:v.engineForce,camera:g.camera.position.toArray(),fov:g.camera.fov,
+      challenge:g.challenges.current?.id,rendererName:g.quality.rendererName
+    };
   });
-  if(!(driving.s.speedKmh>5))throw new Error(`Deterministic vehicle acceleration failed: ${driving.s.speedKmh} km/h`);
+  fs.writeFileSync('test-results/physics-diagnostics.json',JSON.stringify(driving,null,2));
+  if(!(driving.s.speedKmh>5))throw new Error(`Deterministic vehicle acceleration failed: ${JSON.stringify(driving)}`);
   if(!driving.camera.every(Number.isFinite)||!Number.isFinite(driving.fov))throw new Error(`Camera became non-finite: ${JSON.stringify(driving)}`);
   if(driving.challenge!=='sprint')throw new Error(`Unexpected initial challenge ${driving.challenge}`);
   await shot(page,'test-results/desktop-driving.png');

@@ -1,0 +1,52 @@
+name: V0.8.0 Fixed Pages Preview
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-a1188bfc
+    paths:
+      - .github/workflows/v080-fixed-pages-preview.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: v080-fixed-pages-preview
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout validated V0.8.0 source
+        uses: actions/checkout@v6
+        with:
+          ref: a1188bfc5c6fbcc27068af6ae71450922a468948
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Build exact validated preview
+        run: npm run build
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy fixed V0.8.0 preview
+        id: deployment
+        uses: actions/deploy-pages@v4

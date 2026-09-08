@@ -4,17 +4,27 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class ChallengeSystem{
-  constructor(scene,{onToast=()=>{},onComplete=()=>{}}={}){
-    this.scene=scene;this.onToast=onToast;this.onComplete=onComplete;
+  constructor(scene,{onToast=()=>{},onComplete=()=>{},runOffset=0}={}){
+    this.scene=scene;this.onToast=onToast;this.onComplete=onComplete;this.runOffset=Math.max(0,Math.floor(runOffset||0));this.runIndex=-1;
     this.group=new THREE.Group();this.group.name='ChallengeMarkers';scene.add(this.group);
     this.startedAt=performance.now();this.score=0;this.combo=1;this.bestCombo=1;this.totalDrift=0;this.completed=false;
     this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._toastCooldown=0;this._speedHint=0;
-    this.challenges=[
-      {id:'sprint',title:'霓虹街廓 · Time Attack',description:'依序穿越 4 個城市 Checkpoint',limit:75,points:[[0,0],[120,0],[120,-120],[0,-120]]},
-      {id:'drift',title:'河岸反打 · Drift Run',description:'在河岸街區累積 1,800 漂移分',target:1800,zone:{x:-120,z:-120,radius:72}},
-      {id:'speed',title:'高架封關 · Speed Trap',description:'以至少 110 km/h 穿越終點',target:110,point:{x:0,z:-180}}
+    this.routes=[
+      {name:'河岸東環',points:[[0,0],[120,0],[120,-120],[0,-120]],drift:{x:-120,z:-120,radius:72},speed:{x:0,z:-180}},
+      {name:'霓虹西環',points:[[0,0],[-120,0],[-120,120],[0,120]],drift:{x:120,z:120,radius:72},speed:{x:0,z:180}},
+      {name:'高架折返',points:[[0,0],[0,-120],[-120,-120],[-120,0]],drift:{x:120,z:-120,radius:72},speed:{x:0,z:-180}}
     ];
+    this._applyRoute(this.runOffset%this.routes.length);
     this.challengeStartedAt=performance.now();this._buildMarkers();this._refreshMarkers();
+  }
+
+  _applyRoute(index){
+    this.routeIndex=((index%this.routes.length)+this.routes.length)%this.routes.length;const r=this.routes[this.routeIndex];this.routeName=r.name;
+    this.challenges=[
+      {id:'sprint',title:'霓虹街廓 · Time Attack',description:'依序穿越 4 個城市 Checkpoint',limit:75,points:r.points.map(p=>[...p])},
+      {id:'drift',title:'河岸反打 · Drift Run',description:'在河岸街區累積 1,800 漂移分',target:1800,zone:{...r.drift}},
+      {id:'speed',title:'高架封關 · Speed Trap',description:'以至少 110 km/h 穿越終點',target:110,point:{...r.speed}}
+    ];
   }
 
   _material(color=0x58eeff){return new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:2.5,roughness:.28,metalness:.15,transparent:true,opacity:.9})}
@@ -34,7 +44,8 @@ export class ChallengeSystem{
   }
 
   reset(){
-    this.startedAt=performance.now();this.challengeStartedAt=performance.now();this.score=0;this.combo=1;this.bestCombo=1;this.totalDrift=0;this.completed=false;this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._driftMission=0;this._speedHint=0;this.group.visible=true;this._refreshMarkers();
+    this.runIndex++;this._applyRoute((this.runOffset+this.runIndex)%this.routes.length);
+    this.startedAt=performance.now();this.challengeStartedAt=performance.now();this.score=0;this.combo=1;this.bestCombo=1;this.totalDrift=0;this.completed=false;this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._driftMission=0;this._speedHint=0;this._toastCooldown=0;this.group.visible=true;this._refreshMarkers();
   }
 
   update(dt,vehicle){
@@ -93,6 +104,6 @@ export class ChallengeSystem{
 
   get current(){return this.challenges[this.challengeIndex]||null}
   get progress(){const c=this.current;if(!c)return 1;if(c.id==='sprint')return this.sprintIndex/c.points.length;if(c.id==='drift')return clamp((this._driftMission||0)/c.target,0,1);if(c.id==='speed')return clamp((this._speedHint||0)/c.target,0,1);return 0}
-  get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:'夜行完成'};if(c.id==='sprint')return{title:c.title,text:`Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`${Math.round(this._speedHint||0)} / ${c.target} km/h · 穿越綠色 Gate`}}
-  summary(){const elapsed=(performance.now()-this.startedAt)/1000;const rank=this.score>9000?'S':this.score>6500?'A':this.score>4500?'B':'C';return{score:Math.round(this.score),time:elapsed,bestCombo:this.bestCombo,rank}}
+  get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:`${this.routeName} · 夜行完成`};if(c.id==='sprint')return{title:c.title,text:`${this.routeName} · Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${this.routeName} · ${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`${this.routeName} · ${Math.round(this._speedHint||0)} / ${c.target} km/h · 穿越綠色 Gate`}}
+  summary(){const elapsed=(performance.now()-this.startedAt)/1000;const rank=this.score>9000?'S':this.score>6500?'A':this.score>4500?'B':'C';return{score:Math.round(this.score),time:elapsed,bestCombo:this.bestCombo,rank,routeIndex:this.routeIndex,routeName:this.routeName}}
 }

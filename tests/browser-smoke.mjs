@@ -84,7 +84,7 @@ async function runDesktop(browser){
       return{minUpY,finalUpY:finalUp.y,maxSpeed,maxRollPitchRate,position:{x:v.position.x,y:v.position.y,z:v.position.z}};
     }finally{g.city.staticBodies.forEach((b,i)=>{b.collisionFilterMask=masks[i]})}
   });
-  if(!(stability.minUpY>.2&&stability.finalUpY>.55&&stability.maxRollPitchRate<3.2))throw new Error(`Rollover stability failed: ${JSON.stringify(stability)}`);
+  if(!(stability.minUpY>.65&&stability.finalUpY>.8&&stability.maxRollPitchRate<5.5))throw new Error(`Rollover stability failed: ${JSON.stringify(stability)}`);
 
   const nitroReach=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,v=g.vehicle;

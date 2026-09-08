@@ -17,8 +17,9 @@ const damp=(a,b,lambda,dt)=>THREE.MathUtils.lerp(a,b,1-Math.exp(-lambda*dt));
 
 export class Game{
   constructor(container){
-    this.container=container;this.state='menu';this.clock=new THREE.Clock();this.accumulator=0;this.fixedDt=1/60;this.frame=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraImpulse=0;this.lastCollisionAt=0;
-    this._renderer();this._physics();this._world();this._systems();this._events();this._restoreSettings();this._resize();
+    this.container=container;this.state='menu';this.clock=new THREE.Clock();this.accumulator=0;this.fixedDt=1/60;this.frame=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraImpulse=0;this.lastCollisionAt=0;this.flipTimer=0;this.recoveryCooldown=0;
+    this.records=this._readRecords();
+    this._renderer();this._physics();this._world();this._systems();this._events();this._restoreSettings();this.hud.setRecords(this.records);this._resize();
     this._debug();this._loop=()=>this._tick();requestAnimationFrame(this._loop);
   }
 
@@ -46,7 +47,7 @@ export class Game{
 
   _systems(){
     this.hud=new HUD();this.input=new Input();this.audio=new AudioManager();this.effects=new Effects(this.scene);
-    this.challenges=new ChallengeSystem(this.scene,{onToast:t=>{this.hud.toast(t);this.audio.success();this.cameraImpulse=Math.min(.42,this.cameraImpulse+.13)},onComplete:s=>this._complete(s)});
+    this.challenges=new ChallengeSystem(this.scene,{runOffset:this.records.runs,onToast:t=>{this.hud.toast(t);this.audio.success();this.cameraImpulse=Math.min(.42,this.cameraImpulse+.13)},onComplete:s=>this._complete(s)});
     this.quality=new QualityManager(this.renderer,this.city,this.bloomPass,label=>{this.hud.qualityLabel(label);this._resize()});
     this.raycaster=new THREE.Raycaster();
     this.vehicle.chassisBody.addEventListener('collide',e=>this._collision(e));
@@ -73,16 +74,29 @@ export class Game{
   }
 
   restart(){
-    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.hud.showGame();this.hud.toast('CITY JOURNEY · START');
+    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.flipTimer=0;this.recoveryCooldown=0;this.hud.showGame();this.hud.toast(`${this.challenges.routeName} · START`);
   }
   pause(){if(this.state!=='running')return;this.state='paused';this.vehicle.setInput({throttle:0,steer:0,handbrake:true,nitro:false});this.hud.showPause()}
   resume(){if(this.state!=='paused')return;this.state='running';this.clock.getDelta();this.hud.hidePause();this.hud.showGame()}
   menu(){this.state='menu';this.vehicle.setInput({throttle:0,steer:0,handbrake:true,nitro:false});this.hud.hideGame();this.hud.showOnly('boot')}
-  _complete(summary){this.state='complete';this.vehicle.setInput({throttle:0,steer:0,handbrake:false,nitro:false});this.hud.showComplete(summary);this.audio.success()}
-  resetVehicle(){this.vehicle.reset({x:0,y:1.3,z:24},0);this.hud.toast('車輛已重置')}
+  _complete(summary){
+    this.state='complete';this.vehicle.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
+    const prev=this.records,first=prev.runs===0;
+    const newScore=first||summary.score>prev.bestScore;const newTime=first||prev.bestTime<=0||summary.time<prev.bestTime;const newCombo=first||summary.bestCombo>prev.bestCombo;
+    const routes={...(prev.routes||{})};routes[summary.routeName]=(routes[summary.routeName]||0)+1;
+    this.records={runs:prev.runs+1,bestScore:newScore?summary.score:prev.bestScore,bestTime:newTime?summary.time:prev.bestTime,bestCombo:newCombo?summary.bestCombo:prev.bestCombo,lastRoute:summary.routeName,routes};
+    try{localStorage.setItem('neon-racer-records',JSON.stringify(this.records))}catch{}
+    summary.records={...this.records,first,newScore,newTime,newCombo};this.hud.setRecords(this.records);this.hud.showComplete(summary);this.audio.success();
+  }
+  resetVehicle(){this.vehicle.reset({x:0,y:1.3,z:24},0);this.flipTimer=0;this.recoveryCooldown=.8;this.challenges.lastPosition={x:this.vehicle.position.x,z:this.vehicle.position.z};this.hud.toast('車輛已重置')}
+  recoverVehicle(){
+    const pos=this.vehicle.position;const tq=new THREE.Quaternion(this.vehicle.quaternion.x,this.vehicle.quaternion.y,this.vehicle.quaternion.z,this.vehicle.quaternion.w);const forward=new THREE.Vector3(0,0,-1).applyQuaternion(tq);const yaw=Math.atan2(-forward.x,-forward.z);
+    this.vehicle.reset({x:clamp(pos.x,-210,210),y:1.35,z:clamp(pos.z,-210,210)},yaw);this.flipTimer=0;this.recoveryCooldown=2.2;this.challenges.lastPosition={x:this.vehicle.position.x,z:this.vehicle.position.z};this.cameraImpulse=Math.min(.3,this.cameraImpulse+.08);this.hud.toast('AUTO RECOVERY · 回正');
+  }
 
   applySettings(s){this.motionEffects=s.motion;this.quality.apply(s);this._resize()}
   _restoreSettings(){let s={quality:'auto',resolution:1,bloom:true,shadows:true,motion:true};try{s={...s,...JSON.parse(localStorage.getItem('neon-racer-settings')||'{}')}}catch{}this.hud.setSettings(s);this.applySettings(s)}
+  _readRecords(){let r={runs:0,bestScore:0,bestTime:0,bestCombo:1,routes:{}};try{const saved=JSON.parse(localStorage.getItem('neon-racer-records')||'{}');r={...r,...saved,routes:saved.routes&&typeof saved.routes==='object'?saved.routes:{}}}catch{}return r}
 
   _collision(event){
     const obstacle=event?.body;
@@ -109,9 +123,15 @@ export class Game{
     while(this.accumulator>=this.fixedDt&&steps<15){this.vehicle.update(this.fixedDt);this.physics.step(this.fixedDt);this.accumulator-=this.fixedDt;steps++}
     if(steps>=15&&this.accumulator>=this.fixedDt)this.accumulator%=this.fixedDt;
     const simDt=Math.max(visualDt,steps*this.fixedDt);
-    this.vehicle._syncVisuals();this.challenges.update(simDt,this.vehicle);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
+    this.vehicle._syncVisuals();this._recovery(simDt);this.challenges.update(simDt,this.vehicle);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
     this.cameraYaw=damp(this.cameraYaw,input.cameraX*.8,2.4,visualDt);this.cameraPitch=damp(this.cameraPitch,.13+input.cameraY*.14,2.2,visualDt);
     if(this.vehicle.position.y<-4||Math.abs(this.vehicle.position.x)>225||Math.abs(this.vehicle.position.z)>225)this.resetVehicle();
+  }
+
+  _recovery(dt){
+    this.recoveryCooldown=Math.max(0,this.recoveryCooldown-dt);const q=this.vehicle.quaternion;const upY=1-2*(q.x*q.x+q.z*q.z);const stranded=upY<.35&&this.vehicle.position.y<1.8&&this.vehicle.speedKmh<14;
+    if(stranded)this.flipTimer+=dt;else this.flipTimer=Math.max(0,this.flipTimer-dt*2.5);
+    if(this.flipTimer>1.45&&this.recoveryCooldown<=0)this.recoverVehicle();
   }
 
   _ambient(dt){
@@ -149,5 +169,5 @@ export class Game{
     this.debugVisible=new URLSearchParams(location.search).has('debug');this.debug=document.createElement('pre');this.debug.style.cssText='position:fixed;z-index:90;left:8px;top:8px;margin:0;padding:8px 10px;border-radius:9px;background:#000a;color:#9ff;font:10px/1.45 ui-monospace,monospace;pointer-events:none;white-space:pre-wrap';document.body.appendChild(this.debug);this.debug.style.display=this.debugVisible?'block':'none';this.fpsAvg=60
   }
   toggleDebug(){this.debugVisible=!this.debugVisible;this.debug.style.display=this.debugVisible?'block':'none'}
-  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,Math.min(.05,dt));const info=this.renderer.info.render;this.debug.textContent=`V0.8.0 DEBUG\nFPS ${this.fpsAvg.toFixed(0)} · calls ${info.calls} · tris ${info.triangles}\nspeed ${this.vehicle.speedKmh.toFixed(0)} km/h · nitro ${(this.vehicle.nitro*100).toFixed(0)}%\npos ${this.vehicle.position.x.toFixed(1)}, ${this.vehicle.position.y.toFixed(1)}, ${this.vehicle.position.z.toFixed(1)}\nchallenge ${this.challenges.challengeIndex+1}/3 · score ${Math.round(this.challenges.score)}\nquality ${this.quality.requested}/${this.quality.effective}\nGPU ${this.quality.rendererName}`}
+  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,Math.min(.05,dt));const info=this.renderer.info.render;this.debug.textContent=`V0.8.0 DEBUG\nFPS ${this.fpsAvg.toFixed(0)} · calls ${info.calls} · tris ${info.triangles}\nspeed ${this.vehicle.speedKmh.toFixed(0)} km/h · nitro ${(this.vehicle.nitro*100).toFixed(0)}%\npos ${this.vehicle.position.x.toFixed(1)}, ${this.vehicle.position.y.toFixed(1)}, ${this.vehicle.position.z.toFixed(1)}\nroute ${this.challenges.routeName} · challenge ${this.challenges.challengeIndex+1}/3 · score ${Math.round(this.challenges.score)}\nquality ${this.quality.requested}/${this.quality.effective}\nGPU ${this.quality.rendererName}`}
 }

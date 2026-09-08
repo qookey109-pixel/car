@@ -24,29 +24,32 @@ export class CityWorld{
     const roadMat=new THREE.MeshStandardMaterial({color:0x172734,roughness:.56,metalness:.16,emissive:0x07121d,emissiveIntensity:.1});
     const curbMat=new THREE.MeshStandardMaterial({color:0x89939a,roughness:.72,metalness:.08});
     const walkMat=new THREE.MeshStandardMaterial({color:0x2a333b,roughness:.88,metalness:.02});
-    const roadPositions=[-180,-120,-60,0,60,120,180];
+    const edgeMat=new THREE.MeshBasicMaterial({color:0x9fc0c9,transparent:true,opacity:.72});
+    const roadPositions=[-180,-120,-60,0,60,120,180],dummy=new THREE.Object3D();
+
+    const roadGeo=new THREE.BoxGeometry(18,.035,420),roadInstances=[];
+    const curbGeo=new THREE.BoxGeometry(.45,.12,420),curbInstances=[];
+    const walkGeo=new THREE.BoxGeometry(2.3,.06,420),walkInstances=[];
+    const edgeGeo=new THREE.BoxGeometry(.08,.018,420),edgeInstances=[];
     for(const p of roadPositions){
-      const a=new THREE.Mesh(new THREE.BoxGeometry(18,.035,420),roadMat);a.position.set(p,.018,0);a.receiveShadow=true;this.group.add(a);
-      const b=new THREE.Mesh(new THREE.BoxGeometry(420,.035,18),roadMat);b.position.set(0,.019,p);b.receiveShadow=true;this.group.add(b);
+      roadInstances.push([p,.018,0,0],[0,.019,p,Math.PI/2]);
       for(const side of [-1,1]){
-        const ca=new THREE.Mesh(new THREE.BoxGeometry(.45,.12,420),curbMat);ca.position.set(p+side*9.2,.06,0);this.group.add(ca);
-        const cb=new THREE.Mesh(new THREE.BoxGeometry(420,.12,.45),curbMat);cb.position.set(0,.06,p+side*9.2);this.group.add(cb);
-        const wa=new THREE.Mesh(new THREE.BoxGeometry(2.3,.06,420),walkMat);wa.position.set(p+side*10.55,.035,0);wa.receiveShadow=true;this.group.add(wa);
-        const wb=new THREE.Mesh(new THREE.BoxGeometry(420,.06,2.3),walkMat);wb.position.set(0,.036,p+side*10.55);wb.receiveShadow=true;this.group.add(wb);
+        curbInstances.push([p+side*9.2,.06,0,0],[0,.06,p+side*9.2,Math.PI/2]);
+        walkInstances.push([p+side*10.55,.035,0,0],[0,.036,p+side*10.55,Math.PI/2]);
+        edgeInstances.push([p+side*7.1,.049,0,0],[0,.05,p+side*7.1,Math.PI/2]);
       }
     }
-    const dashGeo=new THREE.BoxGeometry(.16,.025,4.2),dashMat=new THREE.MeshBasicMaterial({color:0xe7f0ed});
-    const marks=[];
-    for(const p of roadPositions){for(let z=-200;z<=200;z+=12)marks.push([p,.045,z,0]);for(let x=-200;x<=200;x+=12)marks.push([x,.046,p,Math.PI/2])}
-    const inst=new THREE.InstancedMesh(dashGeo,dashMat,marks.length);const dummy=new THREE.Object3D();marks.forEach((m,i)=>{dummy.position.set(m[0],m[1],m[2]);dummy.rotation.y=m[3];dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix)});inst.instanceMatrix.needsUpdate=true;this.group.add(inst);
+    const makeInst=(geo,mat,records,receiveShadow=false)=>{const mesh=new THREE.InstancedMesh(geo,mat,records.length);records.forEach((m,i)=>{dummy.position.set(m[0],m[1],m[2]);dummy.rotation.set(0,m[3],0);dummy.scale.set(1,1,1);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix)});mesh.instanceMatrix.needsUpdate=true;mesh.receiveShadow=receiveShadow;this.group.add(mesh);return mesh};
+    makeInst(roadGeo,roadMat,roadInstances,true);makeInst(curbGeo,curbMat,curbInstances);makeInst(walkGeo,walkMat,walkInstances,true);makeInst(edgeGeo,edgeMat,edgeInstances);
 
-    const edgeMat=new THREE.MeshBasicMaterial({color:0x9fc0c9,transparent:true,opacity:.72});
-    const edgeGeo=new THREE.BoxGeometry(.08,.018,420);for(const p of roadPositions)for(const side of [-1,1]){const line=new THREE.Mesh(edgeGeo,edgeMat);line.position.set(p+side*7.1,.049,0);this.group.add(line);const lineB=new THREE.Mesh(edgeGeo,edgeMat);lineB.rotation.y=Math.PI/2;lineB.position.set(0,.05,p+side*7.1);this.group.add(lineB)}
+    const dashGeo=new THREE.BoxGeometry(.16,.025,4.2),dashMat=new THREE.MeshBasicMaterial({color:0xe7f0ed});
+    const marks=[];for(const p of roadPositions){for(let z=-200;z<=200;z+=12)marks.push([p,.045,z,0]);for(let x=-200;x<=200;x+=12)marks.push([x,.046,p,Math.PI/2])}
+    makeInst(dashGeo,dashMat,marks);
 
     const crossGeo=new THREE.BoxGeometry(.42,.025,4.8),crossMat=new THREE.MeshBasicMaterial({color:0xe9f0e8,transparent:true,opacity:.9});
     const crossings=[];for(const x of roadPositions)for(const z of roadPositions){for(let i=-4;i<=4;i++){crossings.push([x+i*1.15,.054,z-6.2,0]);crossings.push([x-6.2,.055,z+i*1.15,Math.PI/2])}}
-    const crossInst=new THREE.InstancedMesh(crossGeo,crossMat,crossings.length);crossings.forEach((m,i)=>{dummy.position.set(m[0],m[1],m[2]);dummy.rotation.y=m[3];dummy.updateMatrix();crossInst.setMatrixAt(i,dummy.matrix)});crossInst.instanceMatrix.needsUpdate=true;this.group.add(crossInst);
-    this.roadPositions=roadPositions;
+    makeInst(crossGeo,crossMat,crossings);
+    this.roadPositions=roadPositions;this.roadRenderGroups=6;
   }
 
   _buildings(){
@@ -67,10 +70,7 @@ export class CityWorld{
         const x=bx+(r()-.5)*26,z=bz+(r()-.5)*26;
         records.push({x,z,w,d,h,color:palette[Math.floor(r()*palette.length)]});
         const floors=Math.max(2,Math.min(8,Math.floor(h/5)));
-        for(let f=1;f<=floors;f++)if(r()>.18){
-          const y=2.2+f*(h/(floors+1));windows.push({x,y,z:z-d/2-.055,w:w*.72,rot:0});
-          if(r()>.42)windows.push({x:x+w/2+.055,y,z,w:d*.68,rot:Math.PI/2});
-        }
+        for(let f=1;f<=floors;f++)if(r()>.18){const y=2.2+f*(h/(floors+1));windows.push({x,y,z:z-d/2-.055,w:w*.72,rot:0});if(r()>.42)windows.push({x:x+w/2+.055,y,z,w:d*.68,rot:Math.PI/2})}
         if(r()>.42)signs.push({x:x+(r()-.5)*w*.5,y:3.1+r()*5,z:z-d/2-.12,w:2.2+r()*3.8,h:1+r()*2.1});
         if(r()>.28)shops.push({x,y:1.45,z:z-d/2-.09,w:w*.72,h:2.15,color:shopPalette[Math.floor(r()*shopPalette.length)]});
         if(r()>.48)roofs.push({x:x+(r()-.5)*w*.25,y:h+.45,z:z+(r()-.5)*d*.25,w:2.5+r()*4,h:.9+r()*1.3,d:2.2+r()*3.5});
@@ -100,7 +100,7 @@ export class CityWorld{
     const crownGeo=new THREE.IcosahedronGeometry(1.15,1),crownMat=new THREE.MeshStandardMaterial({color:0x2b7655,roughness:.94,emissive:0x0b2018,emissiveIntensity:.22});
     const treePos=[];for(let i=0;i<72;i++){const road=this.roadPositions[Math.floor(r()*this.roadPositions.length)],along=-190+r()*380;if(r()>.5)treePos.push([road-7.6,.8,along]);else treePos.push([along,.8,road-7.6])}
     const trunks=new THREE.InstancedMesh(trunkGeo,trunkMat,treePos.length),crowns=new THREE.InstancedMesh(crownGeo,crownMat,treePos.length);treePos.forEach((p,i)=>{dummy.position.set(...p);dummy.rotation.set(0,0,0);dummy.scale.set(1,1,1);dummy.updateMatrix();trunks.setMatrixAt(i,dummy.matrix);dummy.position.set(p[0],2.25,p[2]);dummy.scale.set(.85+r()*.5,.85+r()*.5,.85+r()*.5);dummy.updateMatrix();crowns.setMatrixAt(i,dummy.matrix)});trunks.instanceMatrix.needsUpdate=true;crowns.instanceMatrix.needsUpdate=true;trunks.castShadow=false;crowns.castShadow=false;this.group.add(trunks,crowns);
-    this.stats={...(this.stats||{}),streetLights:lampPos.length,trees:treePos.length};
+    this.stats={...(this.stats||{}),streetLights:lampPos.length,trees:treePos.length,roadRenderGroups:this.roadRenderGroups};
   }
 
   _river(){

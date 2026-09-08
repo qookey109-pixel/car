@@ -48,6 +48,14 @@ export class VehicleController{
     const glow=new THREE.MeshStandardMaterial({color:0x6bf7ff,emissive:0x28dfff,emissiveIntensity:3.2,roughness:.28});
     const redGlow=new THREE.MeshStandardMaterial({color:0xff5870,emissive:0xff173d,emissiveIntensity:3.4,roughness:.28});
     const accent=new THREE.MeshBasicMaterial({color:0x58ecff,transparent:true,opacity:.9});
+    const addStaticInstances=(geometry,material,transforms,name)=>{
+      const mesh=new THREE.InstancedMesh(geometry,material,transforms.length),dummy=new THREE.Object3D();
+      mesh.name=name;
+      transforms.forEach((t,i)=>{
+        dummy.position.set(...t.p);dummy.rotation.set(...(t.r||[0,0,0]));dummy.scale.set(...(t.s||[1,1,1]));dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
+      });
+      mesh.instanceMatrix.needsUpdate=true;this.visualRoot.add(mesh);return mesh;
+    };
 
     const body=new THREE.Mesh(new THREE.BoxGeometry(1.9,.5,3.62),paint);body.position.y=.08;body.castShadow=true;body.receiveShadow=true;this.visualRoot.add(body);
     const shoulder=new THREE.Mesh(new THREE.BoxGeometry(1.98,.22,2.42),paintDark);shoulder.position.set(0,.34,.03);shoulder.castShadow=true;this.visualRoot.add(shoulder);
@@ -57,19 +65,25 @@ export class VehicleController{
     const roof=new THREE.Mesh(new THREE.BoxGeometry(1.28,.07,.9),dark);roof.position.set(0,.95,.14);this.visualRoot.add(roof);
     const centerStripe=new THREE.Mesh(new THREE.BoxGeometry(.16,.025,2.72),accent);centerStripe.position.set(0,.54,-.2);this.visualRoot.add(centerStripe);
 
-    const fenderGeo=new THREE.BoxGeometry(.28,.28,.9);for(const x of [-1.0,1.0])for(const z of [-1.24,1.24]){const f=new THREE.Mesh(fenderGeo,paintDark);f.position.set(x,.06,z);f.rotation.y=x*z>0?.035:-.035;this.visualRoot.add(f)}
-    const skirtGeo=new THREE.BoxGeometry(.14,.12,2.5);for(const x of [-1.0,1.0]){const s=new THREE.Mesh(skirtGeo,dark);s.position.set(x,-.12,.05);this.visualRoot.add(s);const strip=new THREE.Mesh(new THREE.BoxGeometry(.035,.035,2.2),accent);strip.position.set(x*1.01,-.03,.02);this.visualRoot.add(strip)}
+    addStaticInstances(new THREE.BoxGeometry(.28,.28,.9),paintDark,[
+      {p:[-1,.06,-1.24],r:[0,.035,0]},{p:[-1,.06,1.24],r:[0,-.035,0]},
+      {p:[1,.06,-1.24],r:[0,-.035,0]},{p:[1,.06,1.24],r:[0,.035,0]}
+    ],'PlayerFenders');
+    addStaticInstances(new THREE.BoxGeometry(.14,.12,2.5),dark,[{p:[-1,-.12,.05]},{p:[1,-.12,.05]}],'PlayerSkirts');
+    addStaticInstances(new THREE.BoxGeometry(.035,.035,2.2),accent,[{p:[-1.01,-.03,.02]},{p:[1.01,-.03,.02]}],'PlayerSideAccents');
 
     const splitter=new THREE.Mesh(new THREE.BoxGeometry(1.82,.08,.32),dark);splitter.position.set(0,-.18,-1.84);this.visualRoot.add(splitter);
     const rearDiffuser=new THREE.Mesh(new THREE.BoxGeometry(1.75,.1,.32),dark);rearDiffuser.position.set(0,-.16,1.82);this.visualRoot.add(rearDiffuser);
     const wing=new THREE.Mesh(new THREE.BoxGeometry(1.72,.07,.36),dark);wing.position.set(0,.68,1.61);this.visualRoot.add(wing);
-    const wingPostGeo=new THREE.BoxGeometry(.07,.48,.07);[-.6,.6].forEach(x=>{const p=new THREE.Mesh(wingPostGeo,dark);p.position.set(x,.45,1.5);this.visualRoot.add(p)});
+    addStaticInstances(new THREE.BoxGeometry(.07,.48,.07),dark,[{p:[-.6,.45,1.5]},{p:[.6,.45,1.5]}],'PlayerWingPosts');
 
-    [-.58,.58].forEach(x=>{const h=new THREE.Mesh(new THREE.BoxGeometry(.42,.14,.075),glow);h.position.set(x,.2,-1.88);this.visualRoot.add(h)});
+    addStaticInstances(new THREE.BoxGeometry(.42,.14,.075),glow,[{p:[-.58,.2,-1.88]},{p:[.58,.2,-1.88]}],'PlayerHeadlampMeshes');
     const tailBar=new THREE.Mesh(new THREE.BoxGeometry(1.5,.055,.07),redGlow);tailBar.position.set(0,.3,1.9);this.visualRoot.add(tailBar);
-    [-.58,.58].forEach(x=>{const t=new THREE.Mesh(new THREE.BoxGeometry(.34,.12,.075),redGlow);t.position.set(x,.26,1.91);this.visualRoot.add(t)});
+    addStaticInstances(new THREE.BoxGeometry(.34,.12,.075),redGlow,[{p:[-.58,.26,1.91]},{p:[.58,.26,1.91]}],'PlayerTailLamps');
 
-    const underMat=new THREE.MeshBasicMaterial({color:0x16dfff,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
+    // PlaneGeometry faces +Y after the -90° X rotation, so a second transparent back-face
+    // pass is unnecessary for the chase camera and only costs another draw call.
+    const underMat=new THREE.MeshBasicMaterial({color:0x16dfff,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false});
     this.underglow=new THREE.Mesh(new THREE.PlaneGeometry(2.15,4.15),underMat);this.underglow.rotation.x=-Math.PI/2;this.underglow.position.y=-.33;this.visualRoot.add(this.underglow);
     this.underglowLight=new THREE.PointLight(0x2de8ff,8,7,2);this.underglowLight.position.set(0,-.05,.25);this.visualRoot.add(this.underglowLight);
 

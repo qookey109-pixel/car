@@ -2,11 +2,13 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class AudioManager{
   constructor(){
-    this.ctx=null;this.master=null;this.limiter=null;this.enabled=true;this.noiseBuffer=null;
+    this.ctx=null;this.master=null;this.limiter=null;this.enabled=true;this.noiseBuffer=null;this.vehicle=null;
     this.engineFundamental=null;this.engineHarmonic=null;this.engineSub=null;this.engineGain=null;this.engineFilter=null;this.harmonicGain=null;this.subGain=null;
     this.wind=null;this.windGain=null;this.windFilter=null;this.skid=null;this.skidGain=null;this.skidFilter=null;this.nitroAir=null;this.nitroGain=null;this.nitroFilter=null;
     this.state={initialized:false,engineHz:0,engineGain:0,skidGain:0,nitroGain:0,windGain:0,drift:0};
   }
+
+  attachVehicle(vehicle){this.vehicle=vehicle;return this}
 
   async init(){
     if(this.ctx){if(this.ctx.state==='suspended')await this.ctx.resume();return}
@@ -37,9 +39,9 @@ export class AudioManager{
   _skid(){const c=this.ctx;this.skid=this._loopNoise();this.skidFilter=c.createBiquadFilter();this.skidFilter.type='bandpass';this.skidFilter.frequency.value=1250;this.skidFilter.Q.value=.75;this.skidGain=c.createGain();this.skidGain.gain.value=.0001;this.skid.connect(this.skidFilter);this.skidFilter.connect(this.skidGain);this.skidGain.connect(this.master);this.skid.start()}
   _nitro(){const c=this.ctx;this.nitroAir=this._loopNoise();this.nitroFilter=c.createBiquadFilter();this.nitroFilter.type='bandpass';this.nitroFilter.frequency.value=920;this.nitroFilter.Q.value=.42;this.nitroGain=c.createGain();this.nitroGain.gain.value=.0001;this.nitroAir.connect(this.nitroFilter);this.nitroFilter.connect(this.nitroGain);this.nitroGain.connect(this.master);this.nitroAir.start()}
 
-  update(speed=0,throttle=0,nitro=false,driftIntensity=0){
+  update(speed=0,throttle=0,nitro=false,driftIntensity=null){
     if(!this.ctx||!this.enabled)return;
-    const c=this.ctx,t=c.currentTime,s=Math.max(0,Number(speed)||0),load=clamp(Math.abs(Number(throttle)||0),0,1),drift=clamp(Number(driftIntensity)||0,0,1),boost=nitro?1:0;
+    const c=this.ctx,t=c.currentTime,s=Math.max(0,Number(speed)||0),load=clamp(Math.abs(Number(throttle)||0),0,1),drift=clamp(driftIntensity==null?(Number(this.vehicle?.driftIntensity)||0):(Number(driftIntensity)||0),0,1),boost=nitro?1:0;
     const engineHz=52+Math.min(212,s*1.34)+load*34;
     this.engineFundamental.frequency.setTargetAtTime(engineHz,t,.038);this.engineHarmonic.frequency.setTargetAtTime(engineHz*2.015,t,.04);this.engineSub.frequency.setTargetAtTime(engineHz*.5,t,.06);
     this.engineFilter.frequency.setTargetAtTime(clamp(430+s*8.5+load*950+boost*320,430,3200),t,.055);

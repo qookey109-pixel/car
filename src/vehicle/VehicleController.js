@@ -42,7 +42,9 @@ export class VehicleController{
     const paint=new THREE.MeshPhysicalMaterial({color:0x1688ff,metalness:.68,roughness:.22,clearcoat:1,clearcoatRoughness:.1,emissive:0x03152d,emissiveIntensity:.28});
     const paintDark=new THREE.MeshPhysicalMaterial({color:0x0757b5,metalness:.66,roughness:.24,clearcoat:.9,clearcoatRoughness:.12});
     const dark=new THREE.MeshStandardMaterial({color:0x080d14,metalness:.72,roughness:.28});
-    const glass=new THREE.MeshPhysicalMaterial({color:0x0b2946,metalness:.12,roughness:.08,transmission:.2,transparent:true,opacity:.86,clearcoat:1});
+    // Keep the tinted transparent cabin without MeshPhysicalMaterial transmission. Three.js
+    // transmission adds a full-scene prepass, which doubled city/wheel rendering on Safari LOW.
+    const glass=new THREE.MeshPhysicalMaterial({color:0x0b2946,metalness:.12,roughness:.08,transparent:true,opacity:.86,clearcoat:1});
     const glow=new THREE.MeshStandardMaterial({color:0x6bf7ff,emissive:0x28dfff,emissiveIntensity:3.2,roughness:.28});
     const redGlow=new THREE.MeshStandardMaterial({color:0xff5870,emissive:0xff173d,emissiveIntensity:3.4,roughness:.28});
     const accent=new THREE.MeshBasicMaterial({color:0x58ecff,transparent:true,opacity:.9});
@@ -79,14 +81,22 @@ export class VehicleController{
     const tireMat=new THREE.MeshStandardMaterial({color:0x07090c,roughness:.65,metalness:.1});
     const rimMat=new THREE.MeshStandardMaterial({color:0xc2d1df,metalness:.92,roughness:.18});
     const brakeMat=new THREE.MeshStandardMaterial({color:0x2ddfff,emissive:0x18a9d8,emissiveIntensity:1.5,metalness:.35,roughness:.3});
-    this.wheelMeshes=[];
-    for(let i=0;i<4;i++){
-      const g=new THREE.Group();
-      const tire=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.24,20),tireMat);tire.rotation.z=Math.PI/2;tire.castShadow=true;g.add(tire);
-      const rim=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,.25,14),rimMat);rim.rotation.z=Math.PI/2;g.add(rim);
-      const hub=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.26,10),brakeMat);hub.rotation.z=Math.PI/2;g.add(hub);
-      this.scene.add(g);this.wheelMeshes.push(g);
-    }
+    const tireGeo=new THREE.CylinderGeometry(.37,.37,.24,20);tireGeo.rotateZ(Math.PI/2);
+    const rimGeo=new THREE.CylinderGeometry(.21,.21,.25,14);rimGeo.rotateZ(Math.PI/2);
+    const hubGeo=new THREE.CylinderGeometry(.075,.075,.26,10);hubGeo.rotateZ(Math.PI/2);
+    this.wheelInstances=[
+      new THREE.InstancedMesh(tireGeo,tireMat,4),
+      new THREE.InstancedMesh(rimGeo,rimMat,4),
+      new THREE.InstancedMesh(hubGeo,brakeMat,4)
+    ];
+    this.wheelInstances[0].name='PlayerTires';this.wheelInstances[0].castShadow=true;
+    this.wheelInstances[1].name='PlayerRims';this.wheelInstances[2].name='PlayerHubs';
+    this.wheelInstances.forEach(mesh=>{mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);mesh.frustumCulled=false;this.scene.add(mesh)});
+    // Preserve a four-entry transform surface for diagnostics while rendering the wheels in
+    // three instanced batches (tire/rim/hub) instead of twelve independent mesh draw calls.
+    this.wheelMeshes=Array.from({length:4},()=>new THREE.Group());
+    this._wheelDummy=new THREE.Object3D();
+    this._syncVisuals();
   }
 
   setInput(next){Object.assign(this.input,next)}
@@ -176,11 +186,13 @@ export class VehicleController{
   _syncVisuals(){
     const p=this.chassisBody.position,q=this.chassisBody.quaternion;
     this.visualRoot.position.set(p.x,p.y,p.z);this.visualRoot.quaternion.set(q.x,q.y,q.z,q.w);
-    for(let i=0;i<this.wheelMeshes.length;i++){
-      this.vehicle.updateWheelTransform(i);const t=this.vehicle.wheelInfos[i].worldTransform;
-      this.wheelMeshes[i].position.set(t.position.x,t.position.y,t.position.z);
-      this.wheelMeshes[i].quaternion.set(t.quaternion.x,t.quaternion.y,t.quaternion.z,t.quaternion.w);
+    for(let i=0;i<4;i++){
+      this.vehicle.updateWheelTransform(i);const t=this.vehicle.wheelInfos[i].worldTransform,compat=this.wheelMeshes[i];
+      compat.position.set(t.position.x,t.position.y,t.position.z);compat.quaternion.set(t.quaternion.x,t.quaternion.y,t.quaternion.z,t.quaternion.w);
+      this._wheelDummy.position.copy(compat.position);this._wheelDummy.quaternion.copy(compat.quaternion);this._wheelDummy.scale.set(1,1,1);this._wheelDummy.updateMatrix();
+      this.wheelInstances.forEach(mesh=>mesh.setMatrixAt(i,this._wheelDummy.matrix));
     }
+    this.wheelInstances.forEach(mesh=>{mesh.instanceMatrix.needsUpdate=true});
   }
 
   reset(position={x:0,y:1.2,z:24},yaw=0){

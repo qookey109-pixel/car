@@ -39,6 +39,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: npm run test:browser
+      - name: Steering direction and reverse contract
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/control-direction-smoke.mjs
       - name: Upload visual QA screenshots
         if: always()
         uses: actions/upload-artifact@v4

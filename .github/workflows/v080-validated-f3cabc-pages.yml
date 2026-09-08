@@ -1,0 +1,91 @@
+name: V0.8.0 Validated f3cabc Preview
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-f3cabc
+    paths:
+      - .github/workflows/v080-validated-f3cabc-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: v080-validated-f3cabc-preview
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout preserved Safari stability root
+        uses: actions/checkout@v6
+        with:
+          ref: aedf54c22e3f66c16cb4aa06a9dff4030bebbea1
+          path: root-source
+
+      - name: Checkout previous validated V0.8.0 preview
+        uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+          path: previous-source
+
+      - name: Checkout exact validated optimized V0.8.0 candidate
+        uses: actions/checkout@v6
+        with:
+          ref: f3cabcbd15d2b9118328b2774f9c08036dcd7b33
+          path: latest-source
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build preserved Safari stability root
+        working-directory: root-source
+        run: |
+          npm install
+          npm run build
+
+      - name: Build previous validated V0.8.0 preview
+        working-directory: previous-source
+        run: |
+          npm install
+          npm run build
+
+      - name: Build exact validated optimized V0.8.0 candidate
+        working-directory: latest-source
+        run: |
+          npm install
+          npm run build
+
+      - name: Assemble fixed preview site
+        run: |
+          mkdir -p site/v0.8.0-76e9378 site/v0.8.0-f3cabc
+          cp -R root-source/dist/. site/
+          cp -R previous-source/dist/. site/v0.8.0-76e9378/
+          cp -R latest-source/dist/. site/v0.8.0-f3cabc/
+          printf '%s\n' '76e9378ce01941caabe68555d2c0f83055c6980b' > site/v0.8.0-76e9378/PREVIEW_SHA.txt
+          printf '%s\n' 'f3cabcbd15d2b9118328b2774f9c08036dcd7b33' > site/v0.8.0-f3cabc/PREVIEW_SHA.txt
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: v080-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy preserved root plus fixed validated previews
+        id: deployment
+        uses: actions/deploy-pages@v4

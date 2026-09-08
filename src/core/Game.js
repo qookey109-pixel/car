@@ -130,7 +130,8 @@ export class Game{
   _cameraCollision(origin,desired){
     if(this.frame%3!==0&&this._lastSafeCamera)return this._lastSafeCamera.clone();
     const dir=desired.clone().sub(origin),len=dir.length();if(len<.1)return desired;dir.normalize();this.raycaster.set(origin.clone().add(new THREE.Vector3(0,1,0)),dir);this.raycaster.far=len;
-    const hits=this.raycaster.intersectObjects(this.city.group.children,true).filter(h=>h.object.visible&&h.distance>.4);
+    const targets=this.city.cameraOccluders?.length?this.city.cameraOccluders:this.city.group.children;
+    const hits=this.raycaster.intersectObjects(targets,false).filter(h=>h.object.visible&&h.distance>.4);
     let safe=desired;if(hits.length&&hits[0].distance<len-1){safe=origin.clone().add(dir.multiplyScalar(Math.max(2.3,hits[0].distance-.6)));safe.y=Math.max(safe.y,origin.y+1.15)}
     this._lastSafeCamera=safe.clone();return safe;
   }

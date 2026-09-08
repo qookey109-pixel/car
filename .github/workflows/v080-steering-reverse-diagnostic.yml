@@ -1,0 +1,75 @@
+name: V0.8.0 Steering Reverse Diagnostic
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-76e9378
+    paths:
+      - .github/workflows/v080-steering-reverse-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare steering/reverse probe
+        run: |
+          cat > tests/steering-reverse-diagnostic.tmp.mjs <<'EOF'
+          import {chromium} from '@playwright/test';
+          import fs from 'node:fs';
+          fs.mkdirSync('test-results/steering-reverse',{recursive:true});
+          const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+          try{
+            const page=await browser.newPage({viewport:{width:1280,height:720}});
+            await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+            await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+            await page.click('#startGame');
+            await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+            const result=await page.evaluate(()=>{
+              const g=window.__NEON_RACER__.game,v=g.vehicle,input=g.input;
+              g.state='paused';
+              const masks=g.city.staticBodies.map(b=>b.collisionFilterMask);g.city.staticBodies.forEach(b=>{b.collisionFilterMask=0});
+              const step=(n)=>{for(let i=0;i<n;i++){v.setInput(input.sample());v.update(g.fixedDt);g.physics.step(g.fixedDt)}};
+              const runSteer=key=>{
+                v.reset({x:0,y:1.2,z:80},0);input.keys.clear();input.keys.add('KeyW');input.keys.add(key);step(240);input.keys.clear();v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
+                return {key,x:v.position.x,z:v.position.z,speedKmh:v.speedKmh,inputSteer:(()=>{input.keys.add(key);const s=input.sample().steer;input.keys.clear();return s})()};
+              };
+              const left=runSteer('KeyA'),right=runSteer('KeyD');
+              v.reset({x:0,y:1.2,z:24},0);input.keys.clear();input.keys.add('KeyS');let peak=0,signedMin=Infinity,signedMax=-Infinity;
+              for(let i=0;i<360;i++){v.setInput(input.sample());v.update(g.fixedDt);g.physics.step(g.fixedDt);peak=Math.max(peak,v.speedKmh);const raw=v.vehicle.currentVehicleSpeedKmHour||0;signedMin=Math.min(signedMin,raw);signedMax=Math.max(signedMax,raw)}
+              input.keys.clear();v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
+              const reverse={peakSpeedKmh:peak,rawSpeedKmh:v.vehicle.currentVehicleSpeedKmHour||0,signedMin,signedMax,x:v.position.x,z:v.position.z,reverseForce:v.reverseForce};
+              g.city.staticBodies.forEach((b,i)=>{b.collisionFilterMask=masks[i]});
+              return{left,right,reverse};
+            });
+            fs.writeFileSync('test-results/steering-reverse/diagnostic.json',JSON.stringify(result,null,2));
+            console.log(JSON.stringify(result,null,2));
+          }finally{await browser.close()}
+          EOF
+      - name: Start preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/v080-steering-reverse.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/v080-steering-reverse.log; exit 1
+      - name: Run diagnostic
+        run: node tests/steering-reverse-diagnostic.tmp.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v080-steering-reverse-diagnostic-76e9378
+          path: test-results/steering-reverse/
+          if-no-files-found: ignore
+          retention-days: 14

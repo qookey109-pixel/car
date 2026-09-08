@@ -1,0 +1,88 @@
+name: V0.8.0 LOW Transmission Probe
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-76e9378
+    paths:
+      - .github/workflows/v080-low-transmission-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare probe
+        run: |
+          cat > tests/low-transmission-probe.tmp.mjs <<'EOF'
+          import {chromium} from '@playwright/test';
+          import fs from 'node:fs';
+          const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+          fs.mkdirSync('test-results/low-transmission-probe',{recursive:true});
+          try{
+            const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
+            await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+            await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+            await page.click('#startGame');
+            await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+            const setup=await page.evaluate(()=>{
+              const g=window.__NEON_RACER__.game;
+              g.quality.apply({quality:'low',resolution:1,bloom:false,shadows:false});
+              const mats=[];
+              g.vehicle.visualRoot.traverse(o=>{
+                const list=Array.isArray(o.material)?o.material:[o.material];
+                for(const m of list)if(m&&typeof m.transmission==='number'&&m.transmission>0)mats.push({uuid:m.uuid,transmission:m.transmission,opacity:m.opacity,transparent:m.transparent});
+              });
+              return {mats,renderer:g.quality.rendererName,software:g.quality.softwareRenderer,effective:g.quality.effective};
+            });
+            await page.keyboard.down('KeyW');
+            await page.waitForTimeout(1200);
+            const before=[];
+            for(let i=0;i<12;i++){before.push(await page.evaluate(()=>{const g=window.__NEON_RACER__.game;return{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles,speed:g.vehicle.speedKmh}}));await page.waitForTimeout(100)}
+            const patched=await page.evaluate(()=>{
+              const g=window.__NEON_RACER__.game;let count=0;
+              g.vehicle.visualRoot.traverse(o=>{
+                const list=Array.isArray(o.material)?o.material:[o.material];
+                for(const m of list)if(m&&typeof m.transmission==='number'&&m.transmission>0){m.transmission=0;m.needsUpdate=true;count++}
+              });
+              return count;
+            });
+            await page.waitForTimeout(500);
+            const after=[];
+            for(let i=0;i<20;i++){after.push(await page.evaluate(()=>{const g=window.__NEON_RACER__.game;return{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles,speed:g.vehicle.speedKmh}}));await page.waitForTimeout(100)}
+            await page.keyboard.up('KeyW');
+            const max=a=>({calls:Math.max(...a.map(x=>x.calls)),triangles:Math.max(...a.map(x=>x.triangles)),minCalls:Math.min(...a.map(x=>x.calls)),minTriangles:Math.min(...a.map(x=>x.triangles))});
+            const result={setup,patched,before:max(before),after:max(after),afterSamples:after};
+            fs.writeFileSync('test-results/low-transmission-probe/result.json',JSON.stringify(result,null,2));
+            await page.screenshot({path:'test-results/low-transmission-probe/after.png',animations:'disabled'});
+            if(patched<1)throw new Error(`No transmission material found: ${JSON.stringify(setup)}`);
+            if(result.after.calls>60||result.after.triangles>110000)throw new Error(`Transmission-off LOW still over budget: ${JSON.stringify(result)}`);
+            console.log(`Transmission probe PASS · ${result.before.calls}/${result.before.triangles} -> ${result.after.calls}/${result.after.triangles}`);
+          }finally{await browser.close()}
+          EOF
+      - name: Start preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/low-transmission-vite.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/low-transmission-vite.log; exit 1
+      - run: node tests/low-transmission-probe.tmp.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v080-low-transmission-probe-76e9378
+          path: test-results/low-transmission-probe/
+          if-no-files-found: ignore
+          retention-days: 14

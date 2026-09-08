@@ -3,6 +3,7 @@ import fs from 'node:fs';
 
 const base=process.env.BASE_URL||'http://127.0.0.1:4173';
 fs.mkdirSync('test-results',{recursive:true});
+const shot=(page,path)=>page.screenshot({path,fullPage:false,animations:'disabled',caret:'hide'});
 
 async function runDesktop(browser){
   const page=await browser.newPage({viewport:{width:1440,height:900}});
@@ -13,7 +14,7 @@ async function runDesktop(browser){
   await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
   const gl=await page.evaluate(()=>{const c=document.querySelector('canvas');return Boolean(c&&(c.getContext('webgl2')||c.getContext('webgl')))});
   if(!gl)throw new Error('WebGL context unavailable');
-  await page.screenshot({path:'test-results/menu-desktop.png',fullPage:true});
+  await shot(page,'test-results/menu-desktop.png');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
   await page.keyboard.down('KeyW');
@@ -26,7 +27,7 @@ async function runDesktop(browser){
   if(!(driving.s.speedKmh>3))throw new Error(`Vehicle did not accelerate: ${driving.s.speedKmh} km/h`);
   if(!driving.camera.every(Number.isFinite)||!Number.isFinite(driving.fov))throw new Error(`Camera became non-finite: ${JSON.stringify(driving)}`);
   if(driving.challenge!=='sprint')throw new Error(`Unexpected initial challenge ${driving.challenge}`);
-  await page.screenshot({path:'test-results/desktop-driving.png',fullPage:true});
+  await shot(page,'test-results/desktop-driving.png');
   await page.keyboard.press('Escape');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='paused');
   await page.keyboard.press('Escape');
@@ -48,7 +49,7 @@ async function runDesktop(browser){
     return{ok:c.completed&&g.state==='complete',completed:c.completed,state:g.state,score:c.score,rank:document.getElementById('finalRank')?.textContent,completeVisible:document.getElementById('complete')?.classList.contains('visible')};
   });
   if(!progression.ok)throw new Error(`Progression/ending contract failed: ${JSON.stringify(progression)}`);
-  await page.screenshot({path:'test-results/journey-complete.png',fullPage:true});
+  await shot(page,'test-results/journey-complete.png');
   await page.click('#playAgain');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running'&&window.__NEON_RACER__.snapshot().challengeIndex===0);
 
@@ -80,7 +81,7 @@ async function runMobile(browser){
   await gas.dispatchEvent('pointerup',{pointerId:11,pointerType:'touch'});
   await drift.dispatchEvent('pointerup',{pointerId:12,pointerType:'touch'});
   await page.waitForTimeout(150);
-  await page.screenshot({path:'test-results/mobile-844x390.png',fullPage:true});
+  await shot(page,'test-results/mobile-844x390.png');
   if(errors.length)throw new Error(errors.join('\n'));
   await page.close();
 }

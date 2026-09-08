@@ -4,7 +4,7 @@ import * as CANNON from 'cannon-es';
 function rng(seed=7331){let s=seed>>>0;return()=>((s=(s*1664525+1013904223)>>>0)/4294967296)}
 
 export class CityWorld{
-  constructor(scene,physics){this.scene=scene;this.physics=physics;this.rand=rng();this.staticBodies=[];this.group=new THREE.Group();this.group.name='SanchongLuzhouCity';scene.add(this.group);this._lights();this._ground();this._roads();this._buildings();this._streetDetails();this._river();this._sky();this._bounds()}
+  constructor(scene,physics){this.scene=scene;this.physics=physics;this.rand=rng();this.staticBodies=[];this.cameraOccluders=[];this.group=new THREE.Group();this.group.name='SanchongLuzhouCity';scene.add(this.group);this._lights();this._ground();this._roads();this._buildings();this._streetDetails();this._river();this._sky();this._bounds()}
 
   _lights(){
     this.hemi=new THREE.HemisphereLight(0x9fc4ee,0x16202b,2.05);this.scene.add(this.hemi);
@@ -77,7 +77,7 @@ export class CityWorld{
       }
     }
     const bInst=new THREE.InstancedMesh(bodyGeo,bodyMat,records.length);const dmy=new THREE.Object3D();const col=new THREE.Color();
-    records.forEach((b,i)=>{dmy.position.set(b.x,b.h/2,b.z);dmy.scale.set(b.w,b.h,b.d);dmy.rotation.y=(r()-.5)*.045;dmy.updateMatrix();bInst.setMatrixAt(i,dmy.matrix);bInst.setColorAt(i,col.setHex(b.color));this._buildingCollider(b)});bInst.castShadow=false;bInst.receiveShadow=true;bInst.instanceMatrix.needsUpdate=true;bInst.instanceColor.needsUpdate=true;this.group.add(bInst);
+    records.forEach((b,i)=>{dmy.position.set(b.x,b.h/2,b.z);dmy.scale.set(b.w,b.h,b.d);dmy.rotation.y=(r()-.5)*.045;dmy.updateMatrix();bInst.setMatrixAt(i,dmy.matrix);bInst.setColorAt(i,col.setHex(b.color));this._buildingCollider(b)});bInst.castShadow=false;bInst.receiveShadow=true;bInst.instanceMatrix.needsUpdate=true;bInst.instanceColor.needsUpdate=true;this.group.add(bInst);this.cameraOccluders.push(bInst);
     const wInst=new THREE.InstancedMesh(windowGeo,windowMat,windows.length);windows.forEach((w,i)=>{dmy.position.set(w.x,w.y,w.z);dmy.scale.set(w.w,1,1);dmy.rotation.set(0,w.rot,0);dmy.updateMatrix();wInst.setMatrixAt(i,dmy.matrix)});wInst.instanceMatrix.needsUpdate=true;this.group.add(wInst);
     const sInst=new THREE.InstancedMesh(signGeo,signMat,signs.length);signs.forEach((s,i)=>{dmy.position.set(s.x,s.y,s.z);dmy.scale.set(s.w,s.h,1);dmy.rotation.set(0,0,0);dmy.updateMatrix();sInst.setMatrixAt(i,dmy.matrix)});sInst.instanceMatrix.needsUpdate=true;this.group.add(sInst);
     const shInst=new THREE.InstancedMesh(shopGeo,shopMat,shops.length);shops.forEach((s,i)=>{dmy.position.set(s.x,s.y,s.z);dmy.scale.set(s.w,s.h,1);dmy.rotation.set(0,0,0);dmy.updateMatrix();shInst.setMatrixAt(i,dmy.matrix);shInst.setColorAt(i,col.setHex(s.color))});shInst.instanceMatrix.needsUpdate=true;shInst.instanceColor.needsUpdate=true;this.group.add(shInst);
@@ -109,7 +109,7 @@ export class CityWorld{
     const glow=new THREE.Mesh(new THREE.PlaneGeometry(620,7),new THREE.MeshBasicMaterial({color:0x269ddd,transparent:true,opacity:.08,blending:THREE.AdditiveBlending,depthWrite:false}));glow.rotation.x=-Math.PI/2;glow.position.set(0,.075,-244);this.group.add(glow);
     const bankMat=new THREE.MeshStandardMaterial({color:0x355441,roughness:.92,emissive:0x0a1c12,emissiveIntensity:.16});
     [-1,1].forEach(s=>{const bank=new THREE.Mesh(new THREE.BoxGeometry(620,.18,10),bankMat);bank.position.set(0,.08,-244+s*43);bank.receiveShadow=true;this.group.add(bank)});
-    const bridgeMat=new THREE.MeshStandardMaterial({color:0x27343e,roughness:.58,metalness:.18});const bridge=new THREE.Mesh(new THREE.BoxGeometry(19,.75,96),bridgeMat);bridge.position.set(0,.46,-244);bridge.receiveShadow=true;bridge.castShadow=false;this.group.add(bridge);
+    const bridgeMat=new THREE.MeshStandardMaterial({color:0x27343e,roughness:.58,metalness:.18});const bridge=new THREE.Mesh(new THREE.BoxGeometry(19,.75,96),bridgeMat);bridge.position.set(0,.46,-244);bridge.receiveShadow=true;bridge.castShadow=false;this.group.add(bridge);this.cameraOccluders.push(bridge);
     const railMat=new THREE.MeshStandardMaterial({color:0x9dadb5,metalness:.72,roughness:.32});[-9.2,9.2].forEach(x=>{const rail=new THREE.Mesh(new THREE.BoxGeometry(.22,1.05,96),railMat);rail.position.set(x,1.15,-244);this.group.add(rail)});
   }
 

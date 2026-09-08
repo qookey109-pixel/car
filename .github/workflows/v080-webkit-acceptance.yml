@@ -55,7 +55,7 @@ jobs:
           grep -q "webkit as chromium" tests/objective-compass-smoke-webkit.tmp.mjs
           grep -q "webkit as chromium" tests/audio-feel-smoke-webkit.tmp.mjs
 
-      - name: Prepare WebKit frame pacing diagnostic
+      - name: Prepare WebKit frame pacing telemetry
         run: |
           cat > tests/webkit-frame-pacing.tmp.mjs <<'EOF'
           import {webkit} from '@playwright/test';
@@ -90,8 +90,7 @@ jobs:
             fs.writeFileSync('test-results/webkit-frame-pacing/frame-pacing.json',JSON.stringify(sample,null,2));
             await page.screenshot({path:'test-results/webkit-frame-pacing/mobile-driving.png',animations:'disabled'});
             if(errors.length)throw new Error(errors.join('\n'));
-            if(!(sample.avgFps>20&&sample.p95Ms<80))throw new Error(`WebKit frame pacing sanity failed: ${JSON.stringify(sample)}`);
-            console.log(`WebKit frame pacing PASS · ${sample.avgFps.toFixed(1)} FPS · p95 ${sample.p95Ms.toFixed(1)} ms`);
+            console.log(`WebKit telemetry · ${sample.avgFps.toFixed(1)} FPS · p95 ${sample.p95Ms.toFixed(1)} ms · CI headless only, not real Safari acceptance`);
           }finally{await browser.close()}
           EOF
 
@@ -120,7 +119,7 @@ jobs:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/audio-feel-smoke-webkit.tmp.mjs
 
-      - name: WebKit frame pacing sanity
+      - name: WebKit frame pacing telemetry
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/webkit-frame-pacing.tmp.mjs
@@ -131,5 +130,98 @@ jobs:
         with:
           name: v080-webkit-qa-76e9378
           path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  software-low-budget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout exact validated V0.8.0 candidate
+        uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Production build
+        run: npm run build
+
+      - name: Install Chromium SwiftShader
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare active software LOW budget gate
+        run: |
+          cat > tests/software-low-active-budget.tmp.mjs <<'EOF'
+          import {chromium} from '@playwright/test';
+          import fs from 'node:fs';
+          const base=process.env.BASE_URL||'http://127.0.0.1:4173/';
+          fs.mkdirSync('test-results/software-low-budget',{recursive:true});
+          const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+          try{
+            const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(e.message));
+            page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+            await page.goto(base,{waitUntil:'networkidle'});
+            await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+            await page.click('#startGame');
+            await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+            const setup=await page.evaluate(()=>{
+              const g=window.__NEON_RACER__.game;
+              g.quality.apply({quality:'low',resolution:1,bloom:false,shadows:false});
+              return {software:g.quality.softwareRenderer,rendererName:g.quality.rendererName,effective:g.quality.effective};
+            });
+            if(!setup.software||setup.effective!=='low')throw new Error(`Software LOW setup failed: ${JSON.stringify(setup)}`);
+            await page.keyboard.down('KeyW');
+            await page.keyboard.down('ShiftLeft');
+            await page.waitForTimeout(1200);
+            const samples=[];
+            for(let i=0;i<30;i++){
+              samples.push(await page.evaluate(()=>{
+                const g=window.__NEON_RACER__.game,s=window.__NEON_RACER__.snapshot();
+                return {calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles,speedKmh:s.speedKmh,position:s.position,effective:g.quality.effective};
+              }));
+              await page.waitForTimeout(100);
+            }
+            await page.keyboard.up('ShiftLeft');
+            await page.keyboard.up('KeyW');
+            const result={setup,maxCalls:Math.max(...samples.map(s=>s.calls)),maxTriangles:Math.max(...samples.map(s=>s.triangles)),samples};
+            fs.writeFileSync('test-results/software-low-budget/active-budget.json',JSON.stringify(result,null,2));
+            await page.screenshot({path:'test-results/software-low-budget/mobile-driving.png',animations:'disabled'});
+            if(errors.length)throw new Error(errors.join('\n'));
+            if(samples.some(s=>s.effective!=='low'))throw new Error(`Software LOW quality changed during sampling: ${JSON.stringify(result)}`);
+            if(result.maxCalls>60||result.maxTriangles>110000)throw new Error(`Software LOW active render budget exceeded: ${JSON.stringify({maxCalls:result.maxCalls,maxTriangles:result.maxTriangles})}`);
+            console.log(`Software LOW budget PASS · max ${result.maxCalls} calls · ${result.maxTriangles} triangles`);
+          }finally{await browser.close()}
+          EOF
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v080-software-vite.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-v080-software-vite.log
+          exit 1
+
+      - name: Software LOW active render budget
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/software-low-active-budget.tmp.mjs
+
+      - name: Upload software LOW budget evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v080-software-low-budget-76e9378
+          path: test-results/software-low-budget/
           if-no-files-found: ignore
           retention-days: 14

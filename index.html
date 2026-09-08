@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#060b12" />
+  <title>Neon Racer — Sanchong / Luzhou V0.8.0</title>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="boot" class="screen screen-visible">
+    <div class="hero-card">
+      <div class="eyebrow">NEON RACER · V0.8.0</div>
+      <h1>三蘆夜行</h1>
+      <p class="hero-copy">在雨後霓虹、河岸高架與密集街廓間完成三段城市挑戰。這不是展示場，而是一輪可以開始、完成、失敗、重玩的駕駛旅程。</p>
+      <div class="feature-row">
+        <span>Raycast Vehicle</span><span>Drift</span><span>Nitro</span><span>3 Challenges</span><span>Gamepad</span>
+      </div>
+      <div class="menu-actions">
+        <button id="startGame" class="primary">開始旅程</button>
+        <button id="openSettings">設定</button>
+        <button id="openControls">操作說明</button>
+      </div>
+      <div class="tiny-note">WASD / 方向鍵 · Space 漂移 · Shift 氮氣 · ESC 暫停 · R 重置</div>
+    </div>
+  </div>
+
+  <div id="loading" class="screen">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div id="loadingTitle">正在建立三蘆夜景…</div>
+      <div id="loadingDetail">道路、建築、車輛與挑戰系統</div>
+    </div>
+  </div>
+
+  <div id="hud" class="hud hidden">
+    <div class="hud-top-left glass">
+      <div class="hud-kicker">CITY JOURNEY</div>
+      <div id="objectiveTitle" class="objective-title">城市序章</div>
+      <div id="objectiveText" class="objective-text">前往第一個挑戰點</div>
+      <div class="progress-track"><div id="progressBar"></div></div>
+    </div>
+    <div class="hud-top-right glass speed-panel">
+      <div><span id="speed">0</span><small>km/h</small></div>
+      <b id="gear">N</b>
+      <div class="nitro-wrap"><span>N₂O</span><div class="nitro-track"><i id="nitroBar"></i></div></div>
+    </div>
+    <div class="hud-bottom-left glass score-panel">
+      <span>Score</span><b id="score">0</b>
+      <span>Combo</span><b id="combo">x1.0</b>
+    </div>
+    <div id="challengeToast" class="challenge-toast"></div>
+    <div id="qualityBadge" class="quality-badge">AUTO</div>
+  </div>
+
+  <div id="pause" class="screen">
+    <div class="modal-card compact">
+      <div class="eyebrow">PAUSED</div>
+      <h2>暫停</h2>
+      <button id="resumeGame" class="primary">繼續</button>
+      <button id="restartGame">重新開始</button>
+      <button id="pauseSettings">設定</button>
+      <button id="backToMenu">回主畫面</button>
+    </div>
+  </div>
+
+  <div id="settings" class="screen">
+    <div class="modal-card">
+      <div class="eyebrow">GRAPHICS & FEEL</div>
+      <h2>設定</h2>
+      <label>畫質
+        <select id="qualitySelect">
+          <option value="auto">Auto</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </label>
+      <label>解析度比例 <span id="resolutionValue">100%</span>
+        <input id="resolutionScale" type="range" min="60" max="120" step="10" value="100" />
+      </label>
+      <label class="toggle"><span>Bloom</span><input id="bloomToggle" type="checkbox" checked /></label>
+      <label class="toggle"><span>陰影</span><input id="shadowToggle" type="checkbox" checked /></label>
+      <label class="toggle"><span>動態鏡頭</span><input id="motionToggle" type="checkbox" checked /></label>
+      <div class="menu-actions"><button id="closeSettings" class="primary">完成</button></div>
+    </div>
+  </div>
+
+  <div id="controlsModal" class="screen">
+    <div class="modal-card">
+      <div class="eyebrow">CONTROLS</div>
+      <h2>操作</h2>
+      <div class="controls-grid">
+        <div><b>W / ↑</b><span>加速</span></div><div><b>S / ↓</b><span>煞車 / 倒車</span></div>
+        <div><b>A D / ← →</b><span>轉向</span></div><div><b>Space</b><span>手煞車 / 漂移</span></div>
+        <div><b>Shift</b><span>氮氣</span></div><div><b>R</b><span>車輛重置</span></div>
+        <div><b>ESC</b><span>暫停</span></div><div><b>Gamepad</b><span>雙搖桿 + Trigger</span></div>
+      </div>
+      <div class="menu-actions"><button id="closeControls" class="primary">返回</button></div>
+    </div>
+  </div>
+
+  <div id="complete" class="screen">
+    <div class="hero-card result-card">
+      <div class="eyebrow">JOURNEY COMPLETE</div>
+      <h1>夜行完成</h1>
+      <p id="finalRank" class="result-rank">A</p>
+      <div class="result-grid">
+        <div><span>總分</span><b id="finalScore">0</b></div>
+        <div><span>完成時間</span><b id="finalTime">00:00</b></div>
+        <div><span>最佳連段</span><b id="finalCombo">x1.0</b></div>
+      </div>
+      <div class="menu-actions">
+        <button id="playAgain" class="primary">再跑一次</button>
+        <button id="completeMenu">主畫面</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mobileControls" class="mobile-controls hidden">
+    <div class="mobile-left">
+      <button data-control="left">◀</button><button data-control="right">▶</button>
+    </div>
+    <div class="mobile-right">
+      <button data-control="drift" class="drift">DRIFT</button>
+      <button data-control="brake" class="brake">BRAKE</button>
+      <button data-control="nitro" class="nitro">N₂O</button>
+      <button data-control="gas" class="gas">GAS</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

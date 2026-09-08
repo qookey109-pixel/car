@@ -2,13 +2,15 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const expStep=(current,target,rate,dt)=>current+(target-current)*(1-Math.exp(-rate*dt));
 
 export class VehicleController{
   constructor(scene,world){
     this.scene=scene;this.world=world;
     this.input={throttle:0,steer:0,handbrake:false,nitro:false};
     this.nitro=1;this.nitroActive=false;this.driftIntensity=0;this.isDrifting=false;
-    this.engineForce=2350;this.reverseForce=1100;this.maxSteer=.48;
+    this.engineForce=1950;this.reverseForce=1000;this.maxSteer=.42;
+    this._throttleState=0;this._steerState=0;this._nitroBlend=0;
     this.spawn={position:new CANNON.Vec3(0,1.2,24),quaternion:new CANNON.Quaternion()};
     this._buildPhysics();this._buildVisual();
   }
@@ -16,15 +18,17 @@ export class VehicleController{
   _buildPhysics(){
     const chassisShape=new CANNON.Box(new CANNON.Vec3(.93,.34,1.9));
     this.chassisBody=new CANNON.Body({mass:165,material:new CANNON.Material('car'),position:this.spawn.position.clone()});
-    this.chassisBody.addShape(chassisShape,new CANNON.Vec3(0,.05,0));
-    this.chassisBody.angularDamping=.48;this.chassisBody.linearDamping=.045;
+    // Keep the body origin slightly below the geometric center. This lowers the effective
+    // center of mass without changing the visible sports-car proportions.
+    this.chassisBody.addShape(chassisShape,new CANNON.Vec3(0,.12,0));
+    this.chassisBody.angularDamping=.6;this.chassisBody.linearDamping=.06;
     this.chassisBody.allowSleep=false;
 
     this.vehicle=new CANNON.RaycastVehicle({chassisBody:this.chassisBody,indexRightAxis:0,indexUpAxis:1,indexForwardAxis:2});
     const wheel={
       radius:.37,directionLocal:new CANNON.Vec3(0,-1,0),suspensionStiffness:38,
-      suspensionRestLength:.33,frictionSlip:4.8,dampingRelaxation:2.4,dampingCompression:4.8,
-      maxSuspensionForce:100000,rollInfluence:.018,axleLocal:new CANNON.Vec3(-1,0,0),
+      suspensionRestLength:.33,frictionSlip:3.45,dampingRelaxation:2.4,dampingCompression:4.8,
+      maxSuspensionForce:100000,rollInfluence:.008,axleLocal:new CANNON.Vec3(-1,0,0),
       chassisConnectionPointLocal:new CANNON.Vec3(),maxSuspensionTravel:.28,customSlidingRotationalSpeed:-28,useCustomSlidingRotationalSpeed:true
     };
     [[-.86,0,-1.25],[.86,0,-1.25],[-.88,0,1.25],[.88,0,1.25]].forEach(([x,y,z])=>{
@@ -87,35 +91,74 @@ export class VehicleController{
 
   setInput(next){Object.assign(this.input,next)}
 
+  _stabilityAssist(dt,speed){
+    const grounded=this.vehicle.wheelInfos.reduce((n,w)=>n+(w.isInContact?1:0),0);
+    if(grounded<2)return;
+
+    const up=new CANNON.Vec3(0,1,0);this.chassisBody.quaternion.vmult(up,up);
+    // Only assist a car that is still broadly upright. Once genuinely overturned, Reset
+    // remains the deliberate recovery action rather than an invisible auto-teleport.
+    if(up.y>.2){
+      const worldUp=new CANNON.Vec3(0,1,0),axis=new CANNON.Vec3();
+      up.cross(worldUp,axis);
+      const assist=clamp(speed/45,.35,1)*this.chassisBody.mass*7.5;
+      axis.scale(assist,axis);this.chassisBody.torque.vadd(axis,this.chassisBody.torque);
+    }
+
+    // Damp roll/pitch without suppressing yaw. This is a simcade anti-roll layer and is
+    // intentionally strongest on the ground, where Safari testing exposed traction-roll.
+    const damp=clamp(1-2.5*dt,.78,1);
+    this.chassisBody.angularVelocity.x=clamp(this.chassisBody.angularVelocity.x*damp,-2.1,2.1);
+    this.chassisBody.angularVelocity.z=clamp(this.chassisBody.angularVelocity.z*damp,-2.1,2.1);
+  }
+
   update(dt){
+    dt=clamp(Number.isFinite(dt)?dt:1/60,1/240,1/20);
     const speed=Math.abs(this.vehicle.currentVehicleSpeedKmHour||0);
-    const steer=this.input.steer*this.maxSteer*clamp(1.15-speed/260,.58,1.05);
+
+    // Keyboard/mobile inputs are digital. Smooth them before they reach the physics model
+    // so pressing GAS or steering no longer becomes an instantaneous full-force impulse.
+    const throttleRate=Math.abs(this.input.throttle)>Math.abs(this._throttleState)?3.2:6.2;
+    this._throttleState=expStep(this._throttleState,this.input.throttle,throttleRate,dt);
+    this._steerState=expStep(this._steerState,this.input.steer,7.5,dt);
+
+    // Strong steering around town, progressively calmer at speed. The previous model still
+    // allowed ~16 degrees at very high speed, which could turn tyre grip into a rollover.
+    const steerScale=clamp(1-speed/160,.26,1);
+    const steer=this._steerState*this.maxSteer*steerScale;
     this.vehicle.setSteeringValue(steer,0);this.vehicle.setSteeringValue(steer,1);
 
-    const wantsForward=this.input.throttle>0.05,wantsReverse=this.input.throttle<-.05;
+    const wantsForward=this._throttleState>.05,wantsReverse=this._throttleState<-.05;
     let drive=0,brake=0;
-    // The procedural car nose, headlights, camera forward and first checkpoint all use local -Z as forward.
-    if(wantsForward)drive=this.engineForce*this.input.throttle;
-    if(wantsReverse){if(speed>7)brake=10;else drive=-this.reverseForce*Math.abs(this.input.throttle)}
+    if(wantsForward){
+      const powerCurve=clamp(1.08-speed/190,.42,1);
+      drive=this.engineForce*this._throttleState*powerCurve;
+      if(speed>165)drive*=clamp((188-speed)/23,0,1);
+    }
+    if(wantsReverse){if(speed>7)brake=10;else drive=-this.reverseForce*Math.abs(this._throttleState)}
 
-    this.nitroActive=Boolean(this.input.nitro&&wantsForward&&speed>18&&this.nitro>.02);
-    if(this.nitroActive){drive*=1.62;this.nitro=Math.max(0,this.nitro-dt*.19)}else this.nitro=Math.min(1,this.nitro+dt*.075);
-    this.nitroGlow.visible=this.nitroActive;
-    if(this.nitroActive){this.nitroGlow.scale.z=1+Math.sin(performance.now()*.04)*.35;this.underglow.material.opacity=.24}else this.underglow.material.opacity=.16;
+    this.nitroActive=Boolean(this.input.nitro&&wantsForward&&speed>22&&this.nitro>.02);
+    this._nitroBlend=expStep(this._nitroBlend,this.nitroActive?1:0,this.nitroActive?3.2:6.5,dt);
+    if(this.nitroActive){this.nitro=Math.max(0,this.nitro-dt*.17)}else this.nitro=Math.min(1,this.nitro+dt*.075);
+    drive*=1+.35*this._nitroBlend;
+    this.nitroGlow.visible=this._nitroBlend>.04;
+    if(this.nitroGlow.visible){this.nitroGlow.scale.z=1+Math.sin(performance.now()*.04)*.24*this._nitroBlend;this.underglow.material.opacity=.16+.07*this._nitroBlend}else this.underglow.material.opacity=.16;
 
     this.vehicle.applyEngineForce(drive,2);this.vehicle.applyEngineForce(drive,3);
     this.vehicle.setBrake(brake,0);this.vehicle.setBrake(brake,1);
     const rearBrake=this.input.handbrake?15:brake;
     this.vehicle.setBrake(rearBrake,2);this.vehicle.setBrake(rearBrake,3);
-    this.vehicle.wheelInfos[2].frictionSlip=this.input.handbrake?1.65:4.8;
-    this.vehicle.wheelInfos[3].frictionSlip=this.input.handbrake?1.65:4.8;
-    this.vehicle.wheelInfos[0].frictionSlip=this.input.handbrake?3.6:4.8;
-    this.vehicle.wheelInfos[1].frictionSlip=this.input.handbrake?3.6:4.8;
+    this.vehicle.wheelInfos[2].frictionSlip=this.input.handbrake?1.3:3.45;
+    this.vehicle.wheelInfos[3].frictionSlip=this.input.handbrake?1.3:3.45;
+    this.vehicle.wheelInfos[0].frictionSlip=this.input.handbrake?2.85:3.45;
+    this.vehicle.wheelInfos[1].frictionSlip=this.input.handbrake?2.85:3.45;
+
+    this._stabilityAssist(dt,speed);
 
     const right=new CANNON.Vec3(1,0,0);this.chassisBody.quaternion.vmult(right,right);
     const lateral=Math.abs(this.chassisBody.velocity.dot(right));
-    this.driftIntensity=clamp((lateral-1.1)/7,0,1)*clamp(speed/55,0,1);
-    this.isDrifting=speed>28&&this.driftIntensity>.08&&(this.input.handbrake||Math.abs(this.input.steer)>.42);
+    this.driftIntensity=clamp((lateral-.9)/6.5,0,1)*clamp(speed/50,0,1);
+    this.isDrifting=speed>26&&this.driftIntensity>.08&&(this.input.handbrake||Math.abs(this._steerState)>.5);
 
     this._syncVisuals();
   }
@@ -133,7 +176,8 @@ export class VehicleController{
   reset(position={x:0,y:1.2,z:24},yaw=0){
     this.chassisBody.position.set(position.x,position.y,position.z);this.chassisBody.velocity.setZero();this.chassisBody.angularVelocity.setZero();
     this.chassisBody.quaternion.setFromEuler(0,yaw,0);this.chassisBody.force.setZero();this.chassisBody.torque.setZero();
-    this.nitro=1;this.input={throttle:0,steer:0,handbrake:false,nitro:false};
+    this.nitro=1;this._throttleState=0;this._steerState=0;this._nitroBlend=0;this.nitroActive=false;
+    this.input={throttle:0,steer:0,handbrake:false,nitro:false};
   }
 
   get speedKmh(){return Math.abs(this.vehicle.currentVehicleSpeedKmHour||0)}

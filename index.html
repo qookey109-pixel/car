@@ -13,10 +13,11 @@
     <div class="hero-card">
       <div class="eyebrow">NEON RACER · V0.8.0</div>
       <h1>三蘆夜行</h1>
-      <p class="hero-copy">在雨後霓虹、河岸高架與密集街廓間完成三段城市挑戰。這不是展示場，而是一輪可以開始、完成、失敗、重玩的駕駛旅程。</p>
+      <p class="hero-copy">在雨後霓虹、河岸高架與密集街廓間完成三段城市挑戰。每次重跑會輪替城市路線，追逐自己的最佳分數、時間與連段。</p>
       <div class="feature-row">
-        <span>Raycast Vehicle</span><span>Drift</span><span>Nitro</span><span>3 Challenges</span><span>Gamepad</span>
+        <span>Raycast Vehicle</span><span>Drift</span><span>Nitro</span><span>3 Routes</span><span>Personal Best</span><span>Gamepad</span>
       </div>
+      <div id="bootRecord" class="record-strip boot-record">PERSONAL BEST · 尚未建立</div>
       <div class="menu-actions">
         <button id="startGame" class="primary">開始旅程</button>
         <button id="openSettings">設定</button>
@@ -96,6 +97,7 @@
         <div><b>A D / ← →</b><span>轉向</span></div><div><b>Space</b><span>手煞車 / 漂移</span></div>
         <div><b>Shift</b><span>氮氣</span></div><div><b>R</b><span>車輛重置</span></div>
         <div><b>ESC</b><span>暫停</span></div><div><b>Gamepad</b><span>雙搖桿 + Trigger</span></div>
+        <div><b>Auto Recovery</b><span>側翻卡住時自動回正</span></div><div><b>Route Rotation</b><span>每輪切換城市路線</span></div>
       </div>
       <div class="menu-actions"><button id="closeControls" class="primary">返回</button></div>
     </div>
@@ -105,14 +107,16 @@
     <div class="hero-card result-card">
       <div class="eyebrow">JOURNEY COMPLETE</div>
       <h1>夜行完成</h1>
+      <div id="finalRoute" class="result-route">河岸東環</div>
       <p id="finalRank" class="result-rank">A</p>
       <div class="result-grid">
         <div><span>總分</span><b id="finalScore">0</b></div>
         <div><span>完成時間</span><b id="finalTime">00:00</b></div>
         <div><span>最佳連段</span><b id="finalCombo">x1.0</b></div>
       </div>
+      <div id="finalRecord" class="record-strip">PERSONAL BEST</div>
       <div class="menu-actions">
-        <button id="playAgain" class="primary">再跑一次</button>
+        <button id="playAgain" class="primary">下一條路線</button>
         <button id="completeMenu">主畫面</button>
       </div>
     </div>

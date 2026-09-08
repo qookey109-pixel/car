@@ -67,7 +67,7 @@ export class CityWorld{
         const x=bx+(r()-.5)*26,z=bz+(r()-.5)*26;
         records.push({x,z,w,d,h,color:palette[Math.floor(r()*palette.length)]});
         const floors=Math.max(2,Math.min(8,Math.floor(h/5)));
-        for(let f=1;f<=floors;f++) if(r()>.16){
+        for(let f=1;f<=floors;f++)if(r()>.16){
           const y=2.2+f*(h/(floors+1));windows.push({x,y,z:z-d/2-.055,w:w*.72,rot:0});
           if(r()>.28)windows.push({x:x+w/2+.055,y,z,w:d*.68,rot:Math.PI/2});
         }
@@ -119,7 +119,6 @@ export class CityWorld{
     const dome=new THREE.Mesh(new THREE.SphereGeometry(700,24,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{top:{value:new THREE.Color(0x07101f)},bottom:{value:new THREE.Color(0x18324a)}},vertexShader:'varying float vY; void main(){vY=normalize(position).y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying float vY; uniform vec3 top; uniform vec3 bottom; void main(){float h=smoothstep(-0.15,0.8,vY);gl_FragColor=vec4(mix(bottom,top,h),1.0);}'}));this.group.add(dome);
     const geo=new THREE.BufferGeometry();const count=950,pos=new Float32Array(count*3),r=this.rand;for(let i=0;i<count;i++){const rad=300+r()*320,theta=r()*Math.PI*2,phi=Math.acos(2*r()-1);pos[i*3]=Math.sin(phi)*Math.cos(theta)*rad;pos[i*3+1]=Math.abs(Math.cos(phi))*rad*.82+34;pos[i*3+2]=Math.sin(phi)*Math.sin(theta)*rad}geo.setAttribute('position',new THREE.BufferAttribute(pos,3));const stars=new THREE.Points(geo,new THREE.PointsMaterial({color:0xcfe2ff,size:1.05,sizeAttenuation:true,transparent:true,opacity:.72,depthWrite:false}));this.group.add(stars);
     const moon=new THREE.Mesh(new THREE.SphereGeometry(12,24,16),new THREE.MeshBasicMaterial({color:0xffe7be}));moon.position.set(-170,120,-270);this.group.add(moon);
-    const moonHalo=new THREE.Mesh(new THREE.SpriteMaterial({color:0xffdfa6,transparent:true,opacity:.13,blending:THREE.AdditiveBlending,depthWrite:false}));
   }
 
   _bounds(){

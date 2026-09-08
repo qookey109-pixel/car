@@ -57,10 +57,52 @@ async function runDesktop(browser){
       wheels,engineForce:v.engineForce,challenge:g.challenges.current?.id,rendererName:g.quality.rendererName
     };
   });
-  fs.writeFileSync('test-results/physics-diagnostics.json',JSON.stringify(driving,null,2));
-  if(!(driving.s.speedKmh>5))throw new Error(`Deterministic vehicle acceleration failed: ${JSON.stringify(driving)}`);
+  if(!(driving.s.speedKmh>35&&driving.s.speedKmh<125))throw new Error(`Acceleration envelope failed: ${JSON.stringify({speedKmh:driving.s.speedKmh,engineForce:driving.engineForce})}`);
   if(!(driving.end.z<driving.start.z-5))throw new Error(`Forward drive moved away from first checkpoint: ${JSON.stringify({start:driving.start,end:driving.end,velocity:driving.velocity})}`);
   if(driving.challenge!=='sprint')throw new Error(`Unexpected initial challenge ${driving.challenge}`);
+
+  const stability=await page.evaluate(()=>{
+    const g=window.__NEON_RACER__.game,v=g.vehicle;
+    g.state='paused';v.reset({x:0,y:1.2,z:80},0);
+    const masks=g.city.staticBodies.map(b=>b.collisionFilterMask);
+    g.city.staticBodies.forEach(b=>{b.collisionFilterMask=0});
+    let minUpY=1,maxSpeed=0,maxRollPitchRate=0;
+    const sample=()=>{
+      const up=new window.CANNON?.Vec3?.()||null;
+      const u={x:0,y:1,z:0};
+      const q=v.chassisBody.quaternion;
+      const x=2*(q.x*q.y-q.w*q.z),y=1-2*(q.x*q.x+q.z*q.z),z=2*(q.y*q.z+q.w*q.x);
+      minUpY=Math.min(minUpY,y);maxSpeed=Math.max(maxSpeed,v.speedKmh);
+      maxRollPitchRate=Math.max(maxRollPitchRate,Math.hypot(v.chassisBody.angularVelocity.x,v.chassisBody.angularVelocity.z));
+      return{x,y,z};
+    };
+    try{
+      v.setInput({throttle:1,steer:0,handbrake:false,nitro:false});
+      for(let i=0;i<90;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt);sample()}
+      v.setInput({throttle:.82,steer:1,handbrake:false,nitro:false});
+      for(let i=0;i<210;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt);sample()}
+      v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
+      const finalUp=sample();
+      return{minUpY,finalUpY:finalUp.y,maxSpeed,maxRollPitchRate,position:{x:v.position.x,y:v.position.y,z:v.position.z}};
+    }finally{g.city.staticBodies.forEach((b,i)=>{b.collisionFilterMask=masks[i]})}
+  });
+  if(!(stability.minUpY>.2&&stability.finalUpY>.55&&stability.maxRollPitchRate<3.2))throw new Error(`Rollover stability failed: ${JSON.stringify(stability)}`);
+
+  const nitroReach=await page.evaluate(()=>{
+    const g=window.__NEON_RACER__.game,v=g.vehicle;
+    g.state='paused';v.reset({x:0,y:1.2,z:150},0);
+    const masks=g.city.staticBodies.map(b=>b.collisionFilterMask);g.city.staticBodies.forEach(b=>{b.collisionFilterMask=0});
+    let peak=0;
+    try{
+      v.setInput({throttle:1,steer:0,handbrake:false,nitro:true});
+      for(let i=0;i<600;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt);peak=Math.max(peak,v.speedKmh)}
+      v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
+      return{peak,nitro:v.nitro};
+    }finally{g.city.staticBodies.forEach((b,i)=>{b.collisionFilterMask=masks[i]})}
+  });
+  if(!(nitroReach.peak>120&&nitroReach.peak<185))throw new Error(`Nitro/Speed Trap envelope failed: ${JSON.stringify(nitroReach)}`);
+
+  fs.writeFileSync('test-results/physics-diagnostics.json',JSON.stringify({driving,stability,nitroReach},null,2));
 
   const composition=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,v=g.vehicle;
@@ -142,5 +184,5 @@ const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshade
 try{
   const desktop=await runDesktop(browser);
   await runMobile(browser);
-  console.log(`V0.8.0 browser smoke PASS · deterministic speed ${desktop.speedKmh.toFixed(1)} km/h · score ${desktop.score}`);
+  console.log(`V0.8.0 browser smoke PASS · 3s speed ${desktop.speedKmh.toFixed(1)} km/h · score ${desktop.score}`);
 }finally{await browser.close()}

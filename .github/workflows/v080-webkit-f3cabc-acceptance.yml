@@ -1,0 +1,123 @@
+name: V0.8.0 WebKit f3cabc Acceptance
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-f3cabc
+    paths:
+      - .github/workflows/v080-webkit-f3cabc-acceptance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - name: Checkout exact validated optimized candidate
+        uses: actions/checkout@v6
+        with:
+          ref: f3cabcbd15d2b9118328b2774f9c08036dcd7b33
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Static smoke
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+
+      - name: Prepare WebKit contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          for src in ['browser-smoke.mjs','objective-compass-smoke.mjs','audio-feel-smoke.mjs','control-direction-smoke.mjs']:
+              p=Path('tests')/src
+              out=Path('tests')/src.replace('.mjs','-webkit.tmp.mjs')
+              s=p.read_text()
+              s=s.replace("import {chromium} from '@playwright/test';","import {webkit as chromium} from '@playwright/test';")
+              s=re.sub(r"chromium\.launch\(\{headless:true,args:\[[^\]]*\]\}\)","chromium.launch({headless:true})",s)
+              out.write_text(s)
+          PY
+
+      - name: Prepare WebKit frame telemetry
+        run: |
+          cat > tests/webkit-f3-frame.tmp.mjs <<'EOF'
+          import {webkit} from '@playwright/test';
+          import fs from 'node:fs';
+          fs.mkdirSync('test-results/webkit-f3',{recursive:true});
+          const browser=await webkit.launch({headless:true});
+          try{
+            const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
+            const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+            await page.goto(process.env.BASE_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+            await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+            await page.click('#startGame');await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+            await page.keyboard.down('KeyW');
+            const sample=await page.evaluate(()=>new Promise(resolve=>{
+              const ds=[];let last=performance.now(),start=last,frames=0;
+              const tick=now=>{ds.push(now-last);last=now;frames++;if(now-start>=4000){const s=ds.slice(1).sort((a,b)=>a-b);const p=q=>s[Math.min(s.length-1,Math.floor(s.length*q))]||0;const g=window.__NEON_RACER__.game;resolve({frames,elapsedMs:now-start,avgFps:frames/((now-start)/1000),p50Ms:p(.5),p95Ms:p(.95),maxMs:s.at(-1)||0,calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles,snapshot:window.__NEON_RACER__.snapshot()})}else requestAnimationFrame(tick)};requestAnimationFrame(tick)
+            }));
+            await page.keyboard.up('KeyW');
+            fs.writeFileSync('test-results/webkit-f3/frame-pacing.json',JSON.stringify(sample,null,2));
+            await page.screenshot({path:'test-results/webkit-f3/mobile-driving.png',animations:'disabled'});
+            if(errors.length)throw new Error(errors.join('\n'));
+            console.log(`WebKit telemetry · ${sample.avgFps.toFixed(1)} FPS · p95 ${sample.p95Ms.toFixed(1)} ms · ${sample.calls} calls · ${sample.triangles} tris · CI headless only`);
+          }finally{await browser.close()}
+          EOF
+
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v080-webkit-f3.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-v080-webkit-f3.log
+          exit 1
+
+      - name: WebKit game-loop acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/browser-smoke-webkit.tmp.mjs
+
+      - name: WebKit steering and reverse acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/control-direction-smoke-webkit.tmp.mjs
+
+      - name: WebKit objective compass acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/objective-compass-smoke-webkit.tmp.mjs
+
+      - name: WebKit audio graph acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/audio-feel-smoke-webkit.tmp.mjs
+
+      - name: WebKit frame pacing telemetry
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/webkit-f3-frame.tmp.mjs
+
+      - name: Upload WebKit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v080-webkit-f3cabc
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

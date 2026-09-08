@@ -1,0 +1,108 @@
+name: V0.8.0 Render Cost Breakdown
+
+on:
+  push:
+    branches:
+      - preview/v0.8.0-validated-76e9378
+    paths:
+      - .github/workflows/v080-render-cost-breakdown.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  breakdown:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact validated candidate
+        uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare breakdown probe
+        run: |
+          cat > tests/render-cost-breakdown.tmp.mjs <<'EOF'
+          import {chromium} from '@playwright/test';
+          import fs from 'node:fs';
+          const base='http://127.0.0.1:4173/';
+          fs.mkdirSync('test-results/render-cost-breakdown',{recursive:true});
+          const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+          try{
+            const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
+            await page.goto(base,{waitUntil:'networkidle'});
+            await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+            await page.click('#startGame');
+            await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+            await page.evaluate(()=>window.__NEON_RACER__.game.quality.apply({quality:'low',resolution:1,bloom:false,shadows:false}));
+            await page.keyboard.down('KeyW');
+            await page.waitForTimeout(1800);
+            await page.keyboard.up('KeyW');
+            const result=await page.evaluate(()=>{
+              const g=window.__NEON_RACER__.game;
+              g.state='paused';
+              g.vehicle.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
+              g.effects.speedLines.visible=false;
+              const measure=()=>{
+                g.renderer.info.reset();
+                g._render();
+                const r=g.renderer.info.render;
+                return {calls:r.calls,triangles:r.triangles,points:r.points,lines:r.lines};
+              };
+              const baseline=measure();
+              const hideMeasure=(obj,label)=>{
+                const was=obj.visible;obj.visible=false;const after=measure();obj.visible=was;
+                return {label,type:obj.type,name:obj.name||'',deltaCalls:baseline.calls-after.calls,deltaTriangles:baseline.triangles-after.triangles,after};
+              };
+              const top=[];
+              for(const [label,obj] of [
+                ['city',g.city.group],['car-body',g.vehicle.visualRoot],['challenge',g.challenges.group],['vfx-points',g.effects.points],['vfx-speed-lines',g.effects.speedLines],
+                ...g.vehicle.wheelMeshes.map((o,i)=>[`wheel-${i}`,o])
+              ]) top.push(hideMeasure(obj,label));
+              const cityChildren=g.city.group.children.map((obj,i)=>hideMeasure(obj,`city-${i}`));
+              const sceneChildren=g.scene.children.map((obj,i)=>hideMeasure(obj,`scene-${i}`));
+              const summarize=obj=>{
+                let meshes=0,instanced=0,lines=0,points=0,triangles=0;
+                obj.traverse(o=>{
+                  if(o.isMesh||o.isInstancedMesh){meshes++;if(o.isInstancedMesh)instanced++;const geo=o.geometry;const pos=geo?.attributes?.position;const idx=geo?.index;let t=idx?idx.count/3:(pos?pos.count/3:0);if(o.isInstancedMesh)t*=o.count||1;triangles+=t||0}
+                  if(o.isLine)lines++;
+                  if(o.isPoints)points++;
+                });
+                return{meshes,instanced,lines,points,geometryTriangles:Math.round(triangles)};
+              };
+              return{
+                baseline,
+                rendererName:g.quality.rendererName,
+                quality:g.quality.effective,
+                speedKmh:g.vehicle.speedKmh,
+                top:top.sort((a,b)=>b.deltaCalls-a.deltaCalls),
+                cityChildren:cityChildren.sort((a,b)=>b.deltaCalls-a.deltaCalls),
+                sceneChildren:sceneChildren.sort((a,b)=>b.deltaCalls-a.deltaCalls),
+                structural:{city:summarize(g.city.group),car:summarize(g.vehicle.visualRoot),wheels:g.vehicle.wheelMeshes.map(summarize),challenge:summarize(g.challenges.group),effects:summarize(g.effects.speedLines)}
+              };
+            });
+            fs.writeFileSync('test-results/render-cost-breakdown/breakdown.json',JSON.stringify(result,null,2));
+            await page.screenshot({path:'test-results/render-cost-breakdown/frame.png',animations:'disabled'});
+            console.log(JSON.stringify({baseline:result.baseline,top:result.top.slice(0,10),city:result.cityChildren.slice(0,15),structural:result.structural},null,2));
+          }finally{await browser.close()}
+          EOF
+      - name: Start preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/render-breakdown-vite.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/render-breakdown-vite.log; exit 1
+      - name: Run breakdown
+        run: node tests/render-cost-breakdown.tmp.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v080-render-cost-breakdown-76e9378
+          path: test-results/render-cost-breakdown/
+          if-no-files-found: ignore
+          retention-days: 14

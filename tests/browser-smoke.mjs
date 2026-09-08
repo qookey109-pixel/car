@@ -17,23 +17,40 @@ async function runDesktop(browser){
   await shot(page,'test-results/menu-desktop.png');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+
+  // Browser input wiring is a separate gate from physics throughput. SwiftShader can
+  // block requestAnimationFrame for seconds, so wall-clock acceleration is not a
+  // deterministic physics assertion.
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(2600);
+  await page.waitForTimeout(120);
+  const inputWired=await page.evaluate(()=>window.__NEON_RACER__.game.input.keys.has('KeyW'));
   await page.keyboard.up('KeyW');
+  if(!inputWired)throw new Error('Keyboard W input did not reach Input system');
+
   const driving=await page.evaluate(()=>{
-    const api=window.__NEON_RACER__,s=api.snapshot(),g=api.game;
-    return {s,camera:g.camera.position.toArray(),fov:g.camera.fov,challenge:g.challenges.current?.id};
+    const api=window.__NEON_RACER__,g=api.game,v=g.vehicle;
+    g.state='paused';
+    v.reset({x:0,y:1.2,z:24},0);
+    v.setInput({throttle:1,steer:0,handbrake:false,nitro:false});
+    for(let i=0;i<180;i++){v.update(g.fixedDt);g.physics.step(g.fixedDt)}
+    v._syncVisuals();
+    v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
+    for(let i=0;i<8;i++)g._camera(1/60);
+    const s=api.snapshot();
+    return {s,camera:g.camera.position.toArray(),fov:g.camera.fov,challenge:g.challenges.current?.id,rendererName:g.quality.rendererName};
   });
-  if(!(driving.s.speedKmh>3))throw new Error(`Vehicle did not accelerate: ${driving.s.speedKmh} km/h`);
+  if(!(driving.s.speedKmh>5))throw new Error(`Deterministic vehicle acceleration failed: ${driving.s.speedKmh} km/h`);
   if(!driving.camera.every(Number.isFinite)||!Number.isFinite(driving.fov))throw new Error(`Camera became non-finite: ${JSON.stringify(driving)}`);
   if(driving.challenge!=='sprint')throw new Error(`Unexpected initial challenge ${driving.challenge}`);
   await shot(page,'test-results/desktop-driving.png');
+
+  await page.evaluate(()=>{window.__NEON_RACER__.game.state='running'});
   await page.keyboard.press('Escape');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='paused');
   await page.keyboard.press('Escape');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
   await page.keyboard.press('KeyR');
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(120);
   const reset=await page.evaluate(()=>window.__NEON_RACER__.snapshot());
   if(Math.abs(reset.position.z-24)>3||Math.abs(reset.position.x)>3)throw new Error(`Reset position unexpected: ${JSON.stringify(reset.position)}`);
 
@@ -55,7 +72,7 @@ async function runDesktop(browser){
 
   const metrics=await page.evaluate(()=>{
     const api=window.__NEON_RACER__,g=api.game,s=api.snapshot();
-    return{snapshot:s,camera:{fov:g.camera.fov,position:g.camera.position.toArray()},quality:{requested:g.quality.requested,effective:g.quality.effective},renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles},city:g.city.stats};
+    return{snapshot:s,camera:{fov:g.camera.fov,position:g.camera.position.toArray()},quality:{requested:g.quality.requested,effective:g.quality.effective,rendererName:g.quality.rendererName,softwareRenderer:g.quality.softwareRenderer},renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles},city:g.city.stats};
   });
   fs.writeFileSync('test-results/metrics.json',JSON.stringify(metrics,null,2));
   if(errors.length)throw new Error(errors.join('\n'));
@@ -75,12 +92,12 @@ async function runMobile(browser){
   const gas=page.locator('[data-control="gas"]'),drift=page.locator('[data-control="drift"]');
   await gas.dispatchEvent('pointerdown',{pointerId:11,pointerType:'touch',isPrimary:true});
   await drift.dispatchEvent('pointerdown',{pointerId:12,pointerType:'touch',isPrimary:false});
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(200);
   const simultaneous=await page.evaluate(()=>({gas:window.__NEON_RACER__.game.input.touch.gas,drift:window.__NEON_RACER__.game.input.touch.drift}));
   if(!simultaneous.gas||!simultaneous.drift)throw new Error(`Simultaneous mobile touch failed: ${JSON.stringify(simultaneous)}`);
   await gas.dispatchEvent('pointerup',{pointerId:11,pointerType:'touch'});
   await drift.dispatchEvent('pointerup',{pointerId:12,pointerType:'touch'});
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(100);
   await shot(page,'test-results/mobile-844x390.png');
   if(errors.length)throw new Error(errors.join('\n'));
   await page.close();
@@ -90,5 +107,5 @@ const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshade
 try{
   const desktop=await runDesktop(browser);
   await runMobile(browser);
-  console.log(`V0.8.0 browser smoke PASS · speed ${desktop.speedKmh.toFixed(1)} km/h · score ${desktop.score}`);
+  console.log(`V0.8.0 browser smoke PASS · deterministic speed ${desktop.speedKmh.toFixed(1)} km/h · score ${desktop.score}`);
 }finally{await browser.close()}

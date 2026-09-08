@@ -2,7 +2,7 @@ const $=id=>document.getElementById(id);
 
 export class HUD{
   constructor(){
-    this.el={boot:$('boot'),loading:$('loading'),hud:$('hud'),pause:$('pause'),settings:$('settings'),controls:$('controlsModal'),complete:$('complete'),speed:$('speed'),gear:$('gear'),nitro:$('nitroBar'),score:$('score'),combo:$('combo'),objectiveTitle:$('objectiveTitle'),objectiveText:$('objectiveText'),progress:$('progressBar'),toast:$('challengeToast'),quality:$('qualityBadge'),mobile:$('mobileControls'),resolution:$('resolutionScale'),resolutionValue:$('resolutionValue'),qualitySelect:$('qualitySelect'),bloom:$('bloomToggle'),shadow:$('shadowToggle'),motion:$('motionToggle')};
+    this.el={boot:$('boot'),loading:$('loading'),hud:$('hud'),pause:$('pause'),settings:$('settings'),controls:$('controlsModal'),complete:$('complete'),speed:$('speed'),gear:$('gear'),nitro:$('nitroBar'),score:$('score'),combo:$('combo'),objectiveTitle:$('objectiveTitle'),objectiveText:$('objectiveText'),progress:$('progressBar'),toast:$('challengeToast'),quality:$('qualityBadge'),mobile:$('mobileControls'),resolution:$('resolutionScale'),resolutionValue:$('resolutionValue'),qualitySelect:$('qualitySelect'),bloom:$('bloomToggle'),shadow:$('shadowToggle'),motion:$('motionToggle'),bootRecord:$('bootRecord'),finalRecord:$('finalRecord'),finalRoute:$('finalRoute')};
     this.toastTimer=0;this.handlers={};this._bind();
   }
 
@@ -41,11 +41,20 @@ export class HUD{
   }
 
   _gear(speed,throttle){if(speed<2&&Math.abs(throttle)<.05)return'N';if(throttle<-.05&&speed<8)return'R';return String(Math.max(1,Math.min(6,Math.floor(speed/38)+1)))}
+  _formatTime(time=0){const m=Math.floor(time/60),s=Math.floor(time%60);return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
   toast(text){this.el.toast.textContent=text;this.el.toast.classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.el.toast.classList.remove('show'),2200)}
   qualityLabel(text){this.el.quality.textContent=String(text).toUpperCase()}
 
+  setRecords(records={}){
+    if(!this.el.bootRecord)return;
+    if(!(records.runs>0)){this.el.bootRecord.textContent='PERSONAL BEST · 尚未建立';return}
+    this.el.bootRecord.textContent=`PERSONAL BEST · ${Number(records.bestScore||0).toLocaleString()} pts · ${this._formatTime(records.bestTime)} · x${Number(records.bestCombo||1).toFixed(1)} · ${records.runs} clears`;
+  }
+
   showComplete(summary){
-    this.hideGame();$('finalRank').textContent=summary.rank;$('finalScore').textContent=summary.score.toLocaleString();$('finalCombo').textContent=`x${summary.bestCombo.toFixed(1)}`;const m=Math.floor(summary.time/60),s=Math.floor(summary.time%60);$('finalTime').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;this.showOnly('complete')
+    this.hideGame();$('finalRank').textContent=summary.rank;$('finalScore').textContent=summary.score.toLocaleString();$('finalCombo').textContent=`x${summary.bestCombo.toFixed(1)}`;$('finalTime').textContent=this._formatTime(summary.time);if(this.el.finalRoute)this.el.finalRoute.textContent=`ROUTE · ${summary.routeName||'CITY LOOP'}`;
+    const r=summary.records||{};if(this.el.finalRecord){const fresh=[];if(r.newScore)fresh.push('SCORE');if(r.newTime)fresh.push('TIME');if(r.newCombo)fresh.push('COMBO');this.el.finalRecord.classList.toggle('new-best',Boolean(r.first||fresh.length));this.el.finalRecord.textContent=r.first?'FIRST CLEAR · PERSONAL BEST CREATED':fresh.length?`NEW PERSONAL BEST · ${fresh.join(' · ')}`:`BEST · ${Number(r.bestScore||summary.score).toLocaleString()} pts · ${this._formatTime(r.bestTime||summary.time)} · x${Number(r.bestCombo||summary.bestCombo).toFixed(1)} · ${r.runs||1} clears`}
+    this.showOnly('complete')
   }
 
   readSettings(){return{quality:this.el.qualitySelect.value,resolution:Number(this.el.resolution.value)/100,bloom:this.el.bloom.checked,shadows:this.el.shadow.checked,motion:this.el.motion.checked}}

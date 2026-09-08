@@ -10,6 +10,7 @@ async function runDesktop(browser){
   const errors=[];
   page.on('pageerror',e=>errors.push(`pageerror: ${e.message}`));
   page.on('console',m=>{if(m.type()==='error')errors.push(`console: ${m.text()}`)});
+  await page.addInitScript(()=>{try{localStorage.removeItem('neon-racer-records')}catch{}});
   await page.goto(base,{waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
   const gl=await page.evaluate(()=>{const c=document.querySelector('canvas');return Boolean(c&&(c.getContext('webgl2')||c.getContext('webgl')))});
@@ -17,6 +18,8 @@ async function runDesktop(browser){
   await shot(page,'test-results/menu-desktop.png');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
+  const initialReplay=await page.evaluate(()=>{const g=window.__NEON_RACER__.game;return{routeIndex:g.challenges.routeIndex,routeName:g.challenges.routeName,routeCount:g.challenges.routes.length,runs:g.records.runs}});
+  if(initialReplay.routeIndex!==0||initialReplay.routeCount!==3||initialReplay.runs!==0)throw new Error(`Initial replay route contract failed: ${JSON.stringify(initialReplay)}`);
 
   await page.keyboard.down('KeyW');
   await page.waitForTimeout(120);
@@ -100,7 +103,15 @@ async function runDesktop(browser){
   });
   if(!(nitroReach.peak>120&&nitroReach.peak<185))throw new Error(`Nitro/Speed Trap envelope failed: ${JSON.stringify(nitroReach)}`);
 
-  fs.writeFileSync('test-results/physics-diagnostics.json',JSON.stringify({driving,stability,nitroReach},null,2));
+  const recovery=await page.evaluate(()=>{
+    const g=window.__NEON_RACER__.game,v=g.vehicle;
+    g.state='paused';v.reset({x:34,y:.9,z:36},0);v.vehicle.currentVehicleSpeedKmHour=0;v.chassisBody.quaternion.setFromEuler(Math.PI,0,0);v.chassisBody.velocity.setZero();v.chassisBody.angularVelocity.setZero();g.flipTimer=0;g.recoveryCooldown=0;
+    const before={x:v.position.x,z:v.position.z};for(let i=0;i<100;i++)g._recovery(1/60);
+    const q=v.chassisBody.quaternion,upY=1-2*(q.x*q.x+q.z*q.z);return{upY,position:{x:v.position.x,y:v.position.y,z:v.position.z},before,flipTimer:g.flipTimer,cooldown:g.recoveryCooldown};
+  });
+  if(!(recovery.upY>.85&&recovery.position.y>1&&Math.abs(recovery.position.x-recovery.before.x)<.5&&Math.abs(recovery.position.z-recovery.before.z)<.5))throw new Error(`Auto recovery contract failed: ${JSON.stringify(recovery)}`);
+
+  fs.writeFileSync('test-results/physics-diagnostics.json',JSON.stringify({driving,stability,nitroReach,recovery},null,2));
 
   const composition=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,v=g.vehicle;
@@ -129,19 +140,22 @@ async function runDesktop(browser){
 
   const progression=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,v=g.vehicle,c=g.challenges;
-    g.state='paused';
+    g.state='paused';const routeName=c.routeName,routeIndex=c.routeIndex;
     for(const [x,z] of c.challenges[0].points){v.chassisBody.position.set(x,1.2,z);c.update(1/60,v)}
     if(c.current?.id!=='drift')return{ok:false,at:'sprint',id:c.current?.id};
     v.chassisBody.position.set(c.current.zone.x,1.2,c.current.zone.z);v.isDrifting=true;v.driftIntensity=1;v.vehicle.currentVehicleSpeedKmHour=100;
     for(let i=0;i<60&&c.current?.id==='drift';i++)c.update(.25,v);
     if(c.current?.id!=='speed')return{ok:false,at:'drift',id:c.current?.id,drift:c._driftMission};
     v.isDrifting=false;v.driftIntensity=0;v.vehicle.currentVehicleSpeedKmHour=125;v.chassisBody.position.set(c.current.point.x,1.2,c.current.point.z);c.update(1/60,v);
-    return{ok:c.completed&&g.state==='complete',completed:c.completed,state:g.state,score:c.score,rank:document.getElementById('finalRank')?.textContent,completeVisible:document.getElementById('complete')?.classList.contains('visible')};
+    return{ok:c.completed&&g.state==='complete',completed:c.completed,state:g.state,score:c.score,rank:document.getElementById('finalRank')?.textContent,completeVisible:document.getElementById('complete')?.classList.contains('visible'),routeName,routeIndex,records:{...g.records},recordText:document.getElementById('finalRecord')?.textContent};
   });
   if(!progression.ok)throw new Error(`Progression/ending contract failed: ${JSON.stringify(progression)}`);
+  if(!(progression.records.runs===1&&progression.records.bestScore>0&&progression.records.bestTime>0&&progression.recordText?.length>5))throw new Error(`Persistent record contract failed: ${JSON.stringify(progression)}`);
   await shot(page,'test-results/journey-complete.png');
   await page.click('#playAgain');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running'&&window.__NEON_RACER__.snapshot().challengeIndex===0);
+  const replay=await page.evaluate(()=>{const s=window.__NEON_RACER__.snapshot();return{routeIndex:s.routeIndex,routeName:s.routeName,records:s.records,button:document.getElementById('playAgain')?.textContent}});
+  if(replay.routeIndex===progression.routeIndex||replay.routeName===progression.routeName||replay.records.runs!==1)throw new Error(`Route replayability contract failed: ${JSON.stringify({before:progression,replay})}`);
 
   const metrics=await page.evaluate(()=>{
     const api=window.__NEON_RACER__,g=api.game,s=api.snapshot();
@@ -160,6 +174,7 @@ async function runMobile(browser){
   const errors=[];
   page.on('pageerror',e=>errors.push(`pageerror: ${e.message}`));
   page.on('console',m=>{if(m.type()==='error')errors.push(`console: ${m.text()}`)});
+  await page.addInitScript(()=>{try{localStorage.removeItem('neon-racer-records')}catch{}});
   await page.goto(base,{waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
   await page.click('#startGame');

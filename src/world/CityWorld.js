@@ -60,9 +60,9 @@ export class CityWorld{
   _buildings(){
     const bodyGeo=new THREE.BoxGeometry(1,1,1);
     const bodyMat=new THREE.MeshLambertMaterial({color:0xffffff,vertexColors:true,emissive:0x2b4257,emissiveIntensity:.7});
-    const windowGeo=new THREE.BoxGeometry(1,.15,.055);const windowMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,opacity:.9});
-    const signGeo=new THREE.BoxGeometry(1,1,.08);const signMat=new THREE.MeshBasicMaterial({color:0xff5fb8,transparent:true,opacity:.95});
-    const shopGeo=new THREE.BoxGeometry(1,1,.07);const shopMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,opacity:.88});
+    const windowGeo=new THREE.BoxGeometry(1,.28,.055);const windowMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,opacity:.94,toneMapped:false});
+    const signGeo=new THREE.BoxGeometry(1,1,.08);const signMat=new THREE.MeshBasicMaterial({color:0xff5fb8,transparent:true,opacity:.95,toneMapped:false});
+    const shopGeo=new THREE.BoxGeometry(1,1,.07);const shopMat=new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,transparent:true,opacity:.9,toneMapped:false});
     const roofGeo=new THREE.BoxGeometry(1,1,1);const roofMat=new THREE.MeshLambertMaterial({color:0x66737d,emissive:0x15212a,emissiveIntensity:.24});
     const records=[],windows=[],signs=[],shops=[],roofs=[];const r=this.rand;
     const centers=[-150,-90,-30,30,90,150];

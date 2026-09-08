@@ -14,13 +14,15 @@ export class Input{
   }
   sample(){
     let throttle=(this.keys.has('KeyW')||this.keys.has('ArrowUp')||this.touch.gas?1:0)-(this.keys.has('KeyS')||this.keys.has('ArrowDown')||this.touch.brake?1:0);
-    let steer=(this.keys.has('KeyD')||this.keys.has('ArrowRight')||this.touch.right?1:0)-(this.keys.has('KeyA')||this.keys.has('ArrowLeft')||this.touch.left?1:0);
+    // RaycastVehicle's positive steering angle turns the car toward world-left from the
+    // default -Z heading, so logical LEFT inputs must map to +1 and RIGHT inputs to -1.
+    let steer=(this.keys.has('KeyA')||this.keys.has('ArrowLeft')||this.touch.left?1:0)-(this.keys.has('KeyD')||this.keys.has('ArrowRight')||this.touch.right?1:0);
     let handbrake=this.keys.has('Space')||this.touch.drift,nitro=this.keys.has('ShiftLeft')||this.keys.has('ShiftRight')||this.touch.nitro;
     let cameraX=0,cameraY=0;
     const pads=navigator.getGamepads?.()||[];const p=[...pads].find(Boolean);
     if(p){
       const dz=v=>Math.abs(v)<.12?0:v;
-      steer=clamp(dz(p.axes[0]||0),-1,1);
+      steer=clamp(-dz(p.axes[0]||0),-1,1);
       cameraX=clamp(dz(p.axes[2]||0),-1,1);cameraY=clamp(dz(p.axes[3]||0),-1,1);
       const gas=Math.max(p.buttons[7]?.value||0,p.buttons[0]?.pressed ? .7 : 0);
       const brake=Math.max(p.buttons[6]?.value||0,p.buttons[1]?.pressed ? .7 : 0);

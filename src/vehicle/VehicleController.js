@@ -9,7 +9,7 @@ export class VehicleController{
     this.scene=scene;this.world=world;
     this.input={throttle:0,steer:0,handbrake:false,nitro:false};
     this.nitro=1;this.nitroActive=false;this.driftIntensity=0;this.isDrifting=false;
-    this.engineForce=1950;this.reverseForce=1000;this.maxSteer=.42;
+    this.engineForce=1950;this.reverseForce=1450;this.reverseLimit=42;this.maxSteer=.42;
     this._throttleState=0;this._steerState=0;this._nitroBlend=0;
     this.spawn={position:new CANNON.Vec3(0,1.2,24),quaternion:new CANNON.Quaternion()};
     this._buildPhysics();this._buildVisual();
@@ -114,7 +114,8 @@ export class VehicleController{
 
   update(dt){
     dt=clamp(Number.isFinite(dt)?dt:1/60,1/240,1/20);
-    const speed=Math.abs(this.vehicle.currentVehicleSpeedKmHour||0);
+    const signedSpeed=this.vehicle.currentVehicleSpeedKmHour||0;
+    const speed=Math.abs(signedSpeed);
 
     // Keyboard/mobile inputs are digital. Smooth them before they reach the physics model
     // so pressing GAS or steering no longer becomes an instantaneous full-force impulse.
@@ -131,13 +132,22 @@ export class VehicleController{
     const wantsForward=this._throttleState>.05,wantsReverse=this._throttleState<-.05;
     let drive=0,brake=0;
     if(wantsForward){
-      const powerCurve=clamp(1.08-speed/190,.42,1);
-      drive=this.engineForce*this._throttleState*powerCurve;
-      if(speed>165)drive*=clamp((188-speed)/23,0,1);
+      if(signedSpeed>5)brake=10;
+      else{
+        const powerCurve=clamp(1.08-speed/190,.42,1);
+        drive=this.engineForce*this._throttleState*powerCurve;
+        if(speed>165)drive*=clamp((188-speed)/23,0,1);
+      }
     }
-    if(wantsReverse){if(speed>7)brake=10;else drive=-this.reverseForce*Math.abs(this._throttleState)}
+    if(wantsReverse){
+      if(signedSpeed<-5)brake=10;
+      else{
+        const reverseCurve=clamp((this.reverseLimit-speed)/16,0,1);
+        drive=-this.reverseForce*Math.abs(this._throttleState)*reverseCurve;
+      }
+    }
 
-    this.nitroActive=Boolean(this.input.nitro&&wantsForward&&speed>22&&this.nitro>.02);
+    this.nitroActive=Boolean(this.input.nitro&&wantsForward&&drive>0&&speed>22&&this.nitro>.02);
     this._nitroBlend=expStep(this._nitroBlend,this.nitroActive?1:0,this.nitroActive?3.2:6.5,dt);
     if(this.nitroActive){this.nitro=Math.max(0,this.nitro-dt*.17)}else this.nitro=Math.min(1,this.nitro+dt*.075);
     drive*=1+.35*this._nitroBlend;

@@ -8,7 +8,7 @@ export class ChallengeSystem{
     this.scene=scene;this.onToast=onToast;this.onComplete=onComplete;
     this.group=new THREE.Group();this.group.name='ChallengeMarkers';scene.add(this.group);
     this.startedAt=performance.now();this.score=0;this.combo=1;this.bestCombo=1;this.totalDrift=0;this.completed=false;
-    this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._toastCooldown=0;
+    this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._toastCooldown=0;this._speedHint=0;
     this.challenges=[
       {id:'sprint',title:'霓虹街廓 · Time Attack',description:'依序穿越 4 個城市 Checkpoint',limit:75,points:[[0,0],[120,0],[120,-120],[0,-120]]},
       {id:'drift',title:'河岸反打 · Drift Run',description:'在河岸街區累積 1,800 漂移分',target:1800,zone:{x:-120,z:-120,radius:72}},
@@ -34,7 +34,7 @@ export class ChallengeSystem{
   }
 
   reset(){
-    this.startedAt=performance.now();this.challengeStartedAt=performance.now();this.score=0;this.combo=1;this.bestCombo=1;this.totalDrift=0;this.completed=false;this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._refreshMarkers();
+    this.startedAt=performance.now();this.challengeStartedAt=performance.now();this.score=0;this.combo=1;this.bestCombo=1;this.totalDrift=0;this.completed=false;this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._driftMission=0;this._speedHint=0;this.group.visible=true;this._refreshMarkers();
   }
 
   update(dt,vehicle){
@@ -50,7 +50,7 @@ export class ChallengeSystem{
 
     const c=this.current;if(!c)return;
     if(c.id==='sprint')this._updateSprint(c,pos);
-    if(c.id==='drift')this._updateDrift(c,pos,vehicle);
+    if(c.id==='drift')this._updateDrift(c,pos,vehicle,dt);
     if(c.id==='speed')this._updateSpeed(c,pos,vehicle);
     this._animateMarkers(dt);
   }
@@ -68,14 +68,15 @@ export class ChallengeSystem{
     if(elapsed>c.limit){this.challengeStartedAt=performance.now();this.sprintIndex=0;this.combo=1;this.onToast('Time Attack 重置 · 再試一次');this._refreshMarkers()}
   }
 
-  _updateDrift(c,pos,vehicle){
+  _updateDrift(c,pos,vehicle,dt){
     const inside=dist(pos,c.zone)<=c.zone.radius;
-    if(inside&&vehicle.isDrifting){const gain=vehicle.speedKmh*(.4+vehicle.driftIntensity)*dtForMission();this._driftMission=(this._driftMission||0)+gain}
+    if(inside&&vehicle.isDrifting){const gain=vehicle.speedKmh*(.4+vehicle.driftIntensity)*dt;this._driftMission=(this._driftMission||0)+gain}
     if(!inside&&this._toastCooldown<=0){this._toastCooldown=3;this.onToast('進入黃色河岸區域累積漂移分')}
     if((this._driftMission||0)>=c.target){this.score+=1500;this._advance('Drift Run 完成')}
   }
 
   _updateSpeed(c,pos,vehicle){
+    this._speedHint=vehicle.speedKmh;
     if(dist(pos,c.point)<10){
       if(vehicle.speedKmh>=c.target){this.score+=2000+Math.round((vehicle.speedKmh-c.target)*25);this._advance(`Speed Trap ${Math.round(vehicle.speedKmh)} km/h`)}
       else if(this._toastCooldown<=0){this._toastCooldown=2;this.onToast(`速度不足：${Math.round(vehicle.speedKmh)} / ${c.target} km/h`)}
@@ -83,7 +84,7 @@ export class ChallengeSystem{
   }
 
   _advance(message){
-    this.onToast(`${message}  ✓`);this.challengeIndex++;this.challengeStartedAt=performance.now();this.combo=Math.max(1,this.combo);this._driftMission=0;
+    this.onToast(`${message}  ✓`);this.challengeIndex++;this.challengeStartedAt=performance.now();this.combo=Math.max(1,this.combo);this._driftMission=0;this._speedHint=0;
     if(this.challengeIndex>=this.challenges.length){this.completed=true;this.group.visible=false;this.onComplete(this.summary());return}
     this._refreshMarkers();
   }
@@ -92,8 +93,6 @@ export class ChallengeSystem{
 
   get current(){return this.challenges[this.challengeIndex]||null}
   get progress(){const c=this.current;if(!c)return 1;if(c.id==='sprint')return this.sprintIndex/c.points.length;if(c.id==='drift')return clamp((this._driftMission||0)/c.target,0,1);if(c.id==='speed')return clamp((this._speedHint||0)/c.target,0,1);return 0}
-  get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:'夜行完成'};if(c.id==='sprint')return{title:c.title,text:`Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`穿越綠色 Speed Gate · ${c.target} km/h`}}
+  get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:'夜行完成'};if(c.id==='sprint')return{title:c.title,text:`Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`${Math.round(this._speedHint||0)} / ${c.target} km/h · 穿越綠色 Gate`}}
   summary(){const elapsed=(performance.now()-this.startedAt)/1000;const rank=this.score>9000?'S':this.score>6500?'A':this.score>4500?'B':'C';return{score:Math.round(this.score),time:elapsed,bestCombo:this.bestCombo,rank}}
 }
-
-function dtForMission(){return 1/60}

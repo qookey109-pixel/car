@@ -40,7 +40,6 @@ export class Game{
 
   _world(){
     this.city=new CityWorld(this.scene,this.physics);
-    // CityWorld creates its own named materials; add a forgiving default contact profile too.
     this.physics.defaultContactMaterial.friction=.28;this.physics.defaultContactMaterial.restitution=.015;
     this.vehicle=new VehicleController(this.scene,this.physics);
   }
@@ -92,16 +91,20 @@ export class Game{
   }
 
   _tick(){
-    requestAnimationFrame(this._loop);let dt=Math.min(.05,this.clock.getDelta()||1/60);this.frame++;
-    if(this.state==='running')this._update(dt);else this._ambient(dt);
-    this._camera(dt);this.effects.update(dt,this.vehicle,this.camera);this.quality.tick(dt);this._render();this._updateDebug(dt);
+    requestAnimationFrame(this._loop);
+    const rawDt=Math.max(1/240,Math.min(.25,this.clock.getDelta()||1/60));const visualDt=Math.min(.05,rawDt);this.frame++;
+    if(this.state==='running')this._update(visualDt,rawDt);else this._ambient(visualDt);
+    this._camera(visualDt);this.effects.update(visualDt,this.vehicle,this.camera);this.quality.tick(rawDt);this._render();this._updateDebug(rawDt);
   }
 
-  _update(dt){
+  _update(visualDt,elapsedDt=visualDt){
     const input=this.input.sample();this.vehicle.setInput(input);
-    this.accumulator=Math.min(.12,this.accumulator+dt);while(this.accumulator>=this.fixedDt){this.vehicle.update(this.fixedDt);this.physics.step(this.fixedDt);this.accumulator-=this.fixedDt}
-    this.vehicle._syncVisuals();this.challenges.update(dt,this.vehicle);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
-    this.cameraYaw=damp(this.cameraYaw,input.cameraX*.8,2.4,dt);this.cameraPitch=damp(this.cameraPitch,.13+input.cameraY*.14,2.2,dt);
+    this.accumulator=Math.min(.25,this.accumulator+Math.min(.25,elapsedDt));let steps=0;
+    while(this.accumulator>=this.fixedDt&&steps<15){this.vehicle.update(this.fixedDt);this.physics.step(this.fixedDt);this.accumulator-=this.fixedDt;steps++}
+    if(steps>=15&&this.accumulator>=this.fixedDt)this.accumulator%=this.fixedDt;
+    const simDt=Math.max(visualDt,steps*this.fixedDt);
+    this.vehicle._syncVisuals();this.challenges.update(simDt,this.vehicle);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
+    this.cameraYaw=damp(this.cameraYaw,input.cameraX*.8,2.4,visualDt);this.cameraPitch=damp(this.cameraPitch,.13+input.cameraY*.14,2.2,visualDt);
     if(this.vehicle.position.y<-4||Math.abs(this.vehicle.position.x)>225||Math.abs(this.vehicle.position.z)>225)this.resetVehicle();
   }
 
@@ -132,12 +135,12 @@ export class Game{
     this._lastSafeCamera=safe.clone();return safe;
   }
 
-  _render(){this.composer.render()}
+  _render(){if(this.bloomPass.enabled)this.composer.render();else this.renderer.render(this.scene,this.camera)}
   _resize(){const w=innerWidth,h=innerHeight;this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.renderer.setSize(w,h,false);this.composer.setSize(w,h)}
 
   _debug(){
     this.debugVisible=new URLSearchParams(location.search).has('debug');this.debug=document.createElement('pre');this.debug.style.cssText='position:fixed;z-index:90;left:8px;top:8px;margin:0;padding:8px 10px;border-radius:9px;background:#000a;color:#9ff;font:10px/1.45 ui-monospace,monospace;pointer-events:none;white-space:pre-wrap';document.body.appendChild(this.debug);this.debug.style.display=this.debugVisible?'block':'none';this.fpsAvg=60
   }
   toggleDebug(){this.debugVisible=!this.debugVisible;this.debug.style.display=this.debugVisible?'block':'none'}
-  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,dt);const info=this.renderer.info.render;this.debug.textContent=`V0.8.0 DEBUG\nFPS ${this.fpsAvg.toFixed(0)} · calls ${info.calls} · tris ${info.triangles}\nspeed ${this.vehicle.speedKmh.toFixed(0)} km/h · nitro ${(this.vehicle.nitro*100).toFixed(0)}%\npos ${this.vehicle.position.x.toFixed(1)}, ${this.vehicle.position.y.toFixed(1)}, ${this.vehicle.position.z.toFixed(1)}\nchallenge ${this.challenges.challengeIndex+1}/3 · score ${Math.round(this.challenges.score)}\nquality ${this.quality.requested}/${this.quality.effective}`}
+  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,Math.min(.05,dt));const info=this.renderer.info.render;this.debug.textContent=`V0.8.0 DEBUG\nFPS ${this.fpsAvg.toFixed(0)} · calls ${info.calls} · tris ${info.triangles}\nspeed ${this.vehicle.speedKmh.toFixed(0)} km/h · nitro ${(this.vehicle.nitro*100).toFixed(0)}%\npos ${this.vehicle.position.x.toFixed(1)}, ${this.vehicle.position.y.toFixed(1)}, ${this.vehicle.position.z.toFixed(1)}\nchallenge ${this.challenges.challengeIndex+1}/3 · score ${Math.round(this.challenges.score)}\nquality ${this.quality.requested}/${this.quality.effective}\nGPU ${this.quality.rendererName}`}
 }

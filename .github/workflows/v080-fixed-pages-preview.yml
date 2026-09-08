@@ -44,7 +44,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: github-pages
+      name: v080-preview
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy fixed V0.8.0 preview

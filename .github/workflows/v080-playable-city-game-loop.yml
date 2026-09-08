@@ -1,0 +1,64 @@
+name: V0.8.0 Playable City Game Loop
+
+on:
+  push:
+    branches:
+      - feature/v0.8.0-playable-city-game-loop
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Static smoke
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v080-vite.log 2>&1 &
+          echo $! > /tmp/car-v080-vite.pid
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-v080-vite.log
+          exit 1
+      - name: Browser play smoke
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: npm run test:browser
+      - name: Steering direction and reverse contract
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/control-direction-smoke.mjs
+      - name: Software LOW active render budget
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/render-budget-smoke.mjs
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v080-visual-qa
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload production build
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v080-production-build
+          path: dist/
+          retention-days: 14

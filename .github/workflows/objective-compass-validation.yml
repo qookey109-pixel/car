@@ -1,0 +1,54 @@
+name: V0.8.0 Objective Compass Validation
+
+on:
+  pull_request:
+    paths:
+      - 'src/ui/ObjectiveCompass.js'
+      - 'src/objective-compass.css'
+      - 'src/main.js'
+      - 'tests/objective-compass-smoke.mjs'
+      - '.github/workflows/objective-compass-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Production build
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-compass-vite.log 2>&1 &
+          echo $! > /tmp/car-compass-vite.pid
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-compass-vite.log
+          exit 1
+      - name: Objective compass browser contract
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/objective-compass-smoke.mjs
+      - name: Upload objective compass QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v080-objective-compass-qa
+          path: test-results/objective-compass/
+          if-no-files-found: ignore
+          retention-days: 14

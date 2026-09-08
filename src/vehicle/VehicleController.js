@@ -94,8 +94,9 @@ export class VehicleController{
 
     const wantsForward=this.input.throttle>0.05,wantsReverse=this.input.throttle<-.05;
     let drive=0,brake=0;
-    if(wantsForward)drive=-this.engineForce*this.input.throttle;
-    if(wantsReverse){if(speed>7)brake=10;else drive=this.reverseForce*Math.abs(this.input.throttle)}
+    // The procedural car nose, headlights, camera forward and first checkpoint all use local -Z as forward.
+    if(wantsForward)drive=this.engineForce*this.input.throttle;
+    if(wantsReverse){if(speed>7)brake=10;else drive=-this.reverseForce*Math.abs(this.input.throttle)}
 
     this.nitroActive=Boolean(this.input.nitro&&wantsForward&&speed>18&&this.nitro>.02);
     if(this.nitroActive){drive*=1.62;this.nitro=Math.max(0,this.nitro-dt*.19)}else this.nitro=Math.min(1,this.nitro+dt*.075);

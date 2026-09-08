@@ -68,8 +68,6 @@ async function runDesktop(browser){
     g.city.staticBodies.forEach(b=>{b.collisionFilterMask=0});
     let minUpY=1,maxSpeed=0,maxRollPitchRate=0;
     const sample=()=>{
-      const up=new window.CANNON?.Vec3?.()||null;
-      const u={x:0,y:1,z:0};
       const q=v.chassisBody.quaternion;
       const x=2*(q.x*q.y-q.w*q.z),y=1-2*(q.x*q.x+q.z*q.z),z=2*(q.y*q.z+q.w*q.x);
       minUpY=Math.min(minUpY,y);maxSpeed=Math.max(maxSpeed,v.speedKmh);

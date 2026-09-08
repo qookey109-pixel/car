@@ -22,8 +22,8 @@ export class Input{
       const dz=v=>Math.abs(v)<.12?0:v;
       steer=clamp(dz(p.axes[0]||0),-1,1);
       cameraX=clamp(dz(p.axes[2]||0),-1,1);cameraY=clamp(dz(p.axes[3]||0),-1,1);
-      const gas=Math.max(p.buttons[7]?.value||0,p.buttons[0]?.pressed?.7:0);
-      const brake=Math.max(p.buttons[6]?.value||0,p.buttons[1]?.pressed?.7:0);
+      const gas=Math.max(p.buttons[7]?.value||0,p.buttons[0]?.pressed ? .7 : 0);
+      const brake=Math.max(p.buttons[6]?.value||0,p.buttons[1]?.pressed ? .7 : 0);
       if(gas>.05||brake>.05)throttle=gas-brake;
       handbrake=handbrake||Boolean(p.buttons[2]?.pressed||p.buttons[4]?.pressed);nitro=nitro||Boolean(p.buttons[5]?.pressed||p.buttons[3]?.pressed)
     }

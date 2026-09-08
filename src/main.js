@@ -1,12 +1,16 @@
 import './styles.css';
 import './replay.css';
+import './objective-compass.css';
 import {Game} from './core/Game.js';
+import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 
 const app=document.getElementById('app');
 const game=new Game(app);
+const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
   version:'0.8.0',
   game,
+  compass,
   snapshot:()=>({
     version:'0.8.0',
     state:game.state,
@@ -22,6 +26,7 @@ window.__NEON_RACER__={
     completed:game.challenges.completed,
     records:{...game.records},
     recovery:{flipTimer:game.flipTimer,cooldown:game.recoveryCooldown},
+    navigation:compass.snapshot(),
     quality:{requested:game.quality.requested,effective:game.quality.effective},
     city:game.city.stats,
     renderer:{calls:game.renderer.info.render.calls,triangles:game.renderer.info.render.triangles}

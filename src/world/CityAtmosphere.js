@@ -7,6 +7,7 @@ export class CityAtmosphere{
     this.group.name='CityAtmosphere';
     city.group.add(this.group);
     this._trafficSignals();
+    this._facadeLightRhythm();
   }
 
   _trafficSignals(){
@@ -85,5 +86,51 @@ export class CityAtmosphere{
     this.greenLights.instanceMatrix.needsUpdate=true;
     this.signalPhase=next;
     this.city.stats.trafficSignalPhase=next;
+  }
+
+  _facadeLightRhythm(){
+    const targets={windows:null,signs:null,shops:null};
+    const expected={windows:this.city.stats?.windows||0,signs:this.city.stats?.signs||0,shops:this.city.stats?.shopfronts||0};
+    const colors={windows:0x8bdcff,signs:0xff5fb8,shops:0xffc46b};
+    this.city.group.traverse(obj=>{
+      if(!obj?.isInstancedMesh||!obj.material?.color)return;
+      const hex=obj.material.color.getHex();
+      for(const key of Object.keys(targets)){
+        if(!targets[key]&&obj.count===expected[key]&&hex===colors[key])targets[key]=obj;
+      }
+    });
+    this.facadeLights=targets;
+    this.facadeLightGroups=Object.values(targets).filter(Boolean).length;
+    this.facadeLightCycle=0;
+    this.facadeLightIntervalMs=1800;
+    this._facadeColor=new THREE.Color();
+    this.setFacadeLightCycle(0,true);
+    this.city.stats={...(this.city.stats||{}),facadeLightGroups:this.facadeLightGroups,facadeLightCycle:this.facadeLightCycle};
+    this._facadeTimer=setInterval(()=>this.setFacadeLightCycle((this.facadeLightCycle+1)&3),this.facadeLightIntervalMs);
+  }
+
+  _applyFacadeBrightness(mesh,phase,step,dim){
+    if(!mesh)return;
+    for(let i=0;i<mesh.count;i++){
+      const low=((i*step+phase*3)%11)===0;
+      const soft=((i*(step+2)+phase)%17)===0;
+      const brightness=low?dim:(soft?.82:1);
+      this._facadeColor.setRGB(brightness,brightness,brightness);
+      mesh.setColorAt(i,this._facadeColor);
+    }
+    if(mesh.instanceColor){
+      mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+      mesh.instanceColor.needsUpdate=true;
+    }
+  }
+
+  setFacadeLightCycle(cycle,force=false){
+    const next=(Number(cycle)||0)&3;
+    if(!force&&next===this.facadeLightCycle)return;
+    this._applyFacadeBrightness(this.facadeLights.windows,next,5,.58);
+    this._applyFacadeBrightness(this.facadeLights.signs,next+1,7,.7);
+    this._applyFacadeBrightness(this.facadeLights.shops,next+2,9,.84);
+    this.facadeLightCycle=next;
+    if(this.city.stats)this.city.stats.facadeLightCycle=next;
   }
 }

@@ -7,6 +7,7 @@ export class CityAtmosphere{
     this.group.name='CityAtmosphere';
     city.group.add(this.group);
     this._nightDepth();
+    this._roadReadability();
     this._trafficSignals();
     this._facadeLightRhythm();
   }
@@ -43,6 +44,43 @@ export class CityAtmosphere{
       skyLayers:skyDomes+starFields+moons
     };
     this.city.stats={...(this.city.stats||{}),nightDepthProfile:this.nightDepth.profile,nightFogDensity:this.nightDepth.fogDensity,nightStreetGlowGroups:streetGlowGroups,nightSkyLayers:this.nightDepth.skyLayers};
+  }
+
+  _roadReadability(){
+    // Rebalance only the six existing InstancedMesh road layers. No geometry, transforms,
+    // colliders or draw groups change: the goal is simply a clearer night hierarchy where
+    // lane dashes lead the eye, edges define the corridor, and crossings stay readable
+    // without becoming the brightest object at every intersection.
+    const groups={road:0,curb:0,walk:0,edge:0,dash:0,cross:0};
+    this.city.group.traverse(obj=>{
+      if(!obj?.isInstancedMesh||!obj.material?.color)return;
+      const mat=obj.material,hex=mat.color.getHex();
+      if(hex===0x172734){
+        groups.road++;mat.color.setHex(0x142633);mat.roughness=.52;mat.metalness=.16;
+        if(mat.emissive?.isColor){mat.emissive.setHex(0x081722);mat.emissiveIntensity=.14}
+      }else if(hex===0x89939a){
+        groups.curb++;mat.color.setHex(0x93a1a8)
+      }else if(hex===0x303a43){
+        groups.walk++;mat.color.setHex(0x2b3740)
+      }else if(hex===0xaacbd5){
+        groups.edge++;mat.color.setHex(0xb8dce2);mat.opacity=.86
+      }else if(hex===0xe7f0ed){
+        groups.dash++;mat.color.setHex(0xf4f6e9)
+      }else if(hex===0xf0f4ee){
+        groups.cross++;mat.color.setHex(0xe5ece8);mat.opacity=.82
+      }
+    });
+    const count=Object.values(groups).reduce((sum,n)=>sum+n,0);
+    this.roadReadability={
+      profile:'road-rush-v1',
+      groups:count,
+      layers:groups,
+      edgeOpacity:.86,
+      crossOpacity:.82,
+      dashColor:0xf4f6e9,
+      edgeColor:0xb8dce2
+    };
+    this.city.stats={...(this.city.stats||{}),roadReadabilityProfile:this.roadReadability.profile,roadReadabilityGroups:count};
   }
 
   _trafficSignals(){
@@ -110,7 +148,7 @@ export class CityAtmosphere{
     if(next===this.signalPhase)return;
     const red=[],green=[];
     this._signals.forEach(signal=>{
-      const isGreen=next? !signal.greenPhase0:signal.greenPhase0;
+      const isGreen=next?!signal.greenPhase0:signal.greenPhase0;
       (isGreen?green:red).push(signal);
     });
     red.forEach((p,i)=>this._setInstance(this.redLights,i,p));
@@ -149,7 +187,7 @@ export class CityAtmosphere{
     for(let i=0;i<mesh.count;i++){
       const low=((i*step+phase*3)%11)===0;
       const soft=((i*(step+2)+phase)%17)===0;
-      const brightness=low?dim:(soft ? .82 : 1);
+      const brightness=low?dim:(soft?.82:1);
       this._facadeColor.setRGB(brightness,brightness,brightness);
       mesh.setColorAt(i,this._facadeColor);
     }

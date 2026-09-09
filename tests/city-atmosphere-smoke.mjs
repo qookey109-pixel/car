@@ -61,6 +61,7 @@ try{
         rim:g.city.rim?.intensity||0,
         fill:g.city.fill?.intensity||0
       },
+      road:{...a.roadReadability,layers:{...a.roadReadability?.layers}},
       renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles}
     };
   });
@@ -75,10 +76,13 @@ try{
   if(Math.abs(result.night.fogDensity-.00245)>1e-7||result.night.fogColor!==0x10283b||result.night.background!==0x06111e)throw new Error(`Night fog/sky palette drifted: ${JSON.stringify(result.night)}`);
   if(result.night.streetGlowGroups<1||result.night.skyLayers<3||result.stats.nightStreetGlowGroups<1||result.stats.nightSkyLayers<3)throw new Error(`Existing night layers were not discovered in-place: ${JSON.stringify(result.night)}`);
   if(Math.abs(result.night.hemi-2.15)>.001||Math.abs(result.night.ambient-.52)>.001||Math.abs(result.night.sun-1.78)>.001||Math.abs(result.night.rim-1.04)>.001||Math.abs(result.night.fill-.42)>.001)throw new Error(`Night light balance drifted: ${JSON.stringify(result.night)}`);
+  if(result.road.profile!=='road-rush-v1'||result.stats.roadReadabilityProfile!=='road-rush-v1')throw new Error(`Road readability profile missing: ${JSON.stringify(result.road)}`);
+  if(result.road.groups!==6||result.stats.roadReadabilityGroups!==6||Object.values(result.road.layers).some(n=>n!==1))throw new Error(`Road readability must reuse exactly the six existing road layers: ${JSON.stringify(result.road)}`);
+  if(Math.abs(result.road.edgeOpacity-.86)>.001||Math.abs(result.road.crossOpacity-.82)>.001||result.road.dashColor!==0xf4f6e9||result.road.edgeColor!==0xb8dce2)throw new Error(`Road marking hierarchy drifted: ${JSON.stringify(result.road)}`);
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`City atmosphere exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/city-atmosphere-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · facade rhythm PASS · night depth ${result.night.profile} · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
+  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · night ${result.night.profile} · road ${result.road.profile} · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
 }finally{
   await browser.close();
 }

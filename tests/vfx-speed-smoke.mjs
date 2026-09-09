@@ -16,6 +16,11 @@ try{
     const inactiveHidden=[];
     for(let i=0;i<e.capacity;i++)inactiveHidden.push(e.positions[i*3+1]===-999);
 
+    const particlePosition=e.points.geometry.attributes.position;
+    const idleVersionBefore=particlePosition.version;
+    e.update(1/60,{speedKmh:0,nitroActive:false,isDrifting:false},c);
+    const idleVersionAfter=particlePosition.version;
+
     c.rotation.set(.12,.65,0);c.updateMatrixWorld(true);
     e.update(1/60,{speedKmh:95,nitroActive:false,isDrifting:false},c);
     const lowOpacity=e.speedLines.material.opacity;
@@ -44,6 +49,7 @@ try{
     g._render();
     return{
       inactiveHidden:inactiveHidden.every(Boolean),
+      idleBufferStable:idleVersionAfter===idleVersionBefore,
       quaternionDelta:Math.hypot(q1.x-cq.x,q1.y-cq.y,q1.z-cq.z,q1.w-cq.w),
       stableXY,movedZ,lowOpacity,highOpacity,
       colorDistance,spawned:{orange:afterOrange,cyan:afterCyan-afterOrange},
@@ -52,6 +58,7 @@ try{
     };
   });
   if(!result.inactiveHidden)throw new Error(`Inactive particles must start hidden: ${JSON.stringify(result)}`);
+  if(!result.idleBufferStable)throw new Error(`Idle particle update must not upload the position buffer: ${JSON.stringify(result)}`);
   if(result.quaternionDelta>1e-5)throw new Error(`Speed flow must follow camera quaternion: ${JSON.stringify(result)}`);
   if(!result.stableXY||!result.movedZ)throw new Error(`Speed streaks must flow continuously without per-frame lateral flicker: ${JSON.stringify(result)}`);
   if(!(result.highOpacity>result.lowOpacity))throw new Error(`Speed streak opacity must ramp with speed: ${JSON.stringify(result)}`);
@@ -60,7 +67,7 @@ try{
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`VFX polish exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/vfx-speed-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`VFX speed PASS · camera-local · opacity ${result.lowOpacity.toFixed(3)}→${result.highOpacity.toFixed(3)} · particle colors distinct · ${result.renderer.calls} calls`);
+  console.log(`VFX speed PASS · camera-local · idle upload skipped · opacity ${result.lowOpacity.toFixed(3)}→${result.highOpacity.toFixed(3)} · particle colors distinct · ${result.renderer.calls} calls`);
 }finally{
   await browser.close();
 }

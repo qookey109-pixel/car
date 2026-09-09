@@ -10,13 +10,21 @@ export class Effects{
     this.points=new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,vertexColors:true,size:.42,sizeAttenuation:true,transparent:true,opacity:.8,depthWrite:false,blending:THREE.AdditiveBlending}));
     this.points.frustumCulled=false;scene.add(this.points);
 
+    // Keep the existing single LineSegments draw group, but bias the deterministic anchors
+    // away from the objective corridor and toward the lower peripheral view. The result reads
+    // as road/kerb rush instead of full-screen sci-fi streaks, especially on 844x390 mobile.
+    this.speedFlowProfile='peripheral-road-rush-v1';
     this.speedLineCount=20;this.speedLinePositions=new Float32Array(this.speedLineCount*2*3);this.speedLineTime=0;
-    this.speedLineSeeds=Array.from({length:this.speedLineCount},(_,i)=>({
-      x:(i%5-2)+((((i*37)%101)/100)-.5)*.42,
-      y:((i/5|0)-1.5)+((((i*53)%97)/96)-.5)*.34,
-      depth:((i*47)%89)/88,
-      rate:.78+((i*29)%83)/210
-    }));
+    this.speedLineSeeds=Array.from({length:this.speedLineCount},(_,i)=>{
+      const lane=Math.floor(i/2)%5,side=(i&1)?1:-1,row=Math.floor(i/10);
+      const jitterX=((((i*37)%101)/100)-.5)*.12,jitterY=((((i*53)%97)/96)-.5)*.22;
+      return{
+        x:side*(.82+lane*.37+jitterX),
+        y:-.18-row*.58+jitterY,
+        depth:((i*47)%89)/88,
+        rate:.78+((i*29)%83)/210
+      };
+    });
     const speedGeo=new THREE.BufferGeometry();speedGeo.setAttribute('position',new THREE.BufferAttribute(this.speedLinePositions,3));
     const speedMat=new THREE.LineBasicMaterial({color:0x8defff,transparent:true,opacity:0,depthWrite:false});
     this.speedLines=new THREE.LineSegments(speedGeo,speedMat);this.speedLines.visible=false;this.speedLines.frustumCulled=false;scene.add(this.speedLines);
@@ -49,7 +57,7 @@ export class Effects{
     if(active){
       this.speedLineTime=(this.speedLineTime+dt*(.56+speed/155+(vehicle.nitroActive?.28:0)))%10000;
       this.speedLines.position.copy(camera.position);this.speedLines.quaternion.copy(camera.quaternion);
-      const length=2.5+speed*.035+(vehicle.nitroActive?1.35:0),spreadX=2.85+speedMix*.95,spreadY=1.9+speedMix*.48,depthSpan=14+speedMix*4;
+      const length=2.35+speed*.038+(vehicle.nitroActive?1.35:0),spreadX=2.85+speedMix*.95,spreadY=1.9+speedMix*.48,depthSpan=14+speedMix*4;
       for(let i=0;i<this.speedLineCount;i++){
         const s=this.speedLineSeeds[i],phase=(s.depth+this.speedLineTime*s.rate)%1;
         const x=s.x*spreadX,y=s.y*spreadY,z=-3-(1-phase)*depthSpan,o=i*6;

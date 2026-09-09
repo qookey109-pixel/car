@@ -57,6 +57,11 @@ try{
     const highOpacity=e.speedLines.material.opacity;
     const highSpeed=Array.from(e.speedLinePositions);
     const highSpread=spreadOf(highSpeed);
+    let minAbsX=Infinity,maxY=-Infinity,minX=Infinity,maxX=-Infinity;
+    for(let i=0;i<e.speedLineCount;i++){
+      const o=i*6,x=highSpeed[o],y=highSpeed[o+1];
+      minAbsX=Math.min(minAbsX,Math.abs(x));maxY=Math.max(maxY,y);minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+    }
 
     const v={x:0,y:0,z:0};
     e.burst({x:0,y:1,z:0},v,.2,0xffd36e);
@@ -74,29 +79,33 @@ try{
     if(gearEl)gearEl.textContent='5';
     g._render();
     return{
+      flowProfile:e.speedFlowProfile,
       inactiveHidden:inactiveHidden.every(Boolean),
       idleBufferStable:idleVersionAfter===idleVersionBefore,
       quaternionDelta:Math.hypot(q1.x-cq.x,q1.y-cq.y,q1.z-cq.z,q1.w-cq.w),
       stableXY,movedZ,lowOpacity,highOpacity,lowSpread,highSpread,
+      corridor:{minAbsX,maxY,minX,maxX},
       colorDistance,spawned:{orange:afterOrange,cyan:afterCyan-afterOrange},
       lineDrawGroups:e.speedLines.type==='LineSegments'?1:0,
       screenshotState:{gameVisible:!document.getElementById('hud')?.classList.contains('hidden'),speedText:speedEl?.textContent||null},
       renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles}
     };
   });
+  if(result.flowProfile!=='peripheral-road-rush-v1')throw new Error(`Peripheral road-rush profile missing: ${JSON.stringify(result)}`);
   if(!result.inactiveHidden)throw new Error(`Inactive particles must start hidden: ${JSON.stringify(result)}`);
   if(!result.idleBufferStable)throw new Error(`Idle particle update must not upload the position buffer: ${JSON.stringify(result)}`);
   if(result.quaternionDelta>1e-5)throw new Error(`Speed flow must follow camera quaternion: ${JSON.stringify(result)}`);
   if(!result.stableXY||!result.movedZ)throw new Error(`Same-speed streaks must flow in depth without lateral flicker: ${JSON.stringify(result)}`);
   if(!(result.highOpacity>result.lowOpacity))throw new Error(`Speed streak opacity must ramp with speed: ${JSON.stringify(result)}`);
   if(!(result.highSpread>result.lowSpread))throw new Error(`High-speed streak field should widen smoothly: ${JSON.stringify(result)}`);
+  if(!(result.corridor.minAbsX>2.1&&result.corridor.maxY<0&&result.corridor.minX<0&&result.corridor.maxX>0))throw new Error(`Speed streaks must preserve a clear central/upper objective corridor: ${JSON.stringify(result.corridor)}`);
   if(result.colorDistance<.2)throw new Error(`Drift and nitro particles must retain distinct per-particle colors: ${JSON.stringify(result)}`);
   if(result.lineDrawGroups!==1)throw new Error(`Speed streaks must remain one LineSegments draw group: ${JSON.stringify(result)}`);
   if(!result.screenshotState.gameVisible||result.screenshotState.speedText!=='165')throw new Error(`VFX screenshot must show the in-game high-speed state: ${JSON.stringify(result.screenshotState)}`);
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`VFX polish exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/vfx-speed-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`VFX speed PASS · camera-local · idle upload skipped · opacity ${result.lowOpacity.toFixed(3)}→${result.highOpacity.toFixed(3)} · spread ${result.lowSpread.toFixed(2)}→${result.highSpread.toFixed(2)} · particle colors distinct · ${result.renderer.calls} calls`);
+  console.log(`VFX speed PASS · ${result.flowProfile} · center gap ${result.corridor.minAbsX.toFixed(2)} · maxY ${result.corridor.maxY.toFixed(2)} · opacity ${result.lowOpacity.toFixed(3)}→${result.highOpacity.toFixed(3)} · ${result.renderer.calls} calls`);
 }finally{
   await browser.close();
 }

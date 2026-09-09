@@ -34,13 +34,14 @@ export class HUD{
   closeSettings(){this.showOnly(this.settingsReturn||'boot')}
 
   update(vehicle,challenges){
-    this.el.speed.textContent=Math.round(vehicle.speedKmh);this.el.gear.textContent=this._gear(vehicle.speedKmh,vehicle.input.throttle);this.el.nitro.style.width=`${Math.round(vehicle.nitro*100)}%`;
+    const signedSpeed=vehicle.vehicle?.currentVehicleSpeedKmHour||0;
+    this.el.speed.textContent=Math.round(vehicle.speedKmh);this.el.gear.textContent=this._gear(vehicle.speedKmh,signedSpeed,vehicle.input.throttle);this.el.nitro.style.width=`${Math.round(vehicle.nitro*100)}%`;
     this.el.score.textContent=Math.round(challenges.score).toLocaleString();this.el.combo.textContent=`x${challenges.combo.toFixed(1)}`;
     const o=challenges.objective;this.el.objectiveTitle.textContent=o.title;this.el.objectiveText.textContent=o.text;this.el.progress.style.width=`${Math.round(challenges.progress*100)}%`;
     if(vehicle.nitroActive)this.el.nitro.style.filter='brightness(1.5) drop-shadow(0 0 5px #6ff)';else this.el.nitro.style.filter='none';
   }
 
-  _gear(speed,throttle){if(speed<2&&Math.abs(throttle)<.05)return'N';if(throttle<-.05&&speed<8)return'R';return String(Math.max(1,Math.min(6,Math.floor(speed/38)+1)))}
+  _gear(speed,signedSpeed,throttle){if(speed<2&&Math.abs(throttle)<.05)return'N';if(signedSpeed>1.5||(throttle<-.05&&speed<2))return'R';return String(Math.max(1,Math.min(6,Math.floor(speed/38)+1)))}
   _formatTime(time=0){const m=Math.floor(time/60),s=Math.floor(time%60);return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
   toast(text){this.el.toast.textContent=text;this.el.toast.classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.el.toast.classList.remove('show'),2200)}
   qualityLabel(text){this.el.quality.textContent=String(text).toUpperCase()}

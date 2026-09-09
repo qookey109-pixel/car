@@ -1,0 +1,145 @@
+name: V0.8.1 0ae655 WebKit + Preview
+
+on:
+  push:
+    branches:
+      - preview/v0.8.1-city-atmosphere-0ae655
+    paths:
+      - .github/workflows/v081-0ae655-webkit-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: v081-0ae655-preview
+  cancel-in-progress: false
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact city atmosphere candidate
+        uses: actions/checkout@v6
+        with:
+          ref: 0ae65514917a7ffb4829f5f27bce6718747ee837
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps webkit
+      - name: Prepare WebKit contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          for src in ['browser-smoke.mjs','control-direction-smoke.mjs','city-atmosphere-smoke.mjs','objective-compass-smoke.mjs','audio-feel-smoke.mjs']:
+              p=Path('tests')/src
+              out=Path('tests')/src.replace('.mjs','-webkit.tmp.mjs')
+              s=p.read_text()
+              s=s.replace("import {chromium} from '@playwright/test';","import {webkit as chromium} from '@playwright/test';")
+              s=re.sub(r"chromium\.launch\(\{headless:true,args:\[[^\]]*\]\}\)","chromium.launch({headless:true})",s)
+              out.write_text(s)
+          PY
+      - name: Start exact candidate preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v081-webkit.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-v081-webkit.log
+          exit 1
+      - name: WebKit game-loop acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/browser-smoke-webkit.tmp.mjs
+      - name: WebKit steering and reverse acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/control-direction-smoke-webkit.tmp.mjs
+      - name: WebKit city atmosphere acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/city-atmosphere-smoke-webkit.tmp.mjs
+      - name: WebKit objective compass acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/objective-compass-smoke-webkit.tmp.mjs
+      - name: WebKit audio graph acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/audio-feel-smoke-webkit.tmp.mjs
+      - name: Upload WebKit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v081-0ae655-webkit
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  deploy:
+    needs: webkit
+    runs-on: ubuntu-latest
+    environment:
+      name: v080-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout preserved Safari stability root
+        uses: actions/checkout@v6
+        with:
+          ref: aedf54c22e3f66c16cb4aa06a9dff4030bebbea1
+          path: root-source
+      - name: Checkout 76e9378 preview
+        uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+          path: preview-76
+      - name: Checkout f3cabc preview
+        uses: actions/checkout@v6
+        with:
+          ref: f3cabcbd15d2b9118328b2774f9c08036dcd7b33
+          path: preview-f3
+      - name: Checkout 201b9f preview
+        uses: actions/checkout@v6
+        with:
+          ref: 201b9f721fe04fa9e4df040afa44aa363a60ed3b
+          path: preview-201
+      - name: Checkout exact city atmosphere candidate
+        uses: actions/checkout@v6
+        with:
+          ref: 0ae65514917a7ffb4829f5f27bce6718747ee837
+          path: preview-081
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build preserved previews
+        run: |
+          for dir in root-source preview-76 preview-f3 preview-201 preview-081; do
+            (cd "$dir" && npm install && npm run build)
+          done
+      - name: Assemble fixed preview site
+        run: |
+          mkdir -p site/v0.8.0-76e9378 site/v0.8.0-f3cabc site/v0.8.0-201b9f site/v0.8.1-0ae655
+          cp -R root-source/dist/. site/
+          cp -R preview-76/dist/. site/v0.8.0-76e9378/
+          cp -R preview-f3/dist/. site/v0.8.0-f3cabc/
+          cp -R preview-201/dist/. site/v0.8.0-201b9f/
+          cp -R preview-081/dist/. site/v0.8.1-0ae655/
+          printf '%s\n' '76e9378ce01941caabe68555d2c0f83055c6980b' > site/v0.8.0-76e9378/PREVIEW_SHA.txt
+          printf '%s\n' 'f3cabcbd15d2b9118328b2774f9c08036dcd7b33' > site/v0.8.0-f3cabc/PREVIEW_SHA.txt
+          printf '%s\n' '201b9f721fe04fa9e4df040afa44aa363a60ed3b' > site/v0.8.0-201b9f/PREVIEW_SHA.txt
+          printf '%s\n' '0ae65514917a7ffb4829f5f27bce6718747ee837' > site/v0.8.1-0ae655/PREVIEW_SHA.txt
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy preserved root and fixed previews
+        id: deployment
+        uses: actions/deploy-pages@v4

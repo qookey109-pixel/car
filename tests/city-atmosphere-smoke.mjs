@@ -23,8 +23,9 @@ try{
     a.setSignalPhase(0);
 
     const windows=a.facadeLights?.windows;
+    a.setFacadeLightCycle(0,true);
     const facadeBefore=windows?.instanceColor?Array.from(windows.instanceColor.array):[];
-    a.setFacadeLightCycle(1);
+    a.setFacadeLightCycle(1,true);
     const facadeAfter=windows?.instanceColor?Array.from(windows.instanceColor.array):[];
     const facade={
       groups:a.facadeLightGroups,
@@ -36,7 +37,7 @@ try{
       shops:a.facadeLights?.shops?.count||0,
       colorsChanged:facadeBefore.length===facadeAfter.length&&facadeBefore.some((v,i)=>Math.abs(v-facadeAfter[i])>1e-6)
     };
-    a.setFacadeLightCycle(0);
+    a.setFacadeLightCycle(0,true);
     g._render();
     return{
       stats:{...g.city.stats},

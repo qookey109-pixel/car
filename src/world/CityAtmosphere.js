@@ -8,6 +8,7 @@ export class CityAtmosphere{
     city.group.add(this.group);
     this._nightDepth();
     this._roadReadability();
+    this._streetEdgeDetail();
     this._trafficSignals();
     this._facadeLightRhythm();
   }
@@ -81,6 +82,83 @@ export class CityAtmosphere{
       edgeColor:0xb8dce2
     };
     this.city.stats={...(this.city.stats||{}),roadReadabilityProfile:this.roadReadability.profile,roadReadabilityGroups:count};
+  }
+
+  _streetEdgeDetail(){
+    // Add one shared instanced batch of tiny visual-only street-edge details. The batch mixes
+    // facade awning bars / blade signs with curbside bollards, cabinets and planters so the
+    // player gets stronger low-height parallax at speed without touching physics or adding
+    // per-object draw calls.
+    const records=[];
+    const counts={awnings:0,bladeSigns:0,curbProps:0};
+    const add=(x,y,z,sx,sy,sz,rotY,color,kind)=>{records.push({x,y,z,sx,sy,sz,rotY,color,kind});counts[kind]++};
+    const neon=[0xffb761,0xff6cae,0x73d9ff,0xffd77a];
+    const buildings=this.city.staticBodies.slice(0,this.city.stats?.buildings||0);
+
+    buildings.forEach((body,i)=>{
+      const shape=body?.shapes?.[0],he=shape?.halfExtents;
+      if(!he)return;
+      const x=body.position.x,z=body.position.z;
+      const frontSpan=Math.max(3.6,he.x*1.18),sideSpan=Math.max(3.6,he.z*1.14);
+      const c=neon[i%neon.length];
+      add(x,2.72,z-he.z-.18,frontSpan,.16,.38,0,c,'awnings');
+      add(x,2.72,z+he.z+.18,frontSpan,.16,.38,0,neon[(i+1)%neon.length],'awnings');
+      if(i%3!==1){
+        add(x-he.x-.18,2.72,z,sideSpan,.16,.38,Math.PI/2,neon[(i+2)%neon.length],'awnings');
+        add(x+he.x+.18,2.72,z,sideSpan,.16,.38,Math.PI/2,neon[(i+3)%neon.length],'awnings');
+      }
+      if((i&1)===0){
+        const side=(i&2)?1:-1;
+        add(x+side*(he.x+.24),3.6,z-he.z*.5,.22,1.35,.52,0,neon[(i+2)%neon.length],'bladeSigns');
+      }
+    });
+
+    const roads=this.city.roadPositions||[];
+    const nearestIntersection=q=>roads.length?Math.min(...roads.map(p=>Math.abs(q-p))):999;
+    const propColors=[0x52636f,0x42576b,0x496b58];
+    roads.forEach((road,ri)=>{
+      let step=0;
+      for(let q=-186;q<=186;q+=30,step++){
+        if(nearestIntersection(q)<15)continue;
+        const side=((step+ri)&1)?1:-1,type=(step+ri)%3,color=propColors[type];
+        const dims=type===0?[.18,.72,.18]:type===1?[.55,1.02,.38]:[1.18,.38,.54];
+        add(road+side*11.45,dims[1]*.5,q,dims[0],dims[1],dims[2],0,color,'curbProps');
+        add(q,dims[1]*.5,road-side*11.45,dims[0],dims[1],dims[2],Math.PI/2,color,'curbProps');
+      }
+    });
+
+    const geo=new THREE.BoxGeometry(1,1,1);
+    const mat=new THREE.MeshLambertMaterial({color:0xffffff,emissive:0x101820,emissiveIntensity:.18});
+    const mesh=new THREE.InstancedMesh(geo,mat,records.length);
+    mesh.name='CityStreetEdgeDetails';
+    const dummy=new THREE.Object3D(),color=new THREE.Color();
+    records.forEach((p,i)=>{
+      dummy.position.set(p.x,p.y,p.z);
+      dummy.rotation.set(0,p.rotY,0);
+      dummy.scale.set(p.sx,p.sy,p.sz);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i,dummy.matrix);
+      mesh.setColorAt(i,color.setHex(p.color));
+    });
+    mesh.instanceMatrix.needsUpdate=true;
+    if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+    mesh.castShadow=false;
+    mesh.receiveShadow=false;
+    this.group.add(mesh);
+
+    this.streetEdgeDetails=mesh;
+    this.streetEdgeProfile='near-street-v1';
+    this.streetEdgeRenderGroups=1;
+    this.streetEdgeCounts={...counts,total:records.length};
+    this.city.stats={
+      ...(this.city.stats||{}),
+      streetEdgeProfile:this.streetEdgeProfile,
+      streetEdgeRenderGroups:this.streetEdgeRenderGroups,
+      streetEdgeInstances:records.length,
+      streetEdgeAwnings:counts.awnings,
+      streetEdgeBladeSigns:counts.bladeSigns,
+      streetEdgeCurbProps:counts.curbProps
+    };
   }
 
   _trafficSignals(){

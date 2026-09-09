@@ -11,8 +11,13 @@ try{
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
   await page.goto(base,{waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.__NEON_RACER__?.game?.effects);
+  await page.click('#startGame');
+  await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
   const result=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,e=g.effects,c=g.camera;
+    // Freeze physics/gameplay while leaving the rendered game/HUD visible so the screenshot
+    // is real visual evidence of the injected high-speed VFX state rather than the boot menu.
+    g.state='paused';
     const inactiveHidden=[];
     for(let i=0;i<e.capacity;i++)inactiveHidden.push(e.positions[i*3+1]===-999);
 
@@ -21,7 +26,7 @@ try{
     e.update(1/60,{speedKmh:0,nitroActive:false,isDrifting:false},c);
     const idleVersionAfter=particlePosition.version;
 
-    c.rotation.set(.12,.65,0);c.updateMatrixWorld(true);
+    c.updateMatrixWorld(true);
     const lowVehicle={speedKmh:95,nitroActive:false,isDrifting:false};
     e.update(1/60,lowVehicle,c);
     const lowOpacity=e.speedLines.material.opacity;
@@ -62,6 +67,11 @@ try{
     const colorAt=i=>Array.from(colors.slice(i*3,i*3+3));
     const orange=colorAt(0),cyan=colorAt(afterOrange);
     const colorDistance=Math.hypot(orange[0]-cyan[0],orange[1]-cyan[1],orange[2]-cyan[2]);
+
+    // Label the QA-only injected state so the screenshot is self-explanatory.
+    const speedEl=document.getElementById('speed'),gearEl=document.getElementById('gear');
+    if(speedEl)speedEl.textContent='165';
+    if(gearEl)gearEl.textContent='5';
     g._render();
     return{
       inactiveHidden:inactiveHidden.every(Boolean),
@@ -70,6 +80,7 @@ try{
       stableXY,movedZ,lowOpacity,highOpacity,lowSpread,highSpread,
       colorDistance,spawned:{orange:afterOrange,cyan:afterCyan-afterOrange},
       lineDrawGroups:e.speedLines.type==='LineSegments'?1:0,
+      screenshotState:{gameVisible:!document.getElementById('hud')?.classList.contains('hidden'),speedText:speedEl?.textContent||null},
       renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles}
     };
   });
@@ -81,6 +92,7 @@ try{
   if(!(result.highSpread>result.lowSpread))throw new Error(`High-speed streak field should widen smoothly: ${JSON.stringify(result)}`);
   if(result.colorDistance<.2)throw new Error(`Drift and nitro particles must retain distinct per-particle colors: ${JSON.stringify(result)}`);
   if(result.lineDrawGroups!==1)throw new Error(`Speed streaks must remain one LineSegments draw group: ${JSON.stringify(result)}`);
+  if(!result.screenshotState.gameVisible||result.screenshotState.speedText!=='165')throw new Error(`VFX screenshot must show the in-game high-speed state: ${JSON.stringify(result.screenshotState)}`);
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`VFX polish exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/vfx-speed-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));

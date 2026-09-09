@@ -43,7 +43,8 @@ jobs:
               out=Path('tests')/src.replace('.mjs','-webkit.tmp.mjs')
               s=p.read_text()
               s=s.replace("import {chromium} from '@playwright/test';","import {webkit as chromium} from '@playwright/test';")
-              s=re.sub(r"chromium\.launch\(\{headless:true,args:\[[^\]]*\]\}\)","chromium.launch({headless:true})",s)
+              # Strip Chromium-only launch flags in both compact and multiline launch blocks.
+              s=re.sub(r"chromium\.launch\(\{\s*headless\s*:\s*true\s*,\s*args\s*:\s*\[[^\]]*\]\s*\}\)","chromium.launch({headless:true})",s,flags=re.S)
               out.write_text(s)
           PY
       - name: Start exact candidate preview

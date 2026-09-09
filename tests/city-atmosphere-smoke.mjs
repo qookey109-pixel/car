@@ -70,6 +70,12 @@ try{
         count:a.streetEdgeDetails?.count||0,
         ...(a.streetEdgeCounts||{})
       },
+      district:{
+        profile:a.districtProfile,
+        instances:{...(a.districtInstanceCounts||{})},
+        buildings:{...(a.districtBuildingCounts||{})},
+        palettes:{...(a.districtPalettes||{})}
+      },
       renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles}
     };
   });
@@ -90,14 +96,23 @@ try{
   if(result.streetEdge.profile!=='near-street-v2'||result.stats.streetEdgeProfile!=='near-street-v2')throw new Error(`Near-street v2 profile missing: ${JSON.stringify(result.streetEdge)}`);
   if(result.streetEdge.renderGroups!==1||result.stats.streetEdgeRenderGroups!==1||!result.streetEdge.isInstancedMesh)throw new Error(`Near-street details must stay in one InstancedMesh render group: ${JSON.stringify(result.streetEdge)}`);
   if(result.streetEdge.count!==result.streetEdge.total||result.streetEdge.count!==result.stats.streetEdgeInstances)throw new Error(`Near-street instance accounting drifted: ${JSON.stringify(result.streetEdge)}`);
+  if(result.streetEdge.count!==936)throw new Error(`District identity must not add near-street geometry: ${JSON.stringify(result.streetEdge)}`);
   if(result.streetEdge.awnings<result.stats.buildings*2||result.streetEdge.bladeSigns<Math.floor(result.stats.buildings/2)||result.streetEdge.curbProps<60)throw new Error(`Near-street base density too low: ${JSON.stringify(result.streetEdge)}`);
   if(result.streetEdge.shopMullions<result.stats.buildings*2||result.streetEdge.entryFrames<Math.floor(result.stats.buildings/2)*3)throw new Error(`Storefront bay rhythm too low: ${JSON.stringify(result.streetEdge)}`);
   if(result.stats.streetEdgeShopMullions!==result.streetEdge.shopMullions||result.stats.streetEdgeEntryFrames!==result.streetEdge.entryFrames)throw new Error(`Storefront v2 stats drifted: ${JSON.stringify(result.streetEdge)}`);
+  if(result.district.profile!=='district-rhythm-v1'||result.stats.districtProfile!=='district-rhythm-v1')throw new Error(`District identity profile missing: ${JSON.stringify(result.district)}`);
+  const districtInstanceValues=Object.values(result.district.instances),districtBuildingValues=Object.values(result.district.buildings);
+  if(districtInstanceValues.length!==3||districtInstanceValues.some(n=>n<=0)||districtInstanceValues.reduce((a,b)=>a+b,0)!==result.streetEdge.count)throw new Error(`District instance accounting invalid: ${JSON.stringify(result.district)}`);
+  if(districtBuildingValues.length!==3||districtBuildingValues.some(n=>n<=0)||districtBuildingValues.reduce((a,b)=>a+b,0)!==result.stats.buildings)throw new Error(`District building accounting invalid: ${JSON.stringify(result.district)}`);
+  if(result.stats.districtCoreInstances!==result.district.instances.core||result.stats.districtAvenueInstances!==result.district.instances.avenue||result.stats.districtEdgeInstances!==result.district.instances.edge)throw new Error(`District instance stats drifted: ${JSON.stringify(result.district)}`);
+  if(result.stats.districtCoreBuildings!==result.district.buildings.core||result.stats.districtAvenueBuildings!==result.district.buildings.avenue||result.stats.districtEdgeBuildings!==result.district.buildings.edge)throw new Error(`District building stats drifted: ${JSON.stringify(result.district)}`);
+  const paletteSignatures=Object.values(result.district.palettes).map(p=>Array.isArray(p)?p.join(','):'');
+  if(paletteSignatures.length!==3||paletteSignatures.some(p=>!p)||new Set(paletteSignatures).size!==3)throw new Error(`District palettes must remain distinct: ${JSON.stringify(result.district.palettes)}`);
   if(result.physicsStaticBodies!==result.stats.buildings+4)throw new Error(`Visual near-street detail must not add physics colliders: ${JSON.stringify({physicsStaticBodies:result.physicsStaticBodies,buildings:result.stats.buildings})}`);
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`City atmosphere exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/city-atmosphere-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · night ${result.night.profile} · road ${result.road.profile} · street ${result.streetEdge.profile} (${result.streetEdge.count}; mullions ${result.streetEdge.shopMullions}; entries ${result.streetEdge.entryFrames}) · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
+  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · night ${result.night.profile} · road ${result.road.profile} · street ${result.streetEdge.profile} (${result.streetEdge.count}; mullions ${result.streetEdge.shopMullions}; entries ${result.streetEdge.entryFrames}) · district ${result.district.profile} (${result.district.buildings.core}/${result.district.buildings.avenue}/${result.district.buildings.edge} buildings) · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
 }finally{
   await browser.close();
 }

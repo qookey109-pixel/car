@@ -44,6 +44,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/city-atmosphere-smoke.mjs
+      - name: Speed-flow and particle-color acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/vfx-speed-smoke.mjs
       - name: Objective compass acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

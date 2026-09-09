@@ -50,6 +50,17 @@ try{
       },
       phase1,
       facade,
+      night:{
+        ...a.nightDepth,
+        fogDensity:g.scene.fog?.density||0,
+        fogColor:g.scene.fog?.color?.getHex?.()||0,
+        background:g.scene.background?.getHex?.()||0,
+        hemi:g.city.hemi?.intensity||0,
+        ambient:g.city.ambient?.intensity||0,
+        sun:g.city.sun?.intensity||0,
+        rim:g.city.rim?.intensity||0,
+        fill:g.city.fill?.intensity||0
+      },
       renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles}
     };
   });
@@ -60,10 +71,14 @@ try{
   if(result.facade.groups!==3||result.stats.facadeLightGroups!==3)throw new Error(`Expected three existing facade light groups: ${JSON.stringify(result.facade)}`);
   if(result.facade.windows!==result.stats.windows||result.facade.signs!==result.stats.signs||result.facade.shops!==result.stats.shopfronts)throw new Error(`Facade mesh discovery mismatch: ${JSON.stringify(result.facade)}`);
   if(result.facade.cycle!==1||result.facade.statsCycle!==1||result.facade.interval!==1800||!result.facade.colorsChanged)throw new Error(`Facade light rhythm did not update instance colors in-place: ${JSON.stringify(result.facade)}`);
+  if(result.night.profile!=='cool-amber-v1'||result.stats.nightDepthProfile!=='cool-amber-v1')throw new Error(`Night depth profile missing: ${JSON.stringify(result.night)}`);
+  if(Math.abs(result.night.fogDensity-.00245)>1e-7||result.night.fogColor!==0x10283b||result.night.background!==0x06111e)throw new Error(`Night fog/sky palette drifted: ${JSON.stringify(result.night)}`);
+  if(result.night.streetGlowGroups<1||result.night.skyLayers<3||result.stats.nightStreetGlowGroups<1||result.stats.nightSkyLayers<3)throw new Error(`Existing night layers were not discovered in-place: ${JSON.stringify(result.night)}`);
+  if(Math.abs(result.night.hemi-2.15)>.001||Math.abs(result.night.ambient-.52)>.001||Math.abs(result.night.sun-1.78)>.001||Math.abs(result.night.rim-1.04)>.001||Math.abs(result.night.fill-.42)>.001)throw new Error(`Night light balance drifted: ${JSON.stringify(result.night)}`);
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`City atmosphere exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/city-atmosphere-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · phase swap PASS · facade rhythm PASS · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
+  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · facade rhythm PASS · night depth ${result.night.profile} · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
 }finally{
   await browser.close();
 }

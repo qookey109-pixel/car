@@ -54,15 +54,18 @@ try{
 
     v.reset({x:0,y:1.2,z:24},0);
     input.keys.clear();input.keys.add('KeyS');
-    let peakReverse=0,minRaw=Infinity,maxRaw=-Infinity;
+    let peakReverse=0,minRaw=Infinity,maxRaw=-Infinity,gearAbove20=null;
     for(let i=0;i<360;i++){
       v.setInput(input.sample());v.update(g.fixedDt);g.physics.step(g.fixedDt);
       peakReverse=Math.max(peakReverse,v.speedKmh);
       const raw=v.vehicle.currentVehicleSpeedKmHour||0;
       minRaw=Math.min(minRaw,raw);maxRaw=Math.max(maxRaw,raw);
+      if(v.speedKmh>20&&!gearAbove20){g.hud.update(v,g.challenges);gearAbove20=document.getElementById('gear')?.textContent||null}
     }
+    g.hud.update(v,g.challenges);
+    const finalGear=document.getElementById('gear')?.textContent||null;
     input.keys.clear();v.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
-    const reverse={peakKmh:peakReverse,rawKmh:v.vehicle.currentVehicleSpeedKmHour||0,minRaw,maxRaw,z:v.position.z,reverseForce:v.reverseForce,reverseLimit:v.reverseLimit};
+    const reverse={peakKmh:peakReverse,rawKmh:v.vehicle.currentVehicleSpeedKmHour||0,minRaw,maxRaw,z:v.position.z,reverseForce:v.reverseForce,reverseLimit:v.reverseLimit,gearAbove20,finalGear};
 
     g.city.staticBodies.forEach((b,i)=>{b.collisionFilterMask=masks[i]});
     return{mapping,left,right,reverse};
@@ -74,7 +77,8 @@ try{
   if(!(m.keyA===1&&m.arrowLeft===1&&m.touchLeft===1&&m.keyD===-1&&m.arrowRight===-1&&m.touchRight===-1))throw new Error(`Logical steering mapping failed: ${JSON.stringify(m)}`);
   if(!(result.left.x<-10&&result.right.x>10))throw new Error(`Physical A/D steering direction failed: ${JSON.stringify({left:result.left,right:result.right})}`);
   if(!(result.reverse.peakKmh>25&&result.reverse.peakKmh<48&&result.reverse.z>40&&result.reverse.minRaw>=-1))throw new Error(`Reverse envelope failed: ${JSON.stringify(result.reverse)}`);
+  if(result.reverse.gearAbove20!=='R'||result.reverse.finalGear!=='R')throw new Error(`Reverse HUD gear must stay R above 20 km/h: ${JSON.stringify(result.reverse)}`);
   if(errors.length)throw new Error(errors.join('\n'));
 
-  console.log(`Control PASS · A left ${result.left.x.toFixed(1)}m · D right ${result.right.x.toFixed(1)}m · reverse peak ${result.reverse.peakKmh.toFixed(1)} km/h`);
+  console.log(`Control PASS · A left ${result.left.x.toFixed(1)}m · D right ${result.right.x.toFixed(1)}m · reverse peak ${result.reverse.peakKmh.toFixed(1)} km/h · HUD ${result.reverse.finalGear}`);
 }finally{await browser.close()}

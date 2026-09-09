@@ -6,8 +6,43 @@ export class CityAtmosphere{
     this.group=new THREE.Group();
     this.group.name='CityAtmosphere';
     city.group.add(this.group);
+    this._nightDepth();
     this._trafficSignals();
     this._facadeLightRhythm();
+  }
+
+  _nightDepth(){
+    const scene=this.city.scene;
+    if(scene.background?.isColor)scene.background.setHex(0x06111e);
+    if(scene.fog?.isFogExp2){scene.fog.color.setHex(0x10283b);scene.fog.density=.00245}
+
+    if(this.city.hemi){this.city.hemi.color.setHex(0xa5cff2);this.city.hemi.groundColor.setHex(0x13202d);this.city.hemi.intensity=2.15}
+    if(this.city.ambient){this.city.ambient.color.setHex(0x39516c);this.city.ambient.intensity=.52}
+    if(this.city.sun){this.city.sun.color.setHex(0xffcba5);this.city.sun.intensity=1.78}
+    if(this.city.rim){this.city.rim.color.setHex(0x4ecbff);this.city.rim.intensity=1.04}
+    if(this.city.fill){this.city.fill.color.setHex(0x7488ff);this.city.fill.intensity=.42}
+
+    let streetGlowGroups=0,skyDomes=0,starFields=0,moons=0;
+    this.city.group.traverse(obj=>{
+      const mat=obj?.material;
+      if(mat?.uniforms?.top?.value?.isColor&&mat?.uniforms?.bottom?.value?.isColor){
+        mat.uniforms.top.value.setHex(0x040b18);mat.uniforms.bottom.value.setHex(0x1b3e5c);skyDomes++;
+      }
+      if(obj?.isPoints&&mat?.color?.getHex?.()===0xd6e7ff){mat.opacity=.82;starFields++}
+      if(obj?.isInstancedMesh&&mat?.color?.getHex?.()===0xffb259&&mat?.transparent){mat.opacity=.16;streetGlowGroups++}
+      if(obj?.isMesh&&mat?.color?.getHex?.()===0xffe7be){mat.color.setHex(0xffedcf);moons++}
+    });
+
+    this.nightDepth={
+      profile:'cool-amber-v1',
+      fogDensity:scene.fog?.density||0,
+      fogColor:scene.fog?.color?.getHex?.()||0,
+      background:scene.background?.getHex?.()||0,
+      streetGlowGroups,
+      streetGlowOpacity:.16,
+      skyLayers:skyDomes+starFields+moons
+    };
+    this.city.stats={...(this.city.stats||{}),nightDepthProfile:this.nightDepth.profile,nightFogDensity:this.nightDepth.fogDensity,nightStreetGlowGroups:streetGlowGroups,nightSkyLayers:this.nightDepth.skyLayers};
   }
 
   _trafficSignals(){

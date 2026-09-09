@@ -1,0 +1,170 @@
+name: V0.8.1 db3b102 WebKit + Preview
+
+on:
+  push:
+    branches:
+      - preview/v0.8.1-speed-flow-db3b102
+    paths:
+      - .github/workflows/v081-db3b102-webkit-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: v081-db3b102-preview
+  cancel-in-progress: false
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact speed-flow candidate
+        uses: actions/checkout@v6
+        with:
+          ref: db3b10244e4039d625a17b37d9c7d75c87b17c59
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps webkit
+      - name: Prepare WebKit contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          for src in ['browser-smoke.mjs','control-direction-smoke.mjs','city-atmosphere-smoke.mjs','vfx-speed-smoke.mjs','objective-compass-smoke.mjs','audio-feel-smoke.mjs']:
+              p=Path('tests')/src
+              out=Path('tests')/src.replace('.mjs','-webkit.tmp.mjs')
+              s=p.read_text()
+              s=s.replace("import {chromium} from '@playwright/test';","import {webkit as chromium} from '@playwright/test';")
+              s=re.sub(r"chromium\.launch\(\{headless:true,args:\[[^\]]*\]\}\)","chromium.launch({headless:true})",s)
+              out.write_text(s)
+          PY
+      - name: Start exact candidate preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v081-db3b-webkit.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-v081-db3b-webkit.log
+          exit 1
+      - name: WebKit game-loop acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/browser-smoke-webkit.tmp.mjs
+      - name: WebKit steering, reverse and HUD acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/control-direction-smoke-webkit.tmp.mjs
+      - name: WebKit city-atmosphere and facade-rhythm acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/city-atmosphere-smoke-webkit.tmp.mjs
+      - name: WebKit speed-flow and particle-color acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/vfx-speed-smoke-webkit.tmp.mjs
+      - name: WebKit objective compass acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/objective-compass-smoke-webkit.tmp.mjs
+      - name: WebKit audio graph acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/audio-feel-smoke-webkit.tmp.mjs
+      - name: Upload WebKit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v081-db3b102-webkit
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  deploy:
+    needs: webkit
+    runs-on: ubuntu-latest
+    environment:
+      name: v080-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout preserved Safari stability root
+        uses: actions/checkout@v6
+        with:
+          ref: aedf54c22e3f66c16cb4aa06a9dff4030bebbea1
+          path: root-source
+      - name: Checkout 76e9378 preview
+        uses: actions/checkout@v6
+        with:
+          ref: 76e9378ce01941caabe68555d2c0f83055c6980b
+          path: preview-76
+      - name: Checkout f3cabc preview
+        uses: actions/checkout@v6
+        with:
+          ref: f3cabcbd15d2b9118328b2774f9c08036dcd7b33
+          path: preview-f3
+      - name: Checkout 201b9f preview
+        uses: actions/checkout@v6
+        with:
+          ref: 201b9f721fe04fa9e4df040afa44aa363a60ed3b
+          path: preview-201
+      - name: Checkout 0ae655 city preview
+        uses: actions/checkout@v6
+        with:
+          ref: 0ae65514917a7ffb4829f5f27bce6718747ee837
+          path: preview-0ae
+      - name: Checkout 74f1ce dynamic-signal preview
+        uses: actions/checkout@v6
+        with:
+          ref: 74f1ce13cb66746245bc5452c7ce9daa71755f77
+          path: preview-74f
+      - name: Checkout fa8e820 facade-rhythm preview
+        uses: actions/checkout@v6
+        with:
+          ref: fa8e820ea7d4bfdb86a5dc296705a3e8b21ea102
+          path: preview-fa8
+      - name: Checkout exact speed-flow candidate
+        uses: actions/checkout@v6
+        with:
+          ref: db3b10244e4039d625a17b37d9c7d75c87b17c59
+          path: preview-db3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build preserved previews
+        run: |
+          for dir in root-source preview-76 preview-f3 preview-201 preview-0ae preview-74f preview-fa8 preview-db3; do
+            (cd "$dir" && npm install && npm run build)
+          done
+      - name: Assemble fixed preview site
+        run: |
+          mkdir -p site/v0.8.0-76e9378 site/v0.8.0-f3cabc site/v0.8.0-201b9f site/v0.8.1-0ae655 site/v0.8.1-74f1ce site/v0.8.1-fa8e820 site/v0.8.1-db3b102
+          cp -R root-source/dist/. site/
+          cp -R preview-76/dist/. site/v0.8.0-76e9378/
+          cp -R preview-f3/dist/. site/v0.8.0-f3cabc/
+          cp -R preview-201/dist/. site/v0.8.0-201b9f/
+          cp -R preview-0ae/dist/. site/v0.8.1-0ae655/
+          cp -R preview-74f/dist/. site/v0.8.1-74f1ce/
+          cp -R preview-fa8/dist/. site/v0.8.1-fa8e820/
+          cp -R preview-db3/dist/. site/v0.8.1-db3b102/
+          printf '%s\n' '76e9378ce01941caabe68555d2c0f83055c6980b' > site/v0.8.0-76e9378/PREVIEW_SHA.txt
+          printf '%s\n' 'f3cabcbd15d2b9118328b2774f9c08036dcd7b33' > site/v0.8.0-f3cabc/PREVIEW_SHA.txt
+          printf '%s\n' '201b9f721fe04fa9e4df040afa44aa363a60ed3b' > site/v0.8.0-201b9f/PREVIEW_SHA.txt
+          printf '%s\n' '0ae65514917a7ffb4829f5f27bce6718747ee837' > site/v0.8.1-0ae655/PREVIEW_SHA.txt
+          printf '%s\n' '74f1ce13cb66746245bc5452c7ce9daa71755f77' > site/v0.8.1-74f1ce/PREVIEW_SHA.txt
+          printf '%s\n' 'fa8e820ea7d4bfdb86a5dc296705a3e8b21ea102' > site/v0.8.1-fa8e820/PREVIEW_SHA.txt
+          printf '%s\n' 'db3b10244e4039d625a17b37d9c7d75c87b17c59' > site/v0.8.1-db3b102/PREVIEW_SHA.txt
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy preserved root and fixed previews
+        id: deployment
+        uses: actions/deploy-pages@v4

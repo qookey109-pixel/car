@@ -85,61 +85,91 @@ export class CityAtmosphere{
   }
 
   _streetEdgeDetail(){
-    // One shared visual-only InstancedMesh: awnings, blade signs, curb props and simple
-    // storefront bay frames. V2 uses the same draw group as V1 but gives ground floors a
-    // readable shop-by-shop rhythm instead of broad glowing facade strips.
+    // One shared visual-only InstancedMesh. V2 keeps the storefront bay rhythm, while
+    // district-rhythm-v1 gives the same instances distinct spatial identities without
+    // adding geometry, draw groups, colliders or camera occluders.
     const records=[];
     const counts={awnings:0,bladeSigns:0,curbProps:0,shopMullions:0,entryFrames:0};
-    const add=(x,y,z,sx,sy,sz,rotY,color,kind)=>{records.push({x,y,z,sx,sy,sz,rotY,color,kind});counts[kind]++};
-    const neon=[0xffb761,0xff6cae,0x73d9ff,0xffd77a];
-    const frameColors=[0x35566a,0x4b5964,0x355e57];
+    const districtInstances={core:0,avenue:0,edge:0};
+    const districtBuildings={core:0,avenue:0,edge:0};
+    const districtFor=(x,z)=>{
+      const ax=Math.abs(x),az=Math.abs(z);
+      if(ax<=72&&az<=72)return 'core';
+      if(ax<=32||az<=32)return 'avenue';
+      return 'edge';
+    };
+    const palettes={
+      core:{
+        neon:[0xffb761,0xff5fae,0x74e6ff,0xffdf7a],
+        frame:[0x3d6275,0x5b5367,0x3f665c],
+        props:[0x5d6970,0x536878,0x4f705f]
+      },
+      avenue:{
+        neon:[0x72d9ff,0xffc16e,0x76ffc4,0xc4a0ff],
+        frame:[0x315c70,0x59616c,0x3c6259],
+        props:[0x4f6470,0x455f72,0x496b58]
+      },
+      edge:{
+        neon:[0x7094a6,0x987f94,0x719385,0xa39b78],
+        frame:[0x324a58,0x48535c,0x38544d],
+        props:[0x465862,0x3f5263,0x435b50]
+      }
+    };
+    const add=(x,y,z,sx,sy,sz,rotY,color,kind,district)=>{
+      records.push({x,y,z,sx,sy,sz,rotY,color,kind,district});
+      counts[kind]++;
+      districtInstances[district]++;
+    };
     const buildings=this.city.staticBodies.slice(0,this.city.stats?.buildings||0);
 
     buildings.forEach((body,i)=>{
       const shape=body?.shapes?.[0],he=shape?.halfExtents;
       if(!he)return;
-      const x=body.position.x,z=body.position.z;
+      const x=body.position.x,z=body.position.z,district=districtFor(x,z),palette=palettes[district];
+      districtBuildings[district]++;
       const frontSpan=Math.max(3.6,he.x*1.18),sideSpan=Math.max(3.6,he.z*1.14);
-      const c=neon[i%neon.length],frame=frameColors[i%frameColors.length];
-      add(x,2.72,z-he.z-.18,frontSpan,.16,.38,0,c,'awnings');
-      add(x,2.72,z+he.z+.18,frontSpan,.16,.38,0,neon[(i+1)%neon.length],'awnings');
+      const awningY=district==='core'?2.78:(district==='edge'?2.62:2.72);
+      const awningH=district==='core'?.18:(district==='edge'?.13:.16);
+      const c=palette.neon[i%palette.neon.length],frame=palette.frame[i%palette.frame.length];
+      add(x,awningY,z-he.z-.18,frontSpan,awningH,.38,0,c,'awnings',district);
+      add(x,awningY,z+he.z+.18,frontSpan,awningH,.38,0,palette.neon[(i+1)%palette.neon.length],'awnings',district);
       if(i%3!==1){
-        add(x-he.x-.18,2.72,z,sideSpan,.16,.38,Math.PI/2,neon[(i+2)%neon.length],'awnings');
-        add(x+he.x+.18,2.72,z,sideSpan,.16,.38,Math.PI/2,neon[(i+3)%neon.length],'awnings');
+        add(x-he.x-.18,awningY,z,sideSpan,awningH,.38,Math.PI/2,palette.neon[(i+2)%palette.neon.length],'awnings',district);
+        add(x+he.x+.18,awningY,z,sideSpan,awningH,.38,Math.PI/2,palette.neon[(i+3)%palette.neon.length],'awnings',district);
       }
       if((i&1)===0){
         const side=(i&2)?1:-1;
-        add(x+side*(he.x+.24),3.6,z-he.z*.5,.22,1.35,.52,0,neon[(i+2)%neon.length],'bladeSigns');
+        const signH=district==='core'?1.5:(district==='edge'?1.08:1.35);
+        const signW=district==='core'?.25:(district==='edge'?.18:.22);
+        add(x+side*(he.x+.24),3.6,z-he.z*.5,signW,signH,.52,0,palette.neon[(i+2)%palette.neon.length],'bladeSigns',district);
       }
 
-      // Split the two primary street-facing facades into 2–3 readable shop bays.
       const bayCount=he.x>8?3:2;
       for(let b=1;b<bayCount;b++){
         const ox=-he.x+(he.x*2*b/bayCount);
-        add(x+ox,1.34,z-he.z-.135,.105,2.22,.14,0,frame,'shopMullions');
-        add(x+ox,1.34,z+he.z+.135,.105,2.22,.14,0,frame,'shopMullions');
+        add(x+ox,1.34,z-he.z-.135,.105,2.22,.14,0,frame,'shopMullions',district);
+        add(x+ox,1.34,z+he.z+.135,.105,2.22,.14,0,frame,'shopMullions',district);
       }
-      // Every other building gets a compact doorway frame on one facade. Three boxes per
-      // frame stay in the same shared batch and create a recognisable entrance at speed.
       if((i&1)===0){
         const doorX=x+Math.min(he.x*.32,2.4)*(i%4<2?-1:1),frontZ=z-he.z-.145;
-        add(doorX-.72,1.15,frontZ,.11,2.08,.15,0,frame,'entryFrames');
-        add(doorX+.72,1.15,frontZ,.11,2.08,.15,0,frame,'entryFrames');
-        add(doorX,2.18,frontZ,1.55,.11,.15,0,frame,'entryFrames');
+        add(doorX-.72,1.15,frontZ,.11,2.08,.15,0,frame,'entryFrames',district);
+        add(doorX+.72,1.15,frontZ,.11,2.08,.15,0,frame,'entryFrames',district);
+        add(doorX,2.18,frontZ,1.55,.11,.15,0,frame,'entryFrames',district);
       }
     });
 
     const roads=this.city.roadPositions||[];
     const nearestIntersection=q=>roads.length?Math.min(...roads.map(p=>Math.abs(q-p))):999;
-    const propColors=[0x52636f,0x42576b,0x496b58];
     roads.forEach((road,ri)=>{
       let step=0;
       for(let q=-186;q<=186;q+=30,step++){
         if(nearestIntersection(q)<15)continue;
-        const side=((step+ri)&1)?1:-1,type=(step+ri)%3,color=propColors[type];
+        const side=((step+ri)&1)?1:-1,type=(step+ri)%3;
         const dims=type===0?[.18,.72,.18]:type===1?[.55,1.02,.38]:[1.18,.38,.54];
-        add(road+side*11.45,dims[1]*.5,q,dims[0],dims[1],dims[2],0,color,'curbProps');
-        add(q,dims[1]*.5,road-side*11.45,dims[0],dims[1],dims[2],Math.PI/2,color,'curbProps');
+        const verticalDistrict=districtFor(road+side*11.45,q);
+        const horizontalDistrict=districtFor(q,road-side*11.45);
+        add(road+side*11.45,dims[1]*.5,q,dims[0],dims[1],dims[2],0,palettes[verticalDistrict].props[type],'curbProps',verticalDistrict);
+        add(q,dims[1]*.5,road-side*11.45,dims[0],dims[1],dims[2],Math.PI/2,palettes[horizontalDistrict].props[type],'curbProps',horizontalDistrict);
       }
     });
 
@@ -166,6 +196,14 @@ export class CityAtmosphere{
     this.streetEdgeProfile='near-street-v2';
     this.streetEdgeRenderGroups=1;
     this.streetEdgeCounts={...counts,total:records.length};
+    this.districtProfile='district-rhythm-v1';
+    this.districtInstanceCounts={...districtInstances};
+    this.districtBuildingCounts={...districtBuildings};
+    this.districtPalettes={
+      core:palettes.core.neon.slice(),
+      avenue:palettes.avenue.neon.slice(),
+      edge:palettes.edge.neon.slice()
+    };
     this.city.stats={
       ...(this.city.stats||{}),
       streetEdgeProfile:this.streetEdgeProfile,
@@ -175,7 +213,14 @@ export class CityAtmosphere{
       streetEdgeBladeSigns:counts.bladeSigns,
       streetEdgeCurbProps:counts.curbProps,
       streetEdgeShopMullions:counts.shopMullions,
-      streetEdgeEntryFrames:counts.entryFrames
+      streetEdgeEntryFrames:counts.entryFrames,
+      districtProfile:this.districtProfile,
+      districtCoreInstances:districtInstances.core,
+      districtAvenueInstances:districtInstances.avenue,
+      districtEdgeInstances:districtInstances.edge,
+      districtCoreBuildings:districtBuildings.core,
+      districtAvenueBuildings:districtBuildings.avenue,
+      districtEdgeBuildings:districtBuildings.edge
     };
   }
 

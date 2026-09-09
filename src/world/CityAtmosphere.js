@@ -96,7 +96,7 @@ export class CityAtmosphere{
       if(!obj?.isInstancedMesh||!obj.material?.color)return;
       const hex=obj.material.color.getHex();
       for(const key of Object.keys(targets)){
-        if(!targets[key]&&obj.count===expected[key]&&hex===colors[key])targets[key]=obj;
+        if(expected[key]>0&&!targets[key]&&obj.count===expected[key]&&hex===colors[key])targets[key]=obj;
       }
     });
     this.facadeLights=targets;
@@ -114,12 +114,12 @@ export class CityAtmosphere{
     for(let i=0;i<mesh.count;i++){
       const low=((i*step+phase*3)%11)===0;
       const soft=((i*(step+2)+phase)%17)===0;
-      const brightness=low?dim:(soft?.82:1);
+      const brightness=low?dim:(soft ? .82 : 1);
       this._facadeColor.setRGB(brightness,brightness,brightness);
       mesh.setColorAt(i,this._facadeColor);
     }
     if(mesh.instanceColor){
-      mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
+      if(mesh.instanceColor.usage!==THREE.DynamicDrawUsage)mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
       mesh.instanceColor.needsUpdate=true;
     }
   }

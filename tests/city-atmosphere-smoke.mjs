@@ -16,6 +16,12 @@ try{
   const result=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,a=g.cityAtmosphere;
     g._render();
+    const before=Array.from(a.redLights.instanceMatrix.array.slice(0,16));
+    a.setSignalPhase(1);
+    const after=Array.from(a.redLights.instanceMatrix.array.slice(0,16));
+    const phase1={phase:a.signalPhase,red:a.redLights.count,green:a.greenLights.count,statsPhase:g.city.stats.trafficSignalPhase,matrixChanged:before.some((v,i)=>Math.abs(v-after[i])>1e-6)};
+    a.setSignalPhase(0);
+    g._render();
     return{
       stats:{...g.city.stats},
       groups:{
@@ -25,16 +31,18 @@ try{
         green:a?.greenLights?.count||0,
         renderGroups:a?.renderGroups||0
       },
+      phase1,
       renderer:{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles}
     };
   });
   if(result.stats.trafficSignals!==100)throw new Error(`Expected 100 traffic signals: ${JSON.stringify(result)}`);
   if(result.stats.atmosphereRenderGroups!==4||result.groups.renderGroups!==4)throw new Error(`Traffic signals must stay in four instanced render groups: ${JSON.stringify(result)}`);
   if(result.groups.poles!==100||result.groups.heads!==100||result.groups.red+result.groups.green!==100)throw new Error(`Traffic signal instance counts invalid: ${JSON.stringify(result.groups)}`);
+  if(result.phase1.phase!==1||result.phase1.statsPhase!==1||result.phase1.red+result.phase1.green!==100||!result.phase1.matrixChanged)throw new Error(`Traffic signal phase did not switch in-place: ${JSON.stringify(result.phase1)}`);
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`City atmosphere exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/city-atmosphere-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
+  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · phase swap PASS · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
 }finally{
   await browser.close();
 }

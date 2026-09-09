@@ -3,10 +3,13 @@ import './replay.css';
 import './objective-compass.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
+import {CityAtmosphere} from './world/CityAtmosphere.js';
 
 const app=document.getElementById('app');
 const game=new Game(app);
 game.audio.attachVehicle(game.vehicle);
+const atmosphere=new CityAtmosphere(game.city);
+game.cityAtmosphere=atmosphere;
 const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
   version:'0.8.0',

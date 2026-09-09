@@ -87,15 +87,17 @@ try{
   if(result.road.profile!=='road-rush-v1'||result.stats.roadReadabilityProfile!=='road-rush-v1')throw new Error(`Road readability profile missing: ${JSON.stringify(result.road)}`);
   if(result.road.groups!==6||result.stats.roadReadabilityGroups!==6||Object.values(result.road.layers).some(n=>n!==1))throw new Error(`Road readability must reuse exactly the six existing road layers: ${JSON.stringify(result.road)}`);
   if(Math.abs(result.road.edgeOpacity-.86)>.001||Math.abs(result.road.crossOpacity-.82)>.001||result.road.dashColor!==0xf4f6e9||result.road.edgeColor!==0xb8dce2)throw new Error(`Road marking hierarchy drifted: ${JSON.stringify(result.road)}`);
-  if(result.streetEdge.profile!=='near-street-v1'||result.stats.streetEdgeProfile!=='near-street-v1')throw new Error(`Near-street profile missing: ${JSON.stringify(result.streetEdge)}`);
+  if(result.streetEdge.profile!=='near-street-v2'||result.stats.streetEdgeProfile!=='near-street-v2')throw new Error(`Near-street v2 profile missing: ${JSON.stringify(result.streetEdge)}`);
   if(result.streetEdge.renderGroups!==1||result.stats.streetEdgeRenderGroups!==1||!result.streetEdge.isInstancedMesh)throw new Error(`Near-street details must stay in one InstancedMesh render group: ${JSON.stringify(result.streetEdge)}`);
   if(result.streetEdge.count!==result.streetEdge.total||result.streetEdge.count!==result.stats.streetEdgeInstances)throw new Error(`Near-street instance accounting drifted: ${JSON.stringify(result.streetEdge)}`);
-  if(result.streetEdge.awnings<result.stats.buildings*2||result.streetEdge.bladeSigns<Math.floor(result.stats.buildings/2)||result.streetEdge.curbProps<60)throw new Error(`Near-street density too low: ${JSON.stringify(result.streetEdge)}`);
+  if(result.streetEdge.awnings<result.stats.buildings*2||result.streetEdge.bladeSigns<Math.floor(result.stats.buildings/2)||result.streetEdge.curbProps<60)throw new Error(`Near-street base density too low: ${JSON.stringify(result.streetEdge)}`);
+  if(result.streetEdge.shopMullions<result.stats.buildings*2||result.streetEdge.entryFrames<Math.floor(result.stats.buildings/2)*3)throw new Error(`Storefront bay rhythm too low: ${JSON.stringify(result.streetEdge)}`);
+  if(result.stats.streetEdgeShopMullions!==result.streetEdge.shopMullions||result.stats.streetEdgeEntryFrames!==result.streetEdge.entryFrames)throw new Error(`Storefront v2 stats drifted: ${JSON.stringify(result.streetEdge)}`);
   if(result.physicsStaticBodies!==result.stats.buildings+4)throw new Error(`Visual near-street detail must not add physics colliders: ${JSON.stringify({physicsStaticBodies:result.physicsStaticBodies,buildings:result.stats.buildings})}`);
   if(result.renderer.calls>60||result.renderer.triangles>110000)throw new Error(`City atmosphere exceeded LOW render budget: ${JSON.stringify(result.renderer)}`);
   await page.screenshot({path:'test-results/city-atmosphere-844x390.png',animations:'disabled'});
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · night ${result.night.profile} · road ${result.road.profile} · street ${result.streetEdge.profile} (${result.streetEdge.count}) · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
+  console.log(`City atmosphere PASS · ${result.stats.trafficSignals} signals · night ${result.night.profile} · road ${result.road.profile} · street ${result.streetEdge.profile} (${result.streetEdge.count}; mullions ${result.streetEdge.shopMullions}; entries ${result.streetEdge.entryFrames}) · ${result.renderer.calls} calls · ${result.renderer.triangles} tris`);
 }finally{
   await browser.close();
 }

@@ -1,4 +1,4 @@
-import {chromium} from '@playwright/test';
+import {testBrowser as chromium} from './browser-engine.mjs';
 import fs from 'node:fs';
 
 const base=process.env.BASE_URL||'http://127.0.0.1:4173';

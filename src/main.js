@@ -1,6 +1,7 @@
 import './styles.css';
 import './replay.css';
 import './objective-compass.css';
+import './district.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {CityAtmosphere} from './world/CityAtmosphere.js';
@@ -31,6 +32,7 @@ window.__NEON_RACER__={
     records:{...game.records},
     recovery:{flipTimer:game.flipTimer,cooldown:game.recoveryCooldown},
     navigation:compass.snapshot(),
+    district:{profile:'district-awareness-v1',current:game.hud.district,target:game.challenges.targetDistrict,route:{...game.challenges.routeDistricts,checkpoints:[...game.challenges.routeDistricts.checkpoints]}},
     audio:game.audio.snapshot(),
     quality:{requested:game.quality.requested,effective:game.quality.effective},
     city:game.city.stats,

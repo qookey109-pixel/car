@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {districtFor} from './DistrictMap.js';
 
 export class CityAtmosphere{
   constructor(city){
@@ -92,12 +93,6 @@ export class CityAtmosphere{
     const counts={awnings:0,bladeSigns:0,curbProps:0,shopMullions:0,entryFrames:0};
     const districtInstances={core:0,avenue:0,edge:0};
     const districtBuildings={core:0,avenue:0,edge:0};
-    const districtFor=(x,z)=>{
-      const ax=Math.abs(x),az=Math.abs(z);
-      if(ax<=72&&az<=72)return 'core';
-      if(ax<=32||az<=32)return 'avenue';
-      return 'edge';
-    };
     const palettes={
       core:{
         neon:[0xffb761,0xff5fae,0x74e6ff,0xffdf7a],

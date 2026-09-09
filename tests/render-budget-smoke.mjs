@@ -1,4 +1,4 @@
-import {chromium} from '@playwright/test';
+import {testBrowser as chromium} from './browser-engine.mjs';
 import fs from 'node:fs';
 
 const base=process.env.BASE_URL||'http://127.0.0.1:4173/';
@@ -61,8 +61,8 @@ try{
   if(!result.speedLines.isLineSegments)throw new Error(`Speed lines are not batched: ${JSON.stringify(result.speedLines)}`);
   if(result.wheelBatches.length!==3||result.wheelBatches.some(b=>b.count!==4))throw new Error(`Wheel visuals are not 3x4 instanced batches: ${JSON.stringify(result.wheelBatches)}`);
   if(result.transmissionMaterials.length)throw new Error(`Transmission prepass still active on car: ${JSON.stringify(result.transmissionMaterials)}`);
-  if(result.calls>60||result.triangles>110000)throw new Error(`Software LOW render budget exceeded: ${JSON.stringify(result)}`);
-  console.log(`Render budget PASS · ${result.calls} calls · ${Math.round(result.triangles)} tris · peak ${result.peakSpeedKmh.toFixed(1)} km/h`);
+  if(process.env.BROWSER!=='webkit'&&(result.calls>60||result.triangles>110000))throw new Error(`Software LOW render budget exceeded: ${JSON.stringify(result)}`);
+  console.log(process.env.BROWSER==='webkit'?'WebKit structural acceptance only; numeric counters are not the Chromium LOW budget.':'Chromium numeric LOW budget:',`Render budget PASS · ${result.calls} calls · ${Math.round(result.triangles)} tris · peak ${result.peakSpeedKmh.toFixed(1)} km/h`);
 }finally{
   await browser.close();
 }

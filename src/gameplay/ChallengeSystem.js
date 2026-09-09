@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {districtFor} from '../world/DistrictMap.js';
 
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -25,6 +26,11 @@ export class ChallengeSystem{
       {id:'drift',title:'河岸反打 · Drift Run',description:'在河岸街區累積 1,800 漂移分',target:1800,zone:{...r.drift}},
       {id:'speed',title:'高架封關 · Speed Trap',description:'以至少 110 km/h 穿越終點',target:110,point:{...r.speed}}
     ];
+    this.routeDistricts={
+      checkpoints:r.points.map(([x,z])=>districtFor(x,z)),
+      drift:districtFor(r.drift.x,r.drift.z),
+      speed:districtFor(r.speed.x,r.speed.z)
+    };
   }
 
   _material(color=0x58eeff){return new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:2.5,roughness:.28,metalness:.15,transparent:true,opacity:.9})}
@@ -103,6 +109,7 @@ export class ChallengeSystem{
   _animateMarkers(dt){const t=performance.now()*.001;for(const m of this.markerMeshes)if(m.visible){m.rotation.z+=dt*.5;m.material.emissiveIntensity=2.2+Math.sin(t*4)*.7}if(this.speedMarker.visible){this.speedMarker.position.y=Math.sin(t*2)*.18}}
 
   get current(){return this.challenges[this.challengeIndex]||null}
+  get targetDistrict(){const c=this.current;if(!c)return null;return c.id==='sprint'?this.routeDistricts.checkpoints[this.sprintIndex]||null:this.routeDistricts[c.id]||null}
   get progress(){const c=this.current;if(!c)return 1;if(c.id==='sprint')return this.sprintIndex/c.points.length;if(c.id==='drift')return clamp((this._driftMission||0)/c.target,0,1);if(c.id==='speed')return clamp((this._speedHint||0)/c.target,0,1);return 0}
   get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:`${this.routeName} · 夜行完成`};if(c.id==='sprint')return{title:c.title,text:`${this.routeName} · Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${this.routeName} · ${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`${this.routeName} · ${Math.round(this._speedHint||0)} / ${c.target} km/h · 穿越綠色 Gate`}}
   summary(){const elapsed=(performance.now()-this.startedAt)/1000;const rank=this.score>9000?'S':this.score>6500?'A':this.score>4500?'B':'C';return{score:Math.round(this.score),time:elapsed,bestCombo:this.bestCombo,rank,routeIndex:this.routeIndex,routeName:this.routeName}}

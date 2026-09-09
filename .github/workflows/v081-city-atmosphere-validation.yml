@@ -8,6 +8,12 @@ on:
 
 jobs:
   validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    env:
+      BROWSER: ${{ matrix.browser }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -21,8 +27,8 @@ jobs:
         run: npm test
       - name: Production build
         run: npm run build
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install browser engine
+        run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Start production preview
         run: |
           npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v081-vite.log 2>&1 &
@@ -44,6 +50,8 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/city-atmosphere-smoke.mjs
+      - name: District awareness acceptance
+        run: node tests/district-awareness-smoke.mjs
       - name: High-speed camera feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/
@@ -68,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v081-city-atmosphere-qa
+          name: v081-city-atmosphere-qa-${{ matrix.browser }}
           path: test-results/
           if-no-files-found: ignore
           retention-days: 14

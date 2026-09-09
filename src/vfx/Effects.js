@@ -33,13 +33,14 @@ export class Effects{
     this.points.geometry.attributes.position.needsUpdate=true;this.points.geometry.attributes.color.needsUpdate=true
   }
   update(dt,vehicle,camera){
+    let particleMoved=false;
     for(let i=0;i<this.capacity;i++){
       if(this.life[i]<=0)continue;
-      this.life[i]-=dt;const o=i*3;
+      particleMoved=true;this.life[i]-=dt;const o=i*3;
       this.positions[o]+=this.velocity[i].x*dt;this.positions[o+1]+=this.velocity[i].y*dt;this.positions[o+2]+=this.velocity[i].z*dt;this.velocity[i].y-=1.4*dt;
       if(this.life[i]<=0)this.positions[o+1]=-999
     }
-    this.points.geometry.attributes.position.needsUpdate=true;
+    if(particleMoved)this.points.geometry.attributes.position.needsUpdate=true;
     if(vehicle.isDrifting)this.burst(vehicle.position,vehicle.velocity,vehicle.driftIntensity*.7,0xffd36e);
     if(vehicle.nitroActive)this.burst(vehicle.position,vehicle.velocity,.45,0x69f5ff);
 

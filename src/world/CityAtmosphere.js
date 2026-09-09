@@ -85,14 +85,14 @@ export class CityAtmosphere{
   }
 
   _streetEdgeDetail(){
-    // Add one shared instanced batch of tiny visual-only street-edge details. The batch mixes
-    // facade awning bars / blade signs with curbside bollards, cabinets and planters so the
-    // player gets stronger low-height parallax at speed without touching physics or adding
-    // per-object draw calls.
+    // One shared visual-only InstancedMesh: awnings, blade signs, curb props and simple
+    // storefront bay frames. V2 uses the same draw group as V1 but gives ground floors a
+    // readable shop-by-shop rhythm instead of broad glowing facade strips.
     const records=[];
-    const counts={awnings:0,bladeSigns:0,curbProps:0};
+    const counts={awnings:0,bladeSigns:0,curbProps:0,shopMullions:0,entryFrames:0};
     const add=(x,y,z,sx,sy,sz,rotY,color,kind)=>{records.push({x,y,z,sx,sy,sz,rotY,color,kind});counts[kind]++};
     const neon=[0xffb761,0xff6cae,0x73d9ff,0xffd77a];
+    const frameColors=[0x35566a,0x4b5964,0x355e57];
     const buildings=this.city.staticBodies.slice(0,this.city.stats?.buildings||0);
 
     buildings.forEach((body,i)=>{
@@ -100,7 +100,7 @@ export class CityAtmosphere{
       if(!he)return;
       const x=body.position.x,z=body.position.z;
       const frontSpan=Math.max(3.6,he.x*1.18),sideSpan=Math.max(3.6,he.z*1.14);
-      const c=neon[i%neon.length];
+      const c=neon[i%neon.length],frame=frameColors[i%frameColors.length];
       add(x,2.72,z-he.z-.18,frontSpan,.16,.38,0,c,'awnings');
       add(x,2.72,z+he.z+.18,frontSpan,.16,.38,0,neon[(i+1)%neon.length],'awnings');
       if(i%3!==1){
@@ -110,6 +110,22 @@ export class CityAtmosphere{
       if((i&1)===0){
         const side=(i&2)?1:-1;
         add(x+side*(he.x+.24),3.6,z-he.z*.5,.22,1.35,.52,0,neon[(i+2)%neon.length],'bladeSigns');
+      }
+
+      // Split the two primary street-facing facades into 2–3 readable shop bays.
+      const bayCount=he.x>8?3:2;
+      for(let b=1;b<bayCount;b++){
+        const ox=-he.x+(he.x*2*b/bayCount);
+        add(x+ox,1.34,z-he.z-.135,.105,2.22,.14,0,frame,'shopMullions');
+        add(x+ox,1.34,z+he.z+.135,.105,2.22,.14,0,frame,'shopMullions');
+      }
+      // Every other building gets a compact doorway frame on one facade. Three boxes per
+      // frame stay in the same shared batch and create a recognisable entrance at speed.
+      if((i&1)===0){
+        const doorX=x+Math.min(he.x*.32,2.4)*(i%4<2?-1:1),frontZ=z-he.z-.145;
+        add(doorX-.72,1.15,frontZ,.11,2.08,.15,0,frame,'entryFrames');
+        add(doorX+.72,1.15,frontZ,.11,2.08,.15,0,frame,'entryFrames');
+        add(doorX,2.18,frontZ,1.55,.11,.15,0,frame,'entryFrames');
       }
     });
 
@@ -147,7 +163,7 @@ export class CityAtmosphere{
     this.group.add(mesh);
 
     this.streetEdgeDetails=mesh;
-    this.streetEdgeProfile='near-street-v1';
+    this.streetEdgeProfile='near-street-v2';
     this.streetEdgeRenderGroups=1;
     this.streetEdgeCounts={...counts,total:records.length};
     this.city.stats={
@@ -157,7 +173,9 @@ export class CityAtmosphere{
       streetEdgeInstances:records.length,
       streetEdgeAwnings:counts.awnings,
       streetEdgeBladeSigns:counts.bladeSigns,
-      streetEdgeCurbProps:counts.curbProps
+      streetEdgeCurbProps:counts.curbProps,
+      streetEdgeShopMullions:counts.shopMullions,
+      streetEdgeEntryFrames:counts.entryFrames
     };
   }
 

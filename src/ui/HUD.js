@@ -47,13 +47,24 @@ export class HUD{
 
   updateDistrict(position,target){
     const district=observedDistrict(position.x,position.z,this.district);
-    if(district!==this.district){
+    const districtChanged=district!==this.district;
+    const targetChanged=target!==this.targetDistrict;
+    if(districtChanged){
       this.district=district;const info=DISTRICTS[district];
       this.districtLabel.textContent=`${info.label} · ${info.name}`;this.districtLabel.dataset.district=district;
+      this.districtLabel.classList.remove('district-enter');
+      void this.districtLabel.offsetWidth;
+      this.districtLabel.classList.add('district-enter');
     }
-    if(target!==this.targetDistrict){
-      this.targetDistrict=target;
-      this.districtTarget.textContent=target?`目標街區 · ${DISTRICTS[target].label}`:'';
+    if(targetChanged)this.targetDistrict=target;
+    if(districtChanged||targetChanged){
+      if(!target){
+        this.districtTarget.textContent='';delete this.districtTarget.dataset.district;delete this.districtTarget.dataset.state;
+      }else{
+        const info=DISTRICTS[target],arrived=district===target;
+        this.districtTarget.textContent=`${arrived?'已抵達':'前往'} · ${info.label} · ${info.name}`;
+        this.districtTarget.dataset.district=target;this.districtTarget.dataset.state=arrived?'arrived':'travel';
+      }
     }
   }
 
@@ -75,5 +86,5 @@ export class HUD{
   }
 
   readSettings(){return{quality:this.el.qualitySelect.value,resolution:Number(this.el.resolution.value)/100,bloom:this.el.bloom.checked,shadows:this.el.shadow.checked,motion:this.el.motion.checked}}
-  setSettings(v){if(v.quality)this.el.qualitySelect.value=v.quality;if(v.resolution){this.el.resolution.value=Math.round(v.resolution*100);this.el.resolutionValue.textContent=`${Math.round(v.resolution*100)}%`}if(typeof v.bloom==='boolean')this.el.bloom.checked=v.bloom;if(typeof v.shadows==='boolean')this.el.shadow.checked=v.shadows;if(typeof v.motion==='boolean')this.el.motion.checked=v.motion}
+  setSettings(v){if(v.quality)this.el.qualitySelect.value=v.quality;if(v.resolution){this.el.resolution.value=Math.round(v.resolution*100);this.el.resolutionValue.textContent=`${Math.round(v.resolution*100)}%`}if(typeof v.bloom==='boolean')this.el.bloom.checked=v.bloom;if(typeof v.shadows==='boolean')this.el.shadows.checked=v.shadows;if(typeof v.motion==='boolean')this.el.motion.checked=v.motion}
 }

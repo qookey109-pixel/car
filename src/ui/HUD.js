@@ -57,7 +57,7 @@ export class HUD{
       trend=delta>.06?'approaching':delta<-.06?'receding':'steady';
     }
     this.navigationTargetKey=key;this.navigationDistance=remaining;this.navigationTrend=trend;
-    const labels={approaching:'接近中',receding:'遠離中',steady:'距離穩定',arrived:'已到目標'};
+    const labels={approaching:'接近',receding:'遠離',steady:'穩定',arrived:'抵達'};
     return{distance:Math.round(remaining),trend,label:labels[trend]};
   }
 
@@ -79,7 +79,7 @@ export class HUD{
       return;
     }
     const info=DISTRICTS[target],arrived=district===target;
-    const navCopy=nav?` · 距目標 ${nav.distance}m · ${nav.label}`:'';
+    const navCopy=nav?` · 目標 ${nav.distance}m · ${nav.label}`:'';
     const copy=`${arrived?'已抵達':'前往'} · ${info.label} · ${info.name}${navCopy}`;
     if(this.districtTarget.textContent!==copy)this.districtTarget.textContent=copy;
     this.districtTarget.dataset.district=target;this.districtTarget.dataset.state=arrived?'arrived':'travel';

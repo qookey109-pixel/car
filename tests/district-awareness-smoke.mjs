@@ -66,12 +66,12 @@ try{
     assert.deepEqual(result.labels,['core','avenue','edge','core']);
     assert.deepEqual({kind:result.shared.kind,label:result.shared.label,x:result.shared.x,z:result.shared.z},{kind:'sprint',label:'CHECKPOINT 1/4',x:0,z:0});
     assert.equal(result.shared.arrivalRadius,9);assert.deepEqual(result.compassTarget,{kind:'sprint',label:'CHECKPOINT 1/4',x:0,z:0});
-    assert.ok(Math.abs(result.steady.distance-71)<.01&&result.steady.trend==='steady'&&result.steady.state==='travel',JSON.stringify(result.steady));
-    assert.ok(Math.abs(result.approaching.distance-51)<.01&&result.approaching.trend==='approaching'&&result.approaching.text.includes('接近中'),JSON.stringify(result.approaching));
-    assert.ok(Math.abs(result.receding.distance-81)<.01&&result.receding.trend==='receding'&&result.receding.text.includes('遠離中'),JSON.stringify(result.receding));
-    assert.ok(result.targetArrived.distance===0&&result.targetArrived.trend==='arrived'&&result.targetArrived.state==='arrived'&&result.targetArrived.text.includes('已到目標'),JSON.stringify(result.targetArrived));
-    assert.ok(Math.abs(result.driftOutside.distance-8)<.01&&result.driftOutside.text.includes('距目標 8m'),JSON.stringify(result.driftOutside));
-    assert.ok(result.driftInside.distance===0&&result.driftInside.trend==='arrived'&&result.driftInside.text.includes('已到目標'),JSON.stringify(result.driftInside));
+    assert.ok(Math.abs(result.steady.distance-71)<.01&&result.steady.trend==='steady'&&result.steady.state==='travel'&&result.steady.text.includes('目標 71m')&&result.steady.text.includes('穩定'),JSON.stringify(result.steady));
+    assert.ok(Math.abs(result.approaching.distance-51)<.01&&result.approaching.trend==='approaching'&&result.approaching.text.includes('接近'),JSON.stringify(result.approaching));
+    assert.ok(Math.abs(result.receding.distance-81)<.01&&result.receding.trend==='receding'&&result.receding.text.includes('遠離'),JSON.stringify(result.receding));
+    assert.ok(result.targetArrived.distance===0&&result.targetArrived.trend==='arrived'&&result.targetArrived.state==='arrived'&&result.targetArrived.text.includes('目標 0m')&&result.targetArrived.text.includes('抵達'),JSON.stringify(result.targetArrived));
+    assert.ok(Math.abs(result.driftOutside.distance-8)<.01&&result.driftOutside.text.includes('目標 8m'),JSON.stringify(result.driftOutside));
+    assert.ok(result.driftInside.distance===0&&result.driftInside.trend==='arrived'&&result.driftInside.text.includes('抵達'),JSON.stringify(result.driftInside));
     for(const [i,r] of result.metadata.entries()){
       assert.deepEqual(r.checkpoints.map(x=>x.district),['core','avenue','edge','avenue']);
       assert.ok(r.checkpoints.every((x,j)=>x.kind==='sprint'&&x.radius===9&&x.key===`${i}:sprint:${j}`));
@@ -83,13 +83,18 @@ try{
     await page.keyboard.press('Escape');assert.equal(await page.locator('#pause').evaluate(e=>e.classList.contains('visible')),true);
     await page.click('#resumeGame');
     const layout=await page.evaluate(()=>{
+      const g=window.__NEON_RACER__.game,h=g.hud,c=g.challenges,target=document.getElementById('districtTarget');
+      h.navigationTargetKey=null;h.navigationDistance=null;h.navigationTrend=null;
+      h.updateDistrict({x:0,z:24},'edge',{key:'layout-worst',kind:'speed',x:160,z:160,arrivalRadius:10});
+      const worstLines=Math.round(target.getBoundingClientRect().height/parseFloat(getComputedStyle(target).lineHeight));
+      h.update(g.vehicle,c);
       const panel=document.querySelector('.hud-top-left').getBoundingClientRect(),speed=document.querySelector('.speed-panel').getBoundingClientRect();
-      const label=document.getElementById('districtLabel'),target=document.getElementById('districtTarget');
-      return{inside:panel.bottom<innerHeight/2&&panel.right<speed.left,labelFits:label.scrollWidth<=label.clientWidth,targetFits:target.scrollWidth<=target.clientWidth,targetLines:Math.round(target.getBoundingClientRect().height/parseFloat(getComputedStyle(target).lineHeight))};
+      const label=document.getElementById('districtLabel');
+      return{inside:panel.bottom<innerHeight/2&&panel.right<speed.left,labelFits:label.scrollWidth<=label.clientWidth,targetFits:target.scrollWidth<=target.clientWidth,worstLines};
     });
-    assert.ok(layout.inside&&layout.labelFits&&layout.targetFits&&layout.targetLines<=3,JSON.stringify(layout));
+    assert.ok(layout.inside&&layout.labelFits&&layout.targetFits&&layout.worstLines===1,JSON.stringify(layout));
     await page.screenshot({path:`test-results/district-awareness-${viewport.width}x${viewport.height}.png`});
     assert.deepEqual(errors,[]);await page.close();
   }
-  console.log('District awareness v3 PASS · shared target / distance / approach-recede / drift edge / all 3 routes / completion / restart / desktop + 844×390');
+  console.log('District awareness v3 PASS · shared target / compact distance trend / drift edge / single-line worst-case / all 3 routes / desktop + 844×390');
 }finally{await browser.close()}

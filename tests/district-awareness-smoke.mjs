@@ -18,10 +18,31 @@ try{
     await page.click('#startGame');await page.waitForFunction(()=>window.__NEON_RACER__?.game.state==='running');
     const result=await page.evaluate(()=>{
       const g=window.__NEON_RACER__.game,c=g.challenges,h=g.hud;
+      const profile=window.__NEON_RACER__.snapshot().district.profile;
       g.state='paused';
       const routes=JSON.stringify(c.routes),score=c.score,combo=c.combo,staticBodies=g.city.staticBodies.length,occluders=g.city.cameraOccluders.length;
       const labels=[];
       for(const [x,z] of [[0,24],[0,120],[120,120],[0,24]]){h.updateDistrict({x,z},c.targetDistrict);labels.push(h.district)}
+
+      h.updateDistrict({x:120,z:120},'core');
+      const travel={
+        current:h.district,
+        target:h.targetDistrict,
+        state:h.districtTarget.dataset.state,
+        district:h.districtTarget.dataset.district,
+        text:h.districtTarget.textContent,
+        pulse:h.districtLabel.classList.contains('district-enter')
+      };
+      h.updateDistrict({x:0,z:24},'core');
+      const arrived={
+        current:h.district,
+        target:h.targetDistrict,
+        state:h.districtTarget.dataset.state,
+        district:h.districtTarget.dataset.district,
+        text:h.districtTarget.textContent,
+        pulse:h.districtLabel.classList.contains('district-enter')
+      };
+
       const metadata=[];
       for(let i=0;i<3;i++){
         c._applyRoute(i);c.challengeIndex=0;
@@ -31,12 +52,18 @@ try{
         c.challengeIndex=2;const speed=c.targetDistrict;
         metadata.push({checkpoints,drift,speed});
       }
-      c.challengeIndex=3;h.update(g.vehicle,c);const cleared=h.districtTarget.textContent==='';
+      c.challengeIndex=3;h.update(g.vehicle,c);
+      const cleared=h.districtTarget.textContent===''&&!h.districtTarget.dataset.state&&!h.districtTarget.dataset.district;
       const unchanged=routes===JSON.stringify(c.routes)&&score===c.score&&combo===c.combo&&staticBodies===g.city.staticBodies.length&&occluders===g.city.cameraOccluders.length;
       g.restart();h.update(g.vehicle,c);
-      return{labels,metadata,cleared,unchanged,current:h.district,target:c.targetDistrict};
+      return{profile,labels,travel,arrived,metadata,cleared,unchanged,current:h.district,target:c.targetDistrict};
     });
+    assert.equal(result.profile,'district-awareness-v2');
     assert.deepEqual(result.labels,['core','avenue','edge','core']);
+    assert.deepEqual({current:result.travel.current,target:result.travel.target,state:result.travel.state,district:result.travel.district},{current:'edge',target:'core',state:'travel',district:'core'});
+    assert.ok(result.travel.text.includes('前往')&&result.travel.text.includes('CORE DISTRICT')&&result.travel.text.includes('核心商業區')&&result.travel.pulse,JSON.stringify(result.travel));
+    assert.deepEqual({current:result.arrived.current,target:result.arrived.target,state:result.arrived.state,district:result.arrived.district},{current:'core',target:'core',state:'arrived',district:'core'});
+    assert.ok(result.arrived.text.includes('已抵達')&&result.arrived.text.includes('CORE DISTRICT')&&result.arrived.text.includes('核心商業區')&&result.arrived.pulse,JSON.stringify(result.arrived));
     for(const r of result.metadata)assert.deepEqual(r,{checkpoints:['core','avenue','edge','avenue'],drift:'edge',speed:'avenue'});
     assert.ok(result.cleared&&result.unchanged);assert.equal(result.current,'core');assert.equal(result.target,'core');
     await page.keyboard.press('Escape');assert.equal(await page.locator('#pause').evaluate(e=>e.classList.contains('visible')),true);
@@ -50,5 +77,5 @@ try{
     await page.screenshot({path:`test-results/district-awareness-${viewport.width}x${viewport.height}.png`});
     assert.deepEqual(errors,[]);await page.close();
   }
-  console.log('District awareness PASS · boundaries / hysteresis / all 3 routes / completion / restart / pause-resume / desktop + 844×390');
+  console.log('District awareness v2 PASS · boundaries / hysteresis / travel-arrival feedback / all 3 routes / completion / restart / pause-resume / desktop + 844×390');
 }finally{await browser.close()}

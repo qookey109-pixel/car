@@ -25,12 +25,11 @@ try{
 
   const phases=await desktop.evaluate(()=>{
     const api=window.__NEON_RACER__,g=api.game,c=g.challenges,v=g.vehicle,root=document.querySelector('#objectiveCompass'),copy=document.querySelector('.objective-compass-distance');
-    v.reset({x:0,y:1.2,z:0},0);c.update(1/60,v);api.compass.update();
-    const far={...api.compass.snapshot(),copy:copy?.textContent||'',border:getComputedStyle(root).borderColor,textColor:getComputedStyle(copy).color};
-    v.reset({x:60,y:1.2,z:0},0);api.compass.update();
-    const prepare={...api.compass.snapshot(),copy:copy?.textContent||'',border:getComputedStyle(root).borderColor,textColor:getComputedStyle(copy).color};
-    v.reset({x:94,y:1.2,z:0},0);api.compass.update();
-    const commit={...api.compass.snapshot(),copy:copy?.textContent||'',border:getComputedStyle(root).borderColor,textColor:getComputedStyle(copy).color};
+    root.style.transition='none';copy.style.transition='none';
+    const sample=()=>({...api.compass.snapshot(),copy:copy?.textContent||'',border:getComputedStyle(root).borderColor,textColor:getComputedStyle(copy).color});
+    v.reset({x:0,y:1.2,z:0},0);c.update(1/60,v);api.compass.update();const far=sample();
+    v.reset({x:60,y:1.2,z:0},0);api.compass.update();const prepare=sample();
+    v.reset({x:94,y:1.2,z:0},0);api.compass.update();const commit=sample();
     return{far,prepare,commit};
   });
   if(phases.far.kind!=='sprint'||phases.far.label!=='CHECKPOINT 2/4'||!near(phases.far.distance,120,2)||!near(phases.far.angle,Math.PI/2,.12)||phases.far.maneuver!=='left'||phases.far.maneuverPhase!=='far'||phases.far.maneuverLabel!=='抵達後左轉'||!phases.far.copy.includes('抵達後左轉'))throw new Error(`Far turn preview failed: ${JSON.stringify(phases.far)}`);

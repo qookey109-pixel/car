@@ -25,14 +25,8 @@ export class ObjectiveCompass{
   }
 
   _target(){
-    const c=this.game.challenges?.current;if(!c)return null;
-    if(c.id==='sprint'){
-      const i=Math.min(this.game.challenges.sprintIndex,c.points.length-1),p=c.points[i];
-      return{kind:'sprint',label:`CHECKPOINT ${i+1}/${c.points.length}`,x:p[0],z:p[1]};
-    }
-    if(c.id==='drift')return{kind:'drift',label:'DRIFT ZONE',x:c.zone.x,z:c.zone.z};
-    if(c.id==='speed')return{kind:'speed',label:'SPEED GATE',x:c.point.x,z:c.point.z};
-    return null;
+    const t=this.game.challenges?.navigationTarget;
+    return t?{kind:t.kind,label:t.label,x:t.x,z:t.z}:null;
   }
 
   update(){

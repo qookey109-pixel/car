@@ -1,5 +1,12 @@
-.district-label{font-size:12px;line-height:1.3;letter-spacing:.05em;color:#ffd39b}
+.district-label{font-size:12px;line-height:1.3;letter-spacing:.05em;color:#ffd39b;transform-origin:left center}
 .district-label[data-district="avenue"]{color:#99e6ef}
 .district-label[data-district="edge"]{color:#bdcbdc}
-.district-target{margin-top:5px;color:#c3ced9;font-size:12px;line-height:1.3;letter-spacing:.02em}
+.district-label.district-enter{animation:district-enter .58s ease-out}
+.district-target{margin-top:5px;color:#c3ced9;font-size:12px;line-height:1.3;letter-spacing:.02em;transition:color .2s ease,text-shadow .2s ease}
+.district-target[data-district="core"]{color:#ffd39b}
+.district-target[data-district="avenue"]{color:#99e6ef}
+.district-target[data-district="edge"]{color:#bdcbdc}
+.district-target[data-state="arrived"]{color:#a9ffd2;text-shadow:0 0 10px rgba(120,255,190,.2)}
 .district-target:empty{display:none}
+@keyframes district-enter{0%{opacity:.45;transform:translateX(-5px);text-shadow:0 0 12px currentColor}55%{opacity:1;transform:translateX(1px);text-shadow:0 0 7px currentColor}100%{transform:translateX(0);text-shadow:none}}
+@media (prefers-reduced-motion:reduce){.district-label.district-enter{animation:none}.district-target{transition:none}}

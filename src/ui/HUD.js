@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id);
 export class HUD{
   constructor(){
     this.el={boot:$('boot'),loading:$('loading'),hud:$('hud'),pause:$('pause'),settings:$('settings'),controls:$('controlsModal'),complete:$('complete'),speed:$('speed'),gear:$('gear'),nitro:$('nitroBar'),score:$('score'),combo:$('combo'),objectiveTitle:$('objectiveTitle'),objectiveText:$('objectiveText'),progress:$('progressBar'),toast:$('challengeToast'),quality:$('qualityBadge'),mobile:$('mobileControls'),resolution:$('resolutionScale'),resolutionValue:$('resolutionValue'),qualitySelect:$('qualitySelect'),bloom:$('bloomToggle'),shadow:$('shadowToggle'),motion:$('motionToggle'),bootRecord:$('bootRecord'),finalRecord:$('finalRecord'),finalRoute:$('finalRoute')};
-    this.toastTimer=0;this.handlers={};this._bind();
+    this.toastTimer=0;this.checkpointTimer=0;this.handlers={};this._bind();
     this.districtLabel=$('districtLabel');this.districtTarget=$('districtTarget');this.district=null;this.targetDistrict=null;
     this.navigationTargetKey=null;this.navigationDistance=null;this.navigationTrend=null;
   }
@@ -88,7 +88,25 @@ export class HUD{
 
   _gear(speed,signedSpeed,throttle){if(speed<2&&Math.abs(throttle)<.05)return'N';if(signedSpeed>1.5||(throttle<-.05&&speed<2))return'R';return String(Math.max(1,Math.min(6,Math.floor(speed/38)+1)))}
   _formatTime(time=0){const m=Math.floor(time/60),s=Math.floor(time%60);return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
-  toast(text){this.el.toast.textContent=text;this.el.toast.classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>this.el.toast.classList.remove('show'),2200)}
+  _feedbackKind(text=''){
+    const value=String(text);
+    if(/^CHECKPOINT\s+\d+\/\d+/i.test(value))return'checkpoint';
+    if(/(?:完成|✓)/.test(value))return'milestone';
+    if(/(?:速度不足|重置|再試一次|進入黃色)/.test(value))return'info';
+    return'info';
+  }
+  toast(text){
+    const value=String(text),kind=this._feedbackKind(value),el=this.el.toast;
+    el.textContent=value;el.dataset.feedback=kind;el.classList.add('show');
+    clearTimeout(this.checkpointTimer);el.classList.remove('checkpoint-hit');
+    if(kind==='checkpoint'){
+      const match=value.match(/^CHECKPOINT\s+(\d+)\/(\d+)/i);
+      if(match){el.dataset.checkpoint=match[1];el.dataset.checkpointTotal=match[2]}
+      void el.offsetWidth;el.classList.add('checkpoint-hit');this.checkpointTimer=setTimeout(()=>el.classList.remove('checkpoint-hit'),520);
+    }else{delete el.dataset.checkpoint;delete el.dataset.checkpointTotal}
+    if(typeof window!=='undefined'&&typeof CustomEvent==='function')window.dispatchEvent(new CustomEvent('neon-racer-feedback',{detail:{kind,text:value}}));
+    clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>el.classList.remove('show'),2200)
+  }
   qualityLabel(text){this.el.quality.textContent=String(text).toUpperCase()}
 
   setRecords(records={}){

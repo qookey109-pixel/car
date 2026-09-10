@@ -109,6 +109,16 @@ export class ChallengeSystem{
   _animateMarkers(dt){const t=performance.now()*.001;for(const m of this.markerMeshes)if(m.visible){m.rotation.z+=dt*.5;m.material.emissiveIntensity=2.2+Math.sin(t*4)*.7}if(this.speedMarker.visible){this.speedMarker.position.y=Math.sin(t*2)*.18}}
 
   get current(){return this.challenges[this.challengeIndex]||null}
+  get navigationTarget(){
+    const c=this.current;if(!c)return null;
+    if(c.id==='sprint'){
+      const i=Math.min(this.sprintIndex,c.points.length-1),p=c.points[i];
+      return{key:`${this.routeIndex}:sprint:${i}`,kind:'sprint',label:`CHECKPOINT ${i+1}/${c.points.length}`,x:p[0],z:p[1],arrivalRadius:9};
+    }
+    if(c.id==='drift')return{key:`${this.routeIndex}:drift`,kind:'drift',label:'DRIFT ZONE',x:c.zone.x,z:c.zone.z,arrivalRadius:c.zone.radius};
+    if(c.id==='speed')return{key:`${this.routeIndex}:speed`,kind:'speed',label:'SPEED GATE',x:c.point.x,z:c.point.z,arrivalRadius:10};
+    return null;
+  }
   get targetDistrict(){const c=this.current;if(!c)return null;return c.id==='sprint'?this.routeDistricts.checkpoints[this.sprintIndex]||null:this.routeDistricts[c.id]||null}
   get progress(){const c=this.current;if(!c)return 1;if(c.id==='sprint')return this.sprintIndex/c.points.length;if(c.id==='drift')return clamp((this._driftMission||0)/c.target,0,1);if(c.id==='speed')return clamp((this._speedHint||0)/c.target,0,1);return 0}
   get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:`${this.routeName} · 夜行完成`};if(c.id==='sprint')return{title:c.title,text:`${this.routeName} · Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${this.routeName} · ${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`${this.routeName} · ${Math.round(this._speedHint||0)} / ${c.target} km/h · 穿越綠色 Gate`}}

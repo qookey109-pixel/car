@@ -86,5 +86,5 @@ export class HUD{
   }
 
   readSettings(){return{quality:this.el.qualitySelect.value,resolution:Number(this.el.resolution.value)/100,bloom:this.el.bloom.checked,shadows:this.el.shadow.checked,motion:this.el.motion.checked}}
-  setSettings(v){if(v.quality)this.el.qualitySelect.value=v.quality;if(v.resolution){this.el.resolution.value=Math.round(v.resolution*100);this.el.resolutionValue.textContent=`${Math.round(v.resolution*100)}%`}if(typeof v.bloom==='boolean')this.el.bloom.checked=v.bloom;if(typeof v.shadows==='boolean')this.el.shadows.checked=v.shadows;if(typeof v.motion==='boolean')this.el.motion.checked=v.motion}
+  setSettings(v){if(v.quality)this.el.qualitySelect.value=v.quality;if(v.resolution){this.el.resolution.value=Math.round(v.resolution*100);this.el.resolutionValue.textContent=`${Math.round(v.resolution*100)}%`}if(typeof v.bloom==='boolean')this.el.bloom.checked=v.bloom;if(typeof v.shadows==='boolean')this.el.shadow.checked=v.shadows;if(typeof v.motion==='boolean')this.el.motion.checked=v.motion}
 }

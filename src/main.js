@@ -5,11 +5,14 @@ import './district.css';
 import './checkpoint-feedback.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
+import {StageTransition} from './ui/StageTransition.js';
 import {CityAtmosphere} from './world/CityAtmosphere.js';
 
 const app=document.getElementById('app');
 const game=new Game(app);
 game.audio.attachVehicle(game.vehicle);
+const stageTransition=new StageTransition(game.hud);
+game.stageTransition=stageTransition;
 const atmosphere=new CityAtmosphere(game.city);
 game.cityAtmosphere=atmosphere;
 const compass=new ObjectiveCompass(game);
@@ -33,6 +36,7 @@ window.__NEON_RACER__={
     records:{...game.records},
     recovery:{flipTimer:game.flipTimer,cooldown:game.recoveryCooldown},
     navigation:compass.snapshot(),
+    stageTransition:stageTransition.snapshot(),
     district:{profile:'district-awareness-v3',current:game.hud.district,target:game.challenges.targetDistrict,objective:{key:game.hud.navigationTargetKey,distance:game.hud.navigationDistance,trend:game.hud.navigationTrend},route:{...game.challenges.routeDistricts,checkpoints:[...game.challenges.routeDistricts.checkpoints]}},
     audio:game.audio.snapshot(),
     quality:{requested:game.quality.requested,effective:game.quality.effective},

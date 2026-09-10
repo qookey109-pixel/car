@@ -2,6 +2,7 @@ import './styles.css';
 import './replay.css';
 import './objective-compass.css';
 import './district.css';
+import './checkpoint-feedback.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {CityAtmosphere} from './world/CityAtmosphere.js';

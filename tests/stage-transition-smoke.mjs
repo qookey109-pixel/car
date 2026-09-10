@@ -19,15 +19,17 @@ try{
     const before={...a.snapshot().feedback},point=c.current.points[3];
     c._updateSprint(c.current,{x:point[0],z:point[1]});
     const rect=o=>{if(!o)return null;const r=o.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
-    return{before,after:{...a.snapshot().feedback},challengeIndex:c.challengeIndex,current:c.current?.id,text:toast.textContent,kind:toast.dataset.feedback,phase:toast.dataset.phase,next:toast.dataset.nextStage,toastClass:toast.classList.contains('stage-transition'),panelClass:panel.classList.contains('stage-transition'),stage:g.stageTransition.snapshot(),toastRect:rect(toast),panelRect:rect(panel),speedRect:rect(speed),compassRect:rect(compass),scoreRect:rect(score),mobileRect:rect(mobile)};
+    const style=getComputedStyle(toast);
+    return{before,after:{...a.snapshot().feedback},challengeIndex:c.challengeIndex,current:c.current?.id,text:toast.textContent,kind:toast.dataset.feedback,phase:toast.dataset.phase,next:toast.dataset.nextStage,toastClass:toast.classList.contains('stage-transition'),panelClass:panel.classList.contains('stage-transition'),stage:g.stageTransition.snapshot(),toastRect:rect(toast),panelRect:rect(panel),speedRect:rect(speed),compassRect:rect(compass),scoreRect:rect(score),mobileRect:rect(mobile),shortHeightMedia:matchMedia('(max-height:480px)').matches,landscapeMedia:matchMedia('(orientation:landscape)').matches,computedTop:style.top,transitionProperty:style.transitionProperty};
   });
   if(first.challengeIndex!==1||first.current!=='drift'||first.text!=='TIME ATTACK ✓ → DRIFT RUN')throw new Error(`Time Attack handoff failed: ${JSON.stringify(first)}`);
   if(first.kind!=='milestone'||first.phase!=='transition'||first.next!=='drift'||!first.toastClass||!first.panelClass)throw new Error(`Time Attack transition styling failed: ${JSON.stringify(first)}`);
   if(first.stage.profile!=='stage-transition-v1'||first.stage.count!==1||first.stage.lastFrom!=='TIME ATTACK'||first.stage.lastTo!=='DRIFT RUN')throw new Error(`Stage transition state failed: ${JSON.stringify(first.stage)}`);
   if(first.after.successCues!==first.before.successCues+1)throw new Error(`Time Attack success cue count changed: ${JSON.stringify({before:first.before,after:first.after})}`);
+  if(!first.shortHeightMedia||first.transitionProperty.split(',').map(s=>s.trim()).includes('top'))throw new Error(`Transition positioning contract failed: ${JSON.stringify({shortHeightMedia:first.shortHeightMedia,landscapeMedia:first.landscapeMedia,computedTop:first.computedTop,transitionProperty:first.transitionProperty})}`);
   const blocked={panel:first.panelRect,speed:first.speedRect,compass:first.compassRect,score:first.scoreRect,mobile:first.mobileRect};
-  if(first.toastRect.left<0||first.toastRect.right>844||Object.entries(blocked).some(([,r])=>overlaps(first.toastRect,r)))throw new Error(`844x390 transition layout overlap: ${JSON.stringify({toast:first.toastRect,...blocked})}`);
-  if(first.toastRect.top<first.panelRect.bottom+8)throw new Error(`Transition vertical clearance too small: ${JSON.stringify({toast:first.toastRect,panel:first.panelRect})}`);
+  if(first.toastRect.left<0||first.toastRect.right>844||Object.entries(blocked).some(([,r])=>overlaps(first.toastRect,r)))throw new Error(`844x390 transition layout overlap: ${JSON.stringify({toast:first.toastRect,...blocked,computedTop:first.computedTop})}`);
+  if(first.toastRect.top<first.panelRect.bottom+8)throw new Error(`Transition vertical clearance too small: ${JSON.stringify({toast:first.toastRect,panel:first.panelRect,computedTop:first.computedTop})}`);
   await page.waitForFunction(()=>document.getElementById('objectiveTitle')?.textContent.includes('Drift Run'));
   await page.screenshot({path:'test-results/stage-transition/time-to-drift-844x390.png'});
 
@@ -49,6 +51,6 @@ try{
   });
   if(!finish.completed||finish.state!=='complete'||finish.after.count!==finish.before.count||finish.phase!==null||finish.transitionClass)throw new Error(`Final Speed Trap should not create a next-stage transition: ${JSON.stringify(finish)}`);
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log('Stage Transition PASS · TIME ATTACK → DRIFT RUN → SPEED TRAP · single success cue each · final clear has no false next stage · 844x390 HUD corridor clear');
+  console.log(`Stage Transition PASS · TIME ATTACK → DRIFT RUN → SPEED TRAP · first-frame top ${first.computedTop} · single success cue each · final clear has no false next stage · 844x390 HUD corridor clear`);
   await page.close();
 }finally{await browser.close()}

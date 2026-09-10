@@ -4,7 +4,7 @@ import fs from 'node:fs';
 const base=process.env.BASE_URL||'http://127.0.0.1:4173/';
 fs.mkdirSync('test-results/stage-transition',{recursive:true});
 const browser=await testBrowser.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required']});
-const overlaps=(a,b)=>!(a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top);
+const overlaps=(a,b)=>a&&b&&!(a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top);
 try{
   const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
@@ -14,18 +14,20 @@ try{
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running'&&window.__NEON_RACER__.snapshot().audio?.initialized===true);
 
   const first=await page.evaluate(()=>{
-    const g=window.__NEON_RACER__.game,c=g.challenges,a=g.audio,toast=document.getElementById('challengeToast'),panel=document.querySelector('.hud-top-left'),speed=document.querySelector('.speed-panel');
+    const g=window.__NEON_RACER__.game,c=g.challenges,a=g.audio,toast=document.getElementById('challengeToast'),panel=document.querySelector('.hud-top-left'),speed=document.querySelector('.speed-panel'),compass=document.querySelector('.objective-compass'),score=document.querySelector('.score-panel'),mobile=document.querySelector('.mobile-controls');
     c.challengeIndex=0;c.sprintIndex=3;c.challengeStartedAt=performance.now();c._refreshMarkers();
     const before={...a.snapshot().feedback},point=c.current.points[3];
     c._updateSprint(c.current,{x:point[0],z:point[1]});
-    const rect=o=>{const r=o.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
-    return{before,after:{...a.snapshot().feedback},challengeIndex:c.challengeIndex,current:c.current?.id,text:toast.textContent,kind:toast.dataset.feedback,phase:toast.dataset.phase,next:toast.dataset.nextStage,toastClass:toast.classList.contains('stage-transition'),panelClass:panel.classList.contains('stage-transition'),stage:g.stageTransition.snapshot(),toastRect:rect(toast),panelRect:rect(panel),speedRect:rect(speed)};
+    const rect=o=>{if(!o)return null;const r=o.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+    return{before,after:{...a.snapshot().feedback},challengeIndex:c.challengeIndex,current:c.current?.id,text:toast.textContent,kind:toast.dataset.feedback,phase:toast.dataset.phase,next:toast.dataset.nextStage,toastClass:toast.classList.contains('stage-transition'),panelClass:panel.classList.contains('stage-transition'),stage:g.stageTransition.snapshot(),toastRect:rect(toast),panelRect:rect(panel),speedRect:rect(speed),compassRect:rect(compass),scoreRect:rect(score),mobileRect:rect(mobile)};
   });
   if(first.challengeIndex!==1||first.current!=='drift'||first.text!=='TIME ATTACK ✓ → DRIFT RUN')throw new Error(`Time Attack handoff failed: ${JSON.stringify(first)}`);
   if(first.kind!=='milestone'||first.phase!=='transition'||first.next!=='drift'||!first.toastClass||!first.panelClass)throw new Error(`Time Attack transition styling failed: ${JSON.stringify(first)}`);
   if(first.stage.profile!=='stage-transition-v1'||first.stage.count!==1||first.stage.lastFrom!=='TIME ATTACK'||first.stage.lastTo!=='DRIFT RUN')throw new Error(`Stage transition state failed: ${JSON.stringify(first.stage)}`);
   if(first.after.successCues!==first.before.successCues+1)throw new Error(`Time Attack success cue count changed: ${JSON.stringify({before:first.before,after:first.after})}`);
-  if(first.toastRect.left<0||first.toastRect.right>844||overlaps(first.toastRect,first.panelRect)||overlaps(first.toastRect,first.speedRect))throw new Error(`844x390 transition layout overlap: ${JSON.stringify({toast:first.toastRect,panel:first.panelRect,speed:first.speedRect})}`);
+  const blocked={panel:first.panelRect,speed:first.speedRect,compass:first.compassRect,score:first.scoreRect,mobile:first.mobileRect};
+  if(first.toastRect.left<0||first.toastRect.right>844||Object.entries(blocked).some(([,r])=>overlaps(first.toastRect,r)))throw new Error(`844x390 transition layout overlap: ${JSON.stringify({toast:first.toastRect,...blocked})}`);
+  if(first.toastRect.top<first.panelRect.bottom+8)throw new Error(`Transition vertical clearance too small: ${JSON.stringify({toast:first.toastRect,panel:first.panelRect})}`);
   await page.waitForFunction(()=>document.getElementById('objectiveTitle')?.textContent.includes('Drift Run'));
   await page.screenshot({path:'test-results/stage-transition/time-to-drift-844x390.png'});
 
@@ -47,6 +49,6 @@ try{
   });
   if(!finish.completed||finish.state!=='complete'||finish.after.count!==finish.before.count||finish.phase!==null||finish.transitionClass)throw new Error(`Final Speed Trap should not create a next-stage transition: ${JSON.stringify(finish)}`);
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log('Stage Transition PASS · TIME ATTACK → DRIFT RUN → SPEED TRAP · single success cue each · final clear has no false next stage · 844x390 clear');
+  console.log('Stage Transition PASS · TIME ATTACK → DRIFT RUN → SPEED TRAP · single success cue each · final clear has no false next stage · 844x390 HUD corridor clear');
   await page.close();
 }finally{await browser.close()}

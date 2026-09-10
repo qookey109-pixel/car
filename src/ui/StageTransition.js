@@ -1,7 +1,7 @@
 export class StageTransition{
   constructor(hud){
     this.hud=hud;this.toast=hud?.el?.toast||document.getElementById('challengeToast');this.objectivePanel=document.querySelector('.hud-top-left');
-    this.timer=0;this.pendingInfo=null;this.state={profile:'stage-transition-v1',active:false,count:0,lastFrom:null,lastTo:null,lastText:'',nextStage:null};
+    this.holdMs=1400;this.timer=0;this.pendingInfo=null;this.state={profile:'stage-transition-v1',active:false,count:0,lastFrom:null,lastTo:null,lastText:'',nextStage:null,holdMs:this.holdMs};
     this._listener=e=>this._handle(e?.detail||{});window.addEventListener('neon-racer-feedback',this._listener);
   }
 
@@ -28,12 +28,12 @@ export class StageTransition{
   _start(transition){
     this._clear();
     const display=`${transition.from} ✓ → ${transition.to}`;
-    this.state={...this.state,active:true,count:this.state.count+1,lastFrom:transition.from,lastTo:transition.to,lastText:display,nextStage:transition.next};
+    this.state={...this.state,active:true,count:this.state.count+1,lastFrom:transition.from,lastTo:transition.to,lastText:display,nextStage:transition.next,holdMs:this.holdMs};
     this._renderCurrent(true);
     this.timer=setTimeout(()=>{
       const pending=this.pendingInfo;this._clear();
       if(pending?.text)this.hud?.toast(pending.text);
-    },760);
+    },this.holdMs);
   }
 
   _handle(detail={}){

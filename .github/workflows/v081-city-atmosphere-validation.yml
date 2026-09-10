@@ -72,6 +72,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/stage-transition-smoke.mjs
+      - name: Replay momentum acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/replay-momentum-smoke.mjs
       - name: Audio feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

@@ -6,6 +6,7 @@ import './checkpoint-feedback.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {StageTransition} from './ui/StageTransition.js';
+import {ReplayMomentum} from './ui/ReplayMomentum.js';
 import {CityAtmosphere} from './world/CityAtmosphere.js';
 
 const app=document.getElementById('app');
@@ -13,6 +14,8 @@ const game=new Game(app);
 game.audio.attachVehicle(game.vehicle);
 const stageTransition=new StageTransition(game.hud);
 game.stageTransition=stageTransition;
+const replayMomentum=new ReplayMomentum(game);
+game.replayMomentum=replayMomentum;
 const atmosphere=new CityAtmosphere(game.city);
 game.cityAtmosphere=atmosphere;
 const compass=new ObjectiveCompass(game);
@@ -34,6 +37,7 @@ window.__NEON_RACER__={
     score:Math.round(game.challenges.score),
     completed:game.challenges.completed,
     records:{...game.records},
+    replay:replayMomentum.snapshot(),
     recovery:{flipTimer:game.flipTimer,cooldown:game.recoveryCooldown},
     navigation:compass.snapshot(),
     stageTransition:stageTransition.snapshot(),

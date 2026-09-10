@@ -1,0 +1,73 @@
+name: V0.8.1 d533c35 Replay Momentum
+on:
+  push:
+    branches: [preview/v0.8.1-replay-momentum-d533c35]
+    paths: [.github/workflows/v081-d533c35-replay-momentum.yml]
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: car-fixed-preview-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: v080-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Require exact candidate acceptance
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {data: run} = await github.rest.actions.getWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: 34462617346});
+            if (run.head_sha !== 'd533c356858cc9cf6ffe1ecea99866c675c87a2c' || run.conclusion !== 'success') throw new Error('Exact Chromium + WebKit acceptance required');
+      - uses: actions/checkout@v6
+        with:
+          ref: d533c356858cc9cf6ffe1ecea99866c675c87a2c
+          path: candidate
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Build exact candidate
+        working-directory: candidate
+        run: npm install && npm test && npm run build
+      - name: Restore exact previous deployed bytes
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: preserved
+          run-id: 34458866716
+          github-token: ${{ github.token }}
+      - name: Append preview without changing any previous file
+        run: |
+          mkdir site
+          tar -xf preserved/artifact.tar -C site
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root=Path('site')
+          hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file()}
+          assert 'v0.8.1-caae89a/PREVIEW_SHA.txt' in hashes
+          Path('preserved-hashes.json').write_text(json.dumps(hashes))
+          assert not (root/'v0.8.1-d533c35').exists(), 'Immutable preview path already exists'
+          PY
+          mkdir site/v0.8.1-d533c35
+          cp -R candidate/dist/. site/v0.8.1-d533c35/
+          printf '%s\n' 'd533c356858cc9cf6ffe1ecea99866c675c87a2c' > site/v0.8.1-d533c35/PREVIEW_SHA.txt
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          hashes=json.loads(Path('preserved-hashes.json').read_text())
+          for name,digest in hashes.items():
+              assert hashlib.sha256((Path('site')/name).read_bytes()).hexdigest()==digest,name
+          print(f'Preserved all {len(hashes)} previous files byte-for-byte')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with: {path: site}
+      - name: Deploy preserved root and fixed previews
+        id: deployment
+        uses: actions/deploy-pages@v4

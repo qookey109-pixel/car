@@ -64,6 +64,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/objective-compass-smoke.mjs
+      - name: Checkpoint feedback acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/checkpoint-feedback-smoke.mjs
       - name: Audio feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

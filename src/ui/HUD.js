@@ -7,6 +7,7 @@ export class HUD{
     this.el={boot:$('boot'),loading:$('loading'),hud:$('hud'),pause:$('pause'),settings:$('settings'),controls:$('controlsModal'),complete:$('complete'),speed:$('speed'),gear:$('gear'),nitro:$('nitroBar'),score:$('score'),combo:$('combo'),objectiveTitle:$('objectiveTitle'),objectiveText:$('objectiveText'),progress:$('progressBar'),toast:$('challengeToast'),quality:$('qualityBadge'),mobile:$('mobileControls'),resolution:$('resolutionScale'),resolutionValue:$('resolutionValue'),qualitySelect:$('qualitySelect'),bloom:$('bloomToggle'),shadow:$('shadowToggle'),motion:$('motionToggle'),bootRecord:$('bootRecord'),finalRecord:$('finalRecord'),finalRoute:$('finalRoute')};
     this.toastTimer=0;this.handlers={};this._bind();
     this.districtLabel=$('districtLabel');this.districtTarget=$('districtTarget');this.district=null;this.targetDistrict=null;
+    this.navigationTargetKey=null;this.navigationDistance=null;this.navigationTrend=null;
   }
 
   _bind(){
@@ -37,7 +38,7 @@ export class HUD{
   closeSettings(){this.showOnly(this.settingsReturn||'boot')}
 
   update(vehicle,challenges){
-    this.updateDistrict(vehicle.position,challenges.targetDistrict);
+    this.updateDistrict(vehicle.position,challenges.targetDistrict,challenges.navigationTarget);
     const signedSpeed=vehicle.vehicle?.currentVehicleSpeedKmHour||0;
     this.el.speed.textContent=Math.round(vehicle.speedKmh);this.el.gear.textContent=this._gear(vehicle.speedKmh,signedSpeed,vehicle.input.throttle);this.el.nitro.style.width=`${Math.round(vehicle.nitro*100)}%`;
     this.el.score.textContent=Math.round(challenges.score).toLocaleString();this.el.combo.textContent=`x${challenges.combo.toFixed(1)}`;
@@ -45,7 +46,22 @@ export class HUD{
     if(vehicle.nitroActive)this.el.nitro.style.filter='brightness(1.5) drop-shadow(0 0 5px #6ff)';else this.el.nitro.style.filter='none';
   }
 
-  updateDistrict(position,target){
+  _navigationStatus(position,target){
+    if(!target){this.navigationTargetKey=null;this.navigationDistance=null;this.navigationTrend=null;return null}
+    const key=target.key||`${target.kind||'target'}:${target.x}:${target.z}`;
+    const radius=Math.max(0,Number(target.arrivalRadius)||0);
+    const remaining=Math.max(0,Math.hypot(target.x-position.x,target.z-position.z)-radius);
+    let trend=remaining<=.5?'arrived':'steady';
+    if(this.navigationTargetKey===key&&this.navigationDistance!==null&&remaining>.5){
+      const delta=this.navigationDistance-remaining;
+      trend=delta>.06?'approaching':delta<-.06?'receding':'steady';
+    }
+    this.navigationTargetKey=key;this.navigationDistance=remaining;this.navigationTrend=trend;
+    const labels={approaching:'接近中',receding:'遠離中',steady:'距離穩定',arrived:'已到目標'};
+    return{distance:Math.round(remaining),trend,label:labels[trend]};
+  }
+
+  updateDistrict(position,target,navigationTarget=null){
     const district=observedDistrict(position.x,position.z,this.district);
     const districtChanged=district!==this.district;
     const targetChanged=target!==this.targetDistrict;
@@ -57,15 +73,17 @@ export class HUD{
       this.districtLabel.classList.add('district-enter');
     }
     if(targetChanged)this.targetDistrict=target;
-    if(districtChanged||targetChanged){
-      if(!target){
-        this.districtTarget.textContent='';delete this.districtTarget.dataset.district;delete this.districtTarget.dataset.state;
-      }else{
-        const info=DISTRICTS[target],arrived=district===target;
-        this.districtTarget.textContent=`${arrived?'已抵達':'前往'} · ${info.label} · ${info.name}`;
-        this.districtTarget.dataset.district=target;this.districtTarget.dataset.state=arrived?'arrived':'travel';
-      }
+    const nav=this._navigationStatus(position,navigationTarget);
+    if(!target){
+      this.districtTarget.textContent='';delete this.districtTarget.dataset.district;delete this.districtTarget.dataset.state;delete this.districtTarget.dataset.trend;delete this.districtTarget.dataset.distance;
+      return;
     }
+    const info=DISTRICTS[target],arrived=district===target;
+    const navCopy=nav?` · 距目標 ${nav.distance}m · ${nav.label}`:'';
+    const copy=`${arrived?'已抵達':'前往'} · ${info.label} · ${info.name}${navCopy}`;
+    if(this.districtTarget.textContent!==copy)this.districtTarget.textContent=copy;
+    this.districtTarget.dataset.district=target;this.districtTarget.dataset.state=arrived?'arrived':'travel';
+    if(nav){this.districtTarget.dataset.trend=nav.trend;this.districtTarget.dataset.distance=String(nav.distance)}else{delete this.districtTarget.dataset.trend;delete this.districtTarget.dataset.distance}
   }
 
   _gear(speed,signedSpeed,throttle){if(speed<2&&Math.abs(throttle)<.05)return'N';if(signedSpeed>1.5||(throttle<-.05&&speed<2))return'R';return String(Math.max(1,Math.min(6,Math.floor(speed/38)+1)))}

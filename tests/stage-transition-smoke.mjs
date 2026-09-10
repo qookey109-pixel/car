@@ -30,8 +30,14 @@ try{
   const blocked={panel:first.panelRect,speed:first.speedRect,compass:first.compassRect,score:first.scoreRect,mobile:first.mobileRect};
   if(first.toastRect.left<0||first.toastRect.right>844||Object.entries(blocked).some(([,r])=>overlaps(first.toastRect,r)))throw new Error(`844x390 transition layout overlap: ${JSON.stringify({toast:first.toastRect,...blocked,computedTop:first.computedTop})}`);
   if(first.toastRect.top<first.panelRect.bottom+8)throw new Error(`Transition vertical clearance too small: ${JSON.stringify({toast:first.toastRect,panel:first.panelRect,computedTop:first.computedTop})}`);
-  await page.waitForFunction(()=>document.getElementById('objectiveTitle')?.textContent.includes('Drift Run'));
+
+  await page.waitForTimeout(120);
+  const held=await page.evaluate(()=>({text:document.getElementById('challengeToast')?.textContent||'',kind:document.getElementById('challengeToast')?.dataset.feedback||null,phase:document.getElementById('challengeToast')?.dataset.phase||null,objective:document.getElementById('objectiveTitle')?.textContent||'',stage:window.__NEON_RACER__.game.stageTransition.snapshot()}));
+  if(held.text!=='TIME ATTACK ✓ → DRIFT RUN'||held.kind!=='milestone'||held.phase!=='transition'||!held.objective.includes('Drift Run')||!held.stage.active||!held.stage.pendingInfo)throw new Error(`Transition did not survive next-stage info toast: ${JSON.stringify(held)}`);
   await page.screenshot({path:'test-results/stage-transition/time-to-drift-844x390.png'});
+  await page.waitForFunction(()=>window.__NEON_RACER__.game.stageTransition.snapshot().active===false,{timeout:2000});
+  const queued=await page.evaluate(()=>({text:document.getElementById('challengeToast')?.textContent||'',kind:document.getElementById('challengeToast')?.dataset.feedback||null,phase:document.getElementById('challengeToast')?.dataset.phase||null}));
+  if(!queued.text.includes('進入黃色河岸區域')||queued.kind!=='info'||queued.phase!==null)throw new Error(`Queued Drift instruction was not restored after handoff: ${JSON.stringify(queued)}`);
 
   const second=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,c=g.challenges,a=g.audio,toast=document.getElementById('challengeToast');
@@ -51,6 +57,6 @@ try{
   });
   if(!finish.completed||finish.state!=='complete'||finish.after.count!==finish.before.count||finish.phase!==null||finish.transitionClass)throw new Error(`Final Speed Trap should not create a next-stage transition: ${JSON.stringify(finish)}`);
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`Stage Transition PASS · TIME ATTACK → DRIFT RUN → SPEED TRAP · first-frame top ${first.computedTop} · single success cue each · final clear has no false next stage · 844x390 HUD corridor clear`);
+  console.log(`Stage Transition PASS · TIME ATTACK → DRIFT RUN → SPEED TRAP · first-frame top ${first.computedTop} · handoff survives next-stage info · queued instruction restored · single success cue each · final clear clean · 844x390 HUD corridor clear`);
   await page.close();
 }finally{await browser.close()}

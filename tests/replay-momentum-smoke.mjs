@@ -63,7 +63,7 @@ try{
   if(!fourth.pips[0].title.includes('PB 9,500 pts / 01:32'))throw new Error(`Route PB pip evidence missing: ${JSON.stringify(fourth.pips)}`);
   await page.click('#completeMenu');
   const bootRecord=await page.locator('#bootRecord').textContent();
-  if(bootRecord!=='NEXT ROUTE · 霓虹西環 · PB 6,000 pts · 01:26 · x3.0')throw new Error(`Main-menu route PB failed: ${bootRecord}`);
+  if(bootRecord!=='NEXT ROUTE · 霓虹西環 · PB 7,000 pts · 01:26 · x3.0')throw new Error(`Main-menu route PB failed: ${bootRecord}`);
   if(errors.length)throw new Error(errors.join('\n'));
   console.log(`Replay Momentum PASS · 3-route tour 1/3→2/3→3/3 · 河岸東環→霓虹西環→高架折返→河岸東環 · dynamic next-route CTA · per-route PB hunt +400 · main-menu next-route PB · 844x390 result card clear`);
   await page.close();

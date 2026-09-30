@@ -1,0 +1,108 @@
+name: Cloud DevTools MCP Profile
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: Immutable Car preview URL to profile
+        required: false
+        default: https://qookey109-pixel.github.io/car/v0.8.1-aa01a44/
+  push:
+    branches:
+      - tooling/mcp-threejs-dev
+    paths:
+      - .github/workflows/cloud-devtools-profile.yml
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET_URL: ${{ github.event.inputs.target_url || 'https://qookey109-pixel.github.io/car/v0.8.1-aa01a44/' }}
+      OUT_DIR: cloud-devtools-qa
+    steps:
+      - name: Checkout tooling branch
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare ephemeral QA workspace
+        run: |
+          mkdir -p "$OUT_DIR/skills"
+          printf '%s\n' "$TARGET_URL" > "$OUT_DIR/TARGET_URL.txt"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+          fc-cache -f
+          google-chrome --version | tee "$OUT_DIR/chrome-version.txt"
+          node --version | tee "$OUT_DIR/node-version.txt"
+          fc-match "Noto Sans CJK TC" | tee "$OUT_DIR/cjk-font.txt"
+
+      - name: Fetch selected Three.js skills as cloud-only guidance
+        run: |
+          git clone --depth=1 https://github.com/alton47/threejs-skills.git /tmp/threejs-skills
+          for skill in threejs-performance threejs-camera threejs-lighting threejs-physics threejs-audio; do
+            cp "/tmp/threejs-skills/skills/$skill/SKILL.md" "$OUT_DIR/skills/$skill-SKILL.md"
+          done
+          git -C /tmp/threejs-skills rev-parse HEAD > "$OUT_DIR/skills/UPSTREAM_SHA.txt"
+
+      - name: Install Chrome DevTools MCP CLI on ephemeral runner
+        run: |
+          npm install --global chrome-devtools-mcp@latest
+          npm list --global chrome-devtools-mcp --depth=0 | tee "$OUT_DIR/chrome-devtools-mcp-version.txt"
+
+      - name: Start isolated MCP browser
+        run: |
+          chrome-devtools start --workspace="$GITHUB_WORKSPACE/$OUT_DIR"
+          chrome-devtools list_pages --output-format=json > "$OUT_DIR/pages.json"
+
+      - name: Navigate immutable preview and capture runtime evidence
+        run: |
+          chrome-devtools navigate_page 1 --url "$TARGET_URL" --output-format=json > "$OUT_DIR/navigate.json"
+          chrome-devtools resize_page 1 844 390 --output-format=json > "$OUT_DIR/resize.json"
+          chrome-devtools take_snapshot 1 --verbose true --filePath "$GITHUB_WORKSPACE/$OUT_DIR/snapshot.txt" --output-format=json > "$OUT_DIR/snapshot-result.json"
+          chrome-devtools evaluate_script "() => ({href:location.href,title:document.title,viewport:{w:innerWidth,h:innerHeight,dpr:devicePixelRatio},game:window.__NEON_RACER__?.snapshot?.() ?? null,navigation:(()=>{const n=performance.getEntriesByType('navigation')[0];return n?{type:n.type,domContentLoaded:n.domContentLoadedEventEnd,load:n.loadEventEnd,transferSize:n.transferSize,decodedBodySize:n.decodedBodySize}:null})()})" --pageId 1 --waitForStableDom false --output-format=json > "$OUT_DIR/runtime.json"
+          chrome-devtools list_console_messages 1 --includeStackTraces true --output-format=json > "$OUT_DIR/console.json"
+          chrome-devtools list_network_requests 1 --pageSize 200 --output-format=json > "$OUT_DIR/network.json"
+          chrome-devtools take_screenshot 1 --filePath "$GITHUB_WORKSPACE/$OUT_DIR/preview-844x390.png" --output-format=json > "$OUT_DIR/screenshot-result.json"
+
+      - name: Record Chrome DevTools performance trace
+        run: |
+          chrome-devtools performance_start_trace 1 --reload true --autoStop true --filePath "$GITHUB_WORKSPACE/$OUT_DIR/performance-trace.json.gz" --output-format=json > "$OUT_DIR/performance-summary.json"
+          chrome-devtools performance_analyze_insight 1 "NAVIGATION_0" "LCPBreakdown" --output-format=json > "$OUT_DIR/insight-lcp.json"
+          chrome-devtools performance_analyze_insight 1 "NAVIGATION_0" "RenderBlocking" --output-format=json > "$OUT_DIR/insight-render-blocking.json"
+          chrome-devtools performance_analyze_insight 1 "NAVIGATION_0" "Cache" --output-format=json > "$OUT_DIR/insight-cache.json"
+          chrome-devtools evaluate_script "() => ({href:location.href,game:window.__NEON_RACER__?.snapshot?.() ?? null,renderer:window.__NEON_RACER__?.game?.renderer?.info?.render ?? null})" --pageId 1 --waitForStableDom false --output-format=json > "$OUT_DIR/post-trace-runtime.json"
+          chrome-devtools take_screenshot 1 --filePath "$GITHUB_WORKSPACE/$OUT_DIR/post-trace-844x390.png" --output-format=json > "$OUT_DIR/post-trace-screenshot-result.json"
+
+      - name: Write cloud profile receipt
+        run: |
+          cat > "$OUT_DIR/README.txt" <<EOF
+          CLOUD_ONLY Chrome DevTools MCP profile
+          target=$TARGET_URL
+          runner=GitHub-hosted ubuntu-latest
+          local_install=false
+          browser=headless isolated Chrome
+          evidence=performance trace + LCP/render-blocking/cache insights + console + network + runtime snapshot + 844x390 screenshots
+          cjk_font=Noto Sans CJK TC
+          threejs_skills=performance,camera,lighting,physics,audio
+          EOF
+          find "$OUT_DIR" -maxdepth 2 -type f -printf '%P %s bytes\n' | sort | tee "$OUT_DIR/files.txt"
+
+      - name: Stop ephemeral MCP daemon
+        if: always()
+        run: chrome-devtools stop || true
+
+      - name: Upload cloud DevTools evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-devtools-mcp-aa01a44
+          path: cloud-devtools-qa/
+          if-no-files-found: error
+          retention-days: 14

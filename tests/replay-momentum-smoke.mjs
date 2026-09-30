@@ -61,7 +61,10 @@ try{
   if(rb['河岸東環']?.clears!==2||rb['河岸東環']?.bestScore!==9500||Math.round(rb['河岸東環']?.bestTime)!==92||Number(rb['河岸東環']?.bestCombo)!==2.2||rb['霓虹西環']?.clears!==1||rb['高架折返']?.clears!==1)throw new Error(`Route PB persistence failed: ${JSON.stringify(rb)}`);
   if(fourth.replay.routeBest?.bestScore!==9500||fourth.replay.routeResult?.newScore||fourth.replay.routeResult?.newTime||fourth.replay.routeResult?.newCombo)throw new Error(`Route PB chase state failed: ${JSON.stringify(fourth.replay)}`);
   if(!fourth.pips[0].title.includes('PB 9,500 pts / 01:32'))throw new Error(`Route PB pip evidence missing: ${JSON.stringify(fourth.pips)}`);
+  await page.click('#completeMenu');
+  const bootRecord=await page.locator('#bootRecord').textContent();
+  if(bootRecord!=='NEXT ROUTE · 霓虹西環 · PB 6,000 pts · 01:26 · x3.0')throw new Error(`Main-menu route PB failed: ${bootRecord}`);
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`Replay Momentum PASS · 3-route tour 1/3→2/3→3/3 · 河岸東環→霓虹西環→高架折返→河岸東環 · dynamic next-route CTA · per-route PB hunt +400 · 844x390 result card clear`);
+  console.log(`Replay Momentum PASS · 3-route tour 1/3→2/3→3/3 · 河岸東環→霓虹西環→高架折返→河岸東環 · dynamic next-route CTA · per-route PB hunt +400 · main-menu next-route PB · 844x390 result card clear`);
   await page.close();
 }finally{await browser.close()}

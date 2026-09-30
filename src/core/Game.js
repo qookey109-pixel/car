@@ -19,7 +19,7 @@ export class Game{
   constructor(container){
     this.container=container;this.state='menu';this.clock=new THREE.Clock();this.accumulator=0;this.fixedDt=1/60;this.frame=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraSteer=0;this.cameraRoll=0;this.cameraImpulse=0;this.lastCollisionAt=0;this.flipTimer=0;this.recoveryCooldown=0;
     this.records=this._readRecords();
-    this._renderer();this._physics();this._world();this._systems();this._events();this._restoreSettings();this.hud.setRecords(this.records);this._resize();
+    this._renderer();this._physics();this._world();this._systems();this._events();this._restoreSettings();this.hud.setRecords(this.records,this.challenges.routes);this._resize();
     this._debug();this._loop=()=>this._tick();requestAnimationFrame(this._loop);
   }
 
@@ -95,7 +95,7 @@ export class Game{
     this.records={runs:prev.runs+1,bestScore:newScore?summary.score:prev.bestScore,bestTime:newTime?summary.time:prev.bestTime,bestCombo:newCombo?summary.bestCombo:prev.bestCombo,lastRoute:summary.routeName,routes,routeBests};
     this.lastRouteResult={routeName:summary.routeName,first:routeFirst,newScore:routeNewScore,newTime:routeNewTime,newCombo:routeNewCombo,best:{...routeBest}};
     try{localStorage.setItem('neon-racer-records',JSON.stringify(this.records))}catch{}
-    summary.records={...this.records,first,newScore,newTime,newCombo,routeResult:{...this.lastRouteResult,best:{...routeBest}}};this.hud.setRecords(this.records);this.hud.showComplete(summary);this.audio.success();
+    summary.records={...this.records,first,newScore,newTime,newCombo,routeResult:{...this.lastRouteResult,best:{...routeBest}}};this.hud.setRecords(this.records,this.challenges.routes);this.hud.showComplete(summary);this.audio.success();
   }
   resetVehicle(){this.vehicle.reset({x:0,y:1.3,z:24},0);this.flipTimer=0;this.recoveryCooldown=.8;this.challenges.lastPosition={x:this.vehicle.position.x,z:this.vehicle.position.z};this.hud.toast('車輛已重置')}
   recoverVehicle(){

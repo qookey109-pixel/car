@@ -84,9 +84,18 @@ export class Game{
     const prev=this.records,first=prev.runs===0;
     const newScore=first||summary.score>prev.bestScore;const newTime=first||prev.bestTime<=0||summary.time<prev.bestTime;const newCombo=first||summary.bestCombo>prev.bestCombo;
     const routes={...(prev.routes||{})};routes[summary.routeName]=(routes[summary.routeName]||0)+1;
-    this.records={runs:prev.runs+1,bestScore:newScore?summary.score:prev.bestScore,bestTime:newTime?summary.time:prev.bestTime,bestCombo:newCombo?summary.bestCombo:prev.bestCombo,lastRoute:summary.routeName,routes};
+    const routeBests={...(prev.routeBests||{})};
+    const oldRoute=routeBests[summary.routeName]&&typeof routeBests[summary.routeName]==='object'?routeBests[summary.routeName]:{clears:0,bestScore:0,bestTime:0,bestCombo:1};
+    const routeFirst=Number(oldRoute.clears||0)===0;
+    const routeNewScore=routeFirst||summary.score>Number(oldRoute.bestScore||0);
+    const routeNewTime=routeFirst||Number(oldRoute.bestTime||0)<=0||summary.time<Number(oldRoute.bestTime||0);
+    const routeNewCombo=routeFirst||summary.bestCombo>Number(oldRoute.bestCombo||1);
+    const routeBest={clears:Number(oldRoute.clears||0)+1,bestScore:routeNewScore?summary.score:Number(oldRoute.bestScore||0),bestTime:routeNewTime?summary.time:Number(oldRoute.bestTime||0),bestCombo:routeNewCombo?summary.bestCombo:Number(oldRoute.bestCombo||1)};
+    routeBests[summary.routeName]=routeBest;
+    this.records={runs:prev.runs+1,bestScore:newScore?summary.score:prev.bestScore,bestTime:newTime?summary.time:prev.bestTime,bestCombo:newCombo?summary.bestCombo:prev.bestCombo,lastRoute:summary.routeName,routes,routeBests};
+    this.lastRouteResult={routeName:summary.routeName,first:routeFirst,newScore:routeNewScore,newTime:routeNewTime,newCombo:routeNewCombo,best:{...routeBest}};
     try{localStorage.setItem('neon-racer-records',JSON.stringify(this.records))}catch{}
-    summary.records={...this.records,first,newScore,newTime,newCombo};this.hud.setRecords(this.records);this.hud.showComplete(summary);this.audio.success();
+    summary.records={...this.records,first,newScore,newTime,newCombo,routeResult:{...this.lastRouteResult,best:{...routeBest}}};this.hud.setRecords(this.records);this.hud.showComplete(summary);this.audio.success();
   }
   resetVehicle(){this.vehicle.reset({x:0,y:1.3,z:24},0);this.flipTimer=0;this.recoveryCooldown=.8;this.challenges.lastPosition={x:this.vehicle.position.x,z:this.vehicle.position.z};this.hud.toast('車輛已重置')}
   recoverVehicle(){
@@ -96,7 +105,7 @@ export class Game{
 
   applySettings(s){this.motionEffects=s.motion;this.quality.apply(s);this._resize()}
   _restoreSettings(){let s={quality:'auto',resolution:1,bloom:true,shadows:true,motion:true};try{s={...s,...JSON.parse(localStorage.getItem('neon-racer-settings')||'{}')}}catch{}this.hud.setSettings(s);this.applySettings(s)}
-  _readRecords(){let r={runs:0,bestScore:0,bestTime:0,bestCombo:1,routes:{}};try{const saved=JSON.parse(localStorage.getItem('neon-racer-records')||'{}');r={...r,...saved,routes:saved.routes&&typeof saved.routes==='object'?saved.routes:{}}}catch{}return r}
+  _readRecords(){let r={runs:0,bestScore:0,bestTime:0,bestCombo:1,routes:{},routeBests:{}};try{const saved=JSON.parse(localStorage.getItem('neon-racer-records')||'{}');r={...r,...saved,routes:saved.routes&&typeof saved.routes==='object'?saved.routes:{},routeBests:saved.routeBests&&typeof saved.routeBests==='object'?saved.routeBests:{}}}catch{}return r}
 
   _collision(event){
     const obstacle=event?.body;

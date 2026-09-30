@@ -29,8 +29,8 @@ try{
     await page.waitForFunction(route=>{const s=window.__NEON_RACER__.snapshot();return s.state==='running'&&s.routeName===route},expectedRoute);
   };
 
-  const first=await complete(2750,2.2,92,1);
-  if(first.routeName!=='河岸東環'||first.rank!=='B'||first.replay.profile!=='replay-momentum-v1'||first.replay.cleared!==1||first.replay.total!==3||first.replay.nextRoute!=='霓虹西環'||first.replay.nextRouteCleared!==false)throw new Error(`First replay state failed: ${JSON.stringify(first)}`);
+  const first=await complete(7250,2.2,92,1);
+  if(first.routeName!=='河岸東環'||first.rank!=='S'||first.replay.profile!=='replay-momentum-v2'||first.replay.cleared!==1||first.replay.total!==3||first.replay.nextRoute!=='霓虹西環'||first.replay.nextRouteCleared!==false)throw new Error(`First replay state failed: ${JSON.stringify(first)}`);
   if(first.target!=='NEXT TARGET · NEW ROUTE · 霓虹西環'||first.playAgain!=='挑戰 霓虹西環 →'||first.tour!=='CITY TOUR · 1/3 ROUTES CLEARED')throw new Error(`First replay copy failed: ${JSON.stringify(first)}`);
   if(first.pips.length!==3||!first.pips[0].cleared||first.pips[0].next||first.pips[1].cleared||!first.pips[1].next)throw new Error(`First route pips failed: ${JSON.stringify(first.pips)}`);
 
@@ -41,7 +41,7 @@ try{
   await replay('高架折返');
   const third=await complete(7250,4.0,80,3);
   if(third.routeName!=='高架折返'||third.rank!=='S'||third.replay.cleared!==3||third.replay.nextRoute!=='河岸東環'||third.replay.nextRouteCleared!==true)throw new Error(`City tour completion failed: ${JSON.stringify(third)}`);
-  if(third.target!=='PB HUNT · NEW BEST SET · DEFEND S'||third.playAgain!=='挑戰 河岸東環 →'||third.tour!=='CITY TOUR · 3/3 ROUTES CLEARED'||!third.recordNew)throw new Error(`City tour completion copy failed: ${JSON.stringify(third)}`);
+  if(third.target!=='ROUTE PB · 高架折返 · NEW BENCHMARK'||third.playAgain!=='挑戰 河岸東環 →'||third.tour!=='CITY TOUR · 3/3 ROUTES CLEARED'||!third.recordNew)throw new Error(`City tour completion copy failed: ${JSON.stringify(third)}`);
   if(third.pips.length!==3||third.pips.some(p=>!p.cleared)||!third.pips[0].next)throw new Error(`City tour pips failed: ${JSON.stringify(third.pips)}`);
 
   const layout=await page.evaluate(()=>{
@@ -54,10 +54,14 @@ try{
   await page.screenshot({path:'test-results/replay-momentum/city-tour-complete-844x390.png'});
 
   await replay('河岸東環');
-  const fourth=await complete(6850,3.5,84,4);
-  if(fourth.rank!=='S'||fourth.replay.cleared!==3||fourth.replay.nextRoute!=='霓虹西環'||fourth.target!=='PB HUNT · SCORE +400 TO PB'||fourth.recordNew)throw new Error(`PB chase target failed: ${JSON.stringify(fourth)}`);
+  const fourth=await complete(6850,2.0,96,4);
+  if(fourth.rank!=='S'||fourth.replay.cleared!==3||fourth.replay.nextRoute!=='霓虹西環'||fourth.target!=='ROUTE PB · 河岸東環 · SCORE +400'||fourth.recordNew)throw new Error(`PB chase target failed: ${JSON.stringify(fourth)}`);
   if(fourth.records.runs!==4||fourth.records.bestScore!==9500||Number(fourth.records.bestCombo)!==4||fourth.records.routes?.['河岸東環']!==2||fourth.records.routes?.['霓虹西環']!==1||fourth.records.routes?.['高架折返']!==1)throw new Error(`Replay records persistence failed: ${JSON.stringify(fourth.records)}`);
+  const rb=fourth.records.routeBests||{};
+  if(rb['河岸東環']?.clears!==2||rb['河岸東環']?.bestScore!==9500||Math.round(rb['河岸東環']?.bestTime)!==92||Number(rb['河岸東環']?.bestCombo)!==2.2||rb['霓虹西環']?.clears!==1||rb['高架折返']?.clears!==1)throw new Error(`Route PB persistence failed: ${JSON.stringify(rb)}`);
+  if(fourth.replay.routeBest?.bestScore!==9500||fourth.replay.routeResult?.newScore||fourth.replay.routeResult?.newTime||fourth.replay.routeResult?.newCombo)throw new Error(`Route PB chase state failed: ${JSON.stringify(fourth.replay)}`);
+  if(!fourth.pips[0].title.includes('PB 9,500 pts / 01:32'))throw new Error(`Route PB pip evidence missing: ${JSON.stringify(fourth.pips)}`);
   if(errors.length)throw new Error(errors.join('\n'));
-  console.log(`Replay Momentum PASS · 3-route tour 1/3→2/3→3/3 · 河岸東環→霓虹西環→高架折返→河岸東環 · dynamic next-route CTA · S-rank PB hunt +400 · 844x390 result card clear`);
+  console.log(`Replay Momentum PASS · 3-route tour 1/3→2/3→3/3 · 河岸東環→霓虹西環→高架折返→河岸東環 · dynamic next-route CTA · per-route PB hunt +400 · 844x390 result card clear`);
   await page.close();
 }finally{await browser.close()}

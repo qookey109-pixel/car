@@ -36,8 +36,12 @@ jobs:
         run: |
           mkdir -p "$OUT_DIR/skills"
           printf '%s\n' "$TARGET_URL" > "$OUT_DIR/TARGET_URL.txt"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+          fc-cache -f
           google-chrome --version | tee "$OUT_DIR/chrome-version.txt"
           node --version | tee "$OUT_DIR/node-version.txt"
+          fc-match "Noto Sans CJK TC" | tee "$OUT_DIR/cjk-font.txt"
 
       - name: Fetch selected Three.js skills as cloud-only guidance
         run: |
@@ -70,6 +74,9 @@ jobs:
       - name: Record Chrome DevTools performance trace
         run: |
           chrome-devtools performance_start_trace 1 --reload true --autoStop true --filePath "$GITHUB_WORKSPACE/$OUT_DIR/performance-trace.json.gz" --output-format=json > "$OUT_DIR/performance-summary.json"
+          chrome-devtools performance_analyze_insight 1 "NAVIGATION_0" "LCPBreakdown" --output-format=json > "$OUT_DIR/insight-lcp.json"
+          chrome-devtools performance_analyze_insight 1 "NAVIGATION_0" "RenderBlocking" --output-format=json > "$OUT_DIR/insight-render-blocking.json"
+          chrome-devtools performance_analyze_insight 1 "NAVIGATION_0" "Cache" --output-format=json > "$OUT_DIR/insight-cache.json"
           chrome-devtools evaluate_script "() => ({href:location.href,game:window.__NEON_RACER__?.snapshot?.() ?? null,renderer:window.__NEON_RACER__?.game?.renderer?.info?.render ?? null})" --pageId 1 --waitForStableDom false --output-format=json > "$OUT_DIR/post-trace-runtime.json"
           chrome-devtools take_screenshot 1 --filePath "$GITHUB_WORKSPACE/$OUT_DIR/post-trace-844x390.png" --output-format=json > "$OUT_DIR/post-trace-screenshot-result.json"
 
@@ -81,7 +88,8 @@ jobs:
           runner=GitHub-hosted ubuntu-latest
           local_install=false
           browser=headless isolated Chrome
-          evidence=performance trace + console + network + runtime snapshot + 844x390 screenshots
+          evidence=performance trace + LCP/render-blocking/cache insights + console + network + runtime snapshot + 844x390 screenshots
+          cjk_font=Noto Sans CJK TC
           threejs_skills=performance,camera,lighting,physics,audio
           EOF
           find "$OUT_DIR" -maxdepth 2 -type f -printf '%P %s bytes\n' | sort | tee "$OUT_DIR/files.txt"

@@ -6,7 +6,7 @@ on:
       target_url:
         description: Immutable Car preview URL to profile
         required: false
-        default: https://qookey109-pixel.github.io/car/v0.8.1-d533c35/
+        default: https://qookey109-pixel.github.io/car/v0.8.1-aa01a44/
   push:
     branches:
       - tooling/mcp-threejs-dev
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      TARGET_URL: ${{ github.event.inputs.target_url || 'https://qookey109-pixel.github.io/car/v0.8.1-d533c35/' }}
+      TARGET_URL: ${{ github.event.inputs.target_url || 'https://qookey109-pixel.github.io/car/v0.8.1-aa01a44/' }}
       OUT_DIR: cloud-devtools-qa
     steps:
       - name: Checkout tooling branch
@@ -102,7 +102,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cloud-devtools-mcp-d533c35
+          name: cloud-devtools-mcp-aa01a44
           path: cloud-devtools-qa/
           if-no-files-found: error
           retention-days: 14

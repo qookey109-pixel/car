@@ -85,15 +85,15 @@ export class Game{
     const newScore=first||summary.score>prev.bestScore;const newTime=first||prev.bestTime<=0||summary.time<prev.bestTime;const newCombo=first||summary.bestCombo>prev.bestCombo;
     const routes={...(prev.routes||{})};routes[summary.routeName]=(routes[summary.routeName]||0)+1;
     const routeBests={...(prev.routeBests||{})};
-    const oldRoute=routeBests[summary.routeName]&&typeof routeBests[summary.routeName]==='object'?routeBests[summary.routeName]:{clears:0,bestScore:0,bestTime:0,bestCombo:1};
+    const oldRoute=routeBests[summary.routeName]&&typeof routeBests[summary.routeName]==='object'?routeBests[summary.routeName]:{clears:0,bestScore:0,bestTime:0,bestCombo:1,sClears:0};
     const routeFirst=Number(oldRoute.clears||0)===0;
     const routeNewScore=routeFirst||summary.score>Number(oldRoute.bestScore||0);
     const routeNewTime=routeFirst||Number(oldRoute.bestTime||0)<=0||summary.time<Number(oldRoute.bestTime||0);
     const routeNewCombo=routeFirst||summary.bestCombo>Number(oldRoute.bestCombo||1);
-    const routeBest={clears:Number(oldRoute.clears||0)+1,bestScore:routeNewScore?summary.score:Number(oldRoute.bestScore||0),bestTime:routeNewTime?summary.time:Number(oldRoute.bestTime||0),bestCombo:routeNewCombo?summary.bestCombo:Number(oldRoute.bestCombo||1)};
+    const routeBest={clears:Number(oldRoute.clears||0)+1,bestScore:routeNewScore?summary.score:Number(oldRoute.bestScore||0),bestTime:routeNewTime?summary.time:Number(oldRoute.bestTime||0),bestCombo:routeNewCombo?summary.bestCombo:Number(oldRoute.bestCombo||1),sClears:Number(oldRoute.sClears||0)+(summary.rank==='S'?1:0)};
     routeBests[summary.routeName]=routeBest;
     this.records={runs:prev.runs+1,bestScore:newScore?summary.score:prev.bestScore,bestTime:newTime?summary.time:prev.bestTime,bestCombo:newCombo?summary.bestCombo:prev.bestCombo,lastRoute:summary.routeName,routes,routeBests};
-    this.lastRouteResult={routeName:summary.routeName,first:routeFirst,newScore:routeNewScore,newTime:routeNewTime,newCombo:routeNewCombo,best:{...routeBest}};
+    this.lastRouteResult={routeName:summary.routeName,first:routeFirst,newScore:routeNewScore,newTime:routeNewTime,newCombo:routeNewCombo,previous:{clears:Number(oldRoute.clears||0),bestScore:Number(oldRoute.bestScore||0),bestTime:Number(oldRoute.bestTime||0),bestCombo:Number(oldRoute.bestCombo||1),sClears:Number(oldRoute.sClears||0)},best:{...routeBest}};
     try{localStorage.setItem('neon-racer-records',JSON.stringify(this.records))}catch{}
     summary.records={...this.records,first,newScore,newTime,newCombo,routeResult:{...this.lastRouteResult,best:{...routeBest}}};this.hud.setRecords(this.records,this.challenges.routes);this.hud.showComplete(summary);this.audio.success();
   }

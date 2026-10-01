@@ -6,6 +6,8 @@ export class AudioManager{
     this.engineFundamental=null;this.engineHarmonic=null;this.engineSub=null;this.engineGain=null;this.engineFilter=null;this.harmonicGain=null;this.subGain=null;
     this.wind=null;this.windGain=null;this.windFilter=null;this.skid=null;this.skidGain=null;this.skidFilter=null;this.nitroAir=null;this.nitroGain=null;this.nitroFilter=null;
     this.state={initialized:false,engineHz:0,engineGain:0,skidGain:0,nitroGain:0,windGain:0,drift:0};
+    this.feedback={profile:'checkpoint-feedback-v1',lastKind:null,lastText:'',checkpointCues:0,successCues:0,suppressedFallbacks:0,lastCheckpoint:0};this._feedbackAt=-1e9;
+    this._feedbackListener=e=>this._handleFeedback(e?.detail||{});if(typeof window!=='undefined')window.addEventListener('neon-racer-feedback',this._feedbackListener);
   }
 
   attachVehicle(vehicle){this.vehicle=vehicle;return this}
@@ -61,7 +63,23 @@ export class AudioManager{
     if(this.noiseBuffer){const n=c.createBufferSource(),f=c.createBiquadFilter(),ng=c.createGain();n.buffer=this.noiseBuffer;f.type='lowpass';f.frequency.value=420+k*520;ng.gain.setValueAtTime(.018+.055*k,t);ng.gain.exponentialRampToValueAtTime(.0001,t+.11);n.connect(f);f.connect(ng);ng.connect(this.master);n.start(t);n.stop(t+.12)}
   }
 
-  success(){this.beep(610,.07,.06);setTimeout(()=>this.beep(805,.08,.055),78);setTimeout(()=>this.beep(1040,.11,.05),158)}
+  _handleFeedback(detail={}){
+    const kind=String(detail.kind||'info'),text=String(detail.text||'');this.feedback.lastKind=kind;this.feedback.lastText=text;this._feedbackAt=performance.now();
+    if(kind==='checkpoint'){
+      const m=text.match(/^CHECKPOINT\s+(\d+)\/(\d+)/i),index=m?Number(m[1]):1,total=m?Number(m[2]):4;this.checkpoint(index,total);return;
+    }
+    if(kind==='milestone')this.success({fromFeedback:true});
+  }
+
+  checkpoint(index=1,total=4){
+    const i=Math.max(1,Math.floor(Number(index)||1)),n=Math.max(i,Math.floor(Number(total)||4));this.feedback.checkpointCues++;this.feedback.lastCheckpoint=i;this.feedback.lastKind='checkpoint';
+    const base=610+Math.min(5,i)*42;this.beep(base,.045,.038);if(i<n)setTimeout(()=>this.beep(base*1.22,.055,.032),52);
+  }
+
+  success({fromFeedback=false}={}){
+    if(!fromFeedback&&performance.now()-this._feedbackAt<140){this.feedback.suppressedFallbacks++;return}
+    this.feedback.successCues++;this.feedback.lastKind='milestone';this.beep(610,.07,.06);setTimeout(()=>this.beep(805,.08,.055),78);setTimeout(()=>this.beep(1040,.11,.05),158)
+  }
   setVolume(v){if(this.master&&this.ctx)this.master.gain.setTargetAtTime(clamp(Number(v)||0,0,1),this.ctx.currentTime,.05)}
-  snapshot(){return{enabled:this.enabled,contextState:this.ctx?.state||'uninitialized',...this.state}}
+  snapshot(){return{enabled:this.enabled,contextState:this.ctx?.state||'uninitialized',...this.state,feedback:{...this.feedback}}}
 }

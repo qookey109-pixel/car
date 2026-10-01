@@ -1,0 +1,94 @@
+name: V0.8.1 City Atmosphere Validation
+
+on:
+  push:
+    branches:
+      - feature/v0.8.1-city-atmosphere-polish
+  workflow_dispatch:
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    env:
+      BROWSER: ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Static smoke
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Install browser engine
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Start production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/car-v081-vite.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/car-v081-vite.log
+          exit 1
+      - name: Browser play smoke
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: npm run test:browser
+      - name: Steering direction and reverse contract
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/control-direction-smoke.mjs
+      - name: City atmosphere runtime acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/city-atmosphere-smoke.mjs
+      - name: District awareness acceptance
+        run: node tests/district-awareness-smoke.mjs
+      - name: High-speed camera feel acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/camera-feel-smoke.mjs
+      - name: Speed-flow and particle-color acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/vfx-speed-smoke.mjs
+      - name: Objective compass acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/objective-compass-smoke.mjs
+      - name: Checkpoint feedback acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/checkpoint-feedback-smoke.mjs
+      - name: Stage transition acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/stage-transition-smoke.mjs
+      - name: Replay momentum acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/replay-momentum-smoke.mjs
+      - name: Audio feel acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/audio-feel-smoke.mjs
+      - name: Software LOW active render budget
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/render-budget-smoke.mjs
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v081-city-atmosphere-qa-${{ matrix.browser }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

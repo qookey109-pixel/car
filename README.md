@@ -1,21 +1,40 @@
 # Neon Racer — 三蘆夜行
 
-V0.8.0 Playable City Game Loop for the `qookey109-pixel/car` project.
+V0.8.1 City Atmosphere + Replayability Polish for `qookey109-pixel/car`.
 
-This branch turns the Three.js real-world driving prototype into a complete replayable run: start → drive → challenge → score → finish → replay.
+The active development branch is a complete replayable Three.js driving loop: start → drive → challenge → score → finish → chase a route-specific personal best.
 
-## Features
+## Current features
 
 - Three.js + cannon-es RaycastVehicle
 - Stylized Sanchong/Luzhou-inspired night city
 - Third-person dynamic camera with collision avoidance and dynamic FOV
 - Drift, nitro, score and combo systems
-- Three gameplay challenges: Time Attack, Drift Run, Speed Trap
-- Start, pause, restart, settings and completion screens
-- Keyboard, simultaneous mobile touch and gamepad controls
-- Procedural audio and lightweight driving VFX
-- Adaptive quality and debug HUD
-- Instanced urban scenery for browser performance
+- Three rotating city routes:
+  - 河岸東環 — 高速長彎 / HIGH SPEED
+  - 霓虹西環 — 密集轉向 / TECHNICAL
+  - 高架折返 — 煞車節奏 / BRAKE FLOW
+- Route-specific PBs for score / time / combo, plus per-route S-rank clear counts
+- Replay Momentum V3 with score + time delta targets
+- Main-menu next-route identity + PB summary
+- District Awareness, Objective Compass, checkpoint feedback and stage transitions
+- Desktop keyboard, mobile multi-touch and gamepad input
+- Progressive touch steering while preserving direct A/D keyboard steering
+- Procedural audio, traffic-signal phases, facade-light rhythm and lightweight VFX
+- Adaptive quality + debug HUD
+- Immutable SHA-specific GitHub Pages previews
+
+## Current validated preview
+
+Last fully validated/deployed candidate before the current polish pass:
+
+https://qookey109-pixel.github.io/car/v0.8.1-0c20859/
+
+Exact game SHA:
+
+`0c20859a29b3c9d278a2fe9799dad31f32dbca78`
+
+The current development head may be newer than this preview. Repository state and PR #2 are authoritative.
 
 ## Installation
 
@@ -24,8 +43,6 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal.
-
 ## Production
 
 ```bash
@@ -33,13 +50,12 @@ npm run build
 npm run preview
 ```
 
-The production output is written to `dist/`.
-
 ## Controls
 
 - `W` / `↑`: accelerate
 - `S` / `↓`: brake / reverse
-- `A D` / `← →`: steering
+- `A` / `←`: steer left
+- `D` / `→`: steer right
 - `Space`: handbrake / drift
 - `Shift`: nitro
 - Mouse drag: orbit driving camera
@@ -47,10 +63,6 @@ The production output is written to `dist/`.
 - `ESC`: pause / resume
 - `F3`: debug HUD
 - Gamepad: left stick steering, right stick camera, triggers throttle/brake
-
-## Graphics settings
-
-The in-game settings menu provides Auto / High / Medium / Low quality, resolution scale, bloom, shadows and motion effects. Auto quality can reduce rendering cost when sustained FPS is low.
 
 ## QA
 
@@ -60,34 +72,43 @@ npm run build
 npm run test:browser
 ```
 
-Browser QA covers desktop and 844×390 mobile landscape. It checks boot, start, acceleration, finite camera state, pause/resume, restart, simultaneous touch input, WebGL/console/page errors and core runtime snapshot values.
+The V0.8.1 workflow runs the same gameplay contracts on Chromium and WebKit. Chromium SwiftShader also owns the numeric LOW render budget.
+
+Hard LOW budget:
+
+- draw calls <= 60
+- triangles <= 110,000
+
+WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari FPS testing.
 
 ## Architecture
 
 - `src/core/` — game loop and input
 - `src/vehicle/` — RaycastVehicle and car visuals
-- `src/world/` — city/world generation
-- `src/gameplay/` — challenge and scoring loop
+- `src/world/` — city/world generation and atmosphere
+- `src/gameplay/` — challenge, route and scoring loop
 - `src/rendering/` — adaptive quality
 - `src/audio/` — procedural Web Audio
-- `src/vfx/` — lightweight particles and feedback
-- `src/ui/` — HUD and menus
-
-## Debug mode
-
-Append `?debug=1` or press `F3` to display FPS, draw calls, triangles, vehicle position, speed, challenge state and quality mode.
+- `src/vfx/` — lightweight particles and speed feedback
+- `src/ui/` — HUD, navigation, stage transition and replay momentum
 
 ## Asset and resource policy
 
-The current V0.8.0 implementation is primarily procedural and does not redistribute third-party game art. External resources are treated as references or optional future sources only after license review. See `THIRD_PARTY_ASSETS.md` and `docs/RESOURCE_HUB_INTEGRATION.md`.
+The active implementation is primarily procedural and does not redistribute unknown third-party game art or audio. External resources are references until their source license and provenance are explicitly reviewed.
 
-## Recovery provenance
-
-The repository was recreated on 2026-09-08. A user-provided V53 recovery ZIP exists as a recovery candidate, but V0.8.0 is developed as a new modular Three.js branch rather than silently claiming lost V0.7.x history was recovered. Repository state is authoritative going forward.
+See `THIRD_PARTY_ASSETS.md` and `docs/RESOURCE_HUB_INTEGRATION.md`.
 
 ## Known limitations
 
-- V0.8.0 is a stylized city game, not a photorealistic digital twin.
-- Traffic AI, weather cycles and persistent career progression are not yet enabled.
-- Audio is procedural to avoid unclear asset licensing.
-- Real-device Safari visual/FPS acceptance remains a separate manual gate after automated Chromium QA.
+- Full traffic AI is deferred.
+- Weather cycles are deferred.
+- Audio remains procedural.
+- Real-world OSM mode is not restored as an authoritative active branch.
+- Real-device Safari visual/FPS/input/audio-feel acceptance remains a manual gate.
+
+## Repository safety
+
+- `main` is not modified directly.
+- PR #1 remains the V0.8.0 Safari/manual-release candidate.
+- PR #2 remains Draft while V0.8.1 polish continues.
+- Immutable rollback previews must not be overwritten or deleted.

@@ -214,7 +214,7 @@ export class AmbientTraffic{
         (target.signalLimited&&target.signal&&!target.signal.green&&target.signal.stopDistance<=2.2)||
         (target.following&&target.gap<=this.safeGap+1.15)
       ));
-      record.braking=Boolean(record.stopped||record.queued||target.speed<before-.35);
+      record.braking=Boolean(record.stopped||target.speed<before-.35||(target.following&&target.speed<record.velocity-.15));
       if(record.stopped)stopped++;
       if(record.queued)queued++;
       if(record.braking)braking++;

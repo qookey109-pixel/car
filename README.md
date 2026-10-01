@@ -1,8 +1,29 @@
 # Neon Racer — 三蘆夜行
 
-V0.8.5 Traffic Flow Polish development line for `qookey109-pixel/car`.
+V0.9 Award Candidate development line for `qookey109-pixel/car`.
 
-This branch builds on the validated V0.8.4 signal-aware traffic candidate and improves queueing, car-following and brake-light behavior without adding any new render group.
+This branch turns the validated V0.8.5 technical foundation into the first submission-oriented version of the game. The priority is no longer adding isolated features; it is creating a cohesive, memorable playable work with a clear first impression, strong route identity, satisfying finish payoff and stable cross-device performance.
+
+## Creative direction
+
+**三蘆夜行** is a short-form urban night-driving game built around three route personalities:
+
+- 河岸東環 — 高速長彎 / FLOW
+- 霓虹西環 — 密集轉向 / PRECISION
+- 高架折返 — 煞車節奏 / RHYTHM
+
+The player should understand the next goal quickly, feel the city and vehicle rhythm within the first seconds, then be pulled into replay through rank, route PB, Ghost pursuit and route mastery.
+
+The award-candidate standard is:
+
+- recognizable identity in the first 30 seconds
+- clean driving feel
+- clear challenge hierarchy
+- audiovisual cohesion
+- strong finish/payoff
+- replay motivation
+- desktop/mobile usability
+- measurable performance discipline
 
 ## Current features
 
@@ -10,58 +31,74 @@ This branch builds on the validated V0.8.4 signal-aware traffic candidate and im
 - Stylized Sanchong/Luzhou-inspired night city
 - Third-person dynamic camera with collision avoidance and dynamic FOV
 - Drift, nitro, score and combo systems
-- Three rotating routes with distinct driving identities:
-  - 河岸東環 — 高速長彎 / HIGH SPEED
-  - 霓虹西環 — 密集轉向 / TECHNICAL
-  - 高架折返 — 煞車節奏 / BRAKE FLOW
+- Three rotating routes with distinct driving identities
 - Route-specific PBs for score / time / combo plus per-route S-rank clears
-- Replay Momentum V3 with score + time pursuit targets
-- PB Ghost Replay with same-route trajectories and live AHEAD / BEHIND / EVEN delta
-- V0.8.5 Traffic Flow:
-  - 18 deterministic visual city cars
-  - 9 modeled lanes × 2 cars per lane
-  - existing CityAtmosphere signal phase remains the single traffic-signal authority
-  - red-light queue formation
-  - green-light queue release
-  - 7.5m configured safe following gap
-  - 24m active following distance
-  - per-car cruise-speed variation
-  - dynamic brake-light brightness using instance colors
-  - exactly 3 traffic render groups: body + headlights + taillights
-  - 24m near-player exclusion applies to body + lights
+- Replay Momentum V3
+- PB Ghost Replay with live AHEAD / BEHIND / EVEN delta
+- Traffic Flow V3:
+  - 9 modeled lanes / 18 visual traffic cars
+  - signal-aware red stop / green release
+  - 7.5m safe queue gap
+  - dynamic brake lights
+  - exactly three traffic render groups
   - 0 physics bodies / 0 colliders / 0 camera occluders
-- District Awareness, Objective Compass, checkpoint feedback and stage transitions
+- District Awareness V3
+- Objective Compass
+- Checkpoint Feedback
+- Stage Transition
 - Desktop keyboard, mobile multi-touch and gamepad input
-- Progressive touch steering with direct keyboard A/D preserved
-- Procedural audio, traffic-signal phases, facade-light rhythm and lightweight VFX
+- Progressive touch steering with direct A/D keyboard steering preserved
+- Procedural engine / drift / nitro / feedback audio
 - Adaptive quality + debug HUD
 - Immutable SHA-specific GitHub Pages previews
 
+## V0.9 Award Presentation
+
+V0.9 adds a DOM-only cinematic presentation layer without increasing WebGL render cost.
+
+### Route intro
+
+Each route receives a dedicated intro identity:
+
+- 河岸東環 — `RIVER EAST LOOP` / `FLOW`
+  - 「沿河壓住速度，把整座夜色甩在身後。」
+- 霓虹西環 — `NEON WEST LOOP` / `PRECISION`
+  - 「在最窄的街廓裡，切出最乾淨的節奏。」
+- 高架折返 — `VIADUCT RETURN` / `RHYTHM`
+  - 「晚一點煞車，早一點回正，在高架前封關。」
+
+The intro layer uses `pointer-events:none`, does not lock player controls and adds zero Three.js render groups.
+
+### Finish climax
+
+Completion presentation adapts to rank:
+
+- S — `NIGHT MASTERED`
+- A — `CITY FLOW`
+- B — `NIGHT RUN COMPLETE`
+- C — `ROUTE CLEARED`
+
+A new PB receives a distinct `PERSONAL BEST · NEW NIGHT RECORD` treatment. Ordinary clears point back toward Ghost pursuit.
+
+The finish layer is explicitly stacked above the result screen so the climax remains visible in the real completion flow.
+
+### Award audio
+
+- Route start uses a short three-note procedural identity.
+- Finish uses a rank-dependent root and an additional note for a new PB.
+- Existing engine, drift, wind, nitro, checkpoint and impact audio remain intact.
+
 ## Current validated base preview
 
-V0.8.5 is based on the fully validated V0.8.4 candidate:
+V0.9 is based on the fully validated V0.8.5 candidate:
 
-https://qookey109-pixel.github.io/car/v0.8.4-bb85eef/
+https://qookey109-pixel.github.io/car/v0.8.5-9d41669/
 
 Base exact SHA:
 
-`bb85eef880a3dfb60bd7f6ca684277097d953a92`
+`9d41669c9fb87ee86638d1dbfe90b75102ba193d`
 
-A V0.8.5 preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
-
-## Installation
-
-```bash
-npm install
-npm run dev
-```
-
-## Production
-
-```bash
-npm run build
-npm run preview
-```
+A V0.9 immutable preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
 
 ## Controls
 
@@ -77,19 +114,23 @@ npm run preview
 - `F3`: debug HUD
 - Gamepad: left stick steering, right stick camera, triggers throttle/brake
 
-## Traffic flow behavior
+## Installation
 
-Ambient traffic remains visual city atmosphere rather than collision gameplay.
+```bash
+npm install
+npm run dev
+```
 
-The traffic signal grid is still owned by `CityAtmosphere`. Cars only read the existing signal authority.
+## Production
 
-V0.8.5 pairs cars on modeled lanes so a real queue can form. Each follower measures wrapped forward distance to the same-lane lead car. Within 24m it gradually matches the leader, while a 7.5m safe gap prevents stacked cars at red lights.
+```bash
+npm run build
+npm run preview
+```
 
-Brake lights remain in the existing taillight InstancedMesh. Per-instance colors switch to bright red only during actual deceleration or stopping, then return to a dim running-light red after acceleration resumes. This adds no draw call.
+Package/runtime version:
 
-## Ghost Replay behavior
-
-Ghost Replay continues to use the separate `neon-racer-ghosts-v1` localStorage key. Only a new same-route best time replaces a stored ghost; non-PB runs do not overwrite it.
+`0.9.0`
 
 ## QA
 
@@ -97,41 +138,42 @@ Ghost Replay continues to use the separate `neon-racer-ghosts-v1` localStorage k
 npm test
 npm run build
 npm run test:browser
+node tests/award-presentation-smoke.mjs
 node tests/ghost-replay-smoke.mjs
 node tests/ambient-traffic-smoke.mjs
 ```
 
-The V0.8.x workflow runs all gameplay contracts on Chromium and WebKit.
+The V0.9 workflow runs the full gameplay contract on Chromium and WebKit.
 
 Hard Chromium LOW budget:
 
 - draw calls <= 60
 - triangles <= 110,000
 
-V0.8.5 traffic acceptance verifies:
+V0.9 Award Presentation acceptance verifies:
 
-- exactly 18 cars across exactly 9 modeled lanes
-- existing signal-authority mapping
-- red-light lead-car stop
-- queued follower stop
-- 7.5m safe-gap tolerance
-- green-light queue release
-- dynamic bright/dim brake-light state
-- exactly three traffic render groups
-- near-player exclusion for body + lights
-- 0 physics-body changes
-- 0 camera-occluder changes
-- overall LOW budget remains unchanged
+- all 3 route identities
+- S/B finish copy and PB/non-PB states
+- input transparency
+- finish overlay stacking above result screen
+- route-start and finish audio methods
+- 0 WebGL draw-call delta
 
-First code-gate evidence measured:
+First V0.9 code-gate evidence:
 
-- queue gap: 7.50m
-- red-light follower: 0.00 m/s
-- green-light follower: 7.46 m/s
-- dynamic brake-light transition: PASS
+- Chromium: 27/27 SUCCESS
+- WebKit: 27/27 SUCCESS
+- Award Presentation: PASS
+- presentation WebGL delta: 0 calls
+- A left: -50.0m
+- D right: +49.4m
+- reverse peak: 41.4 km/h
+- Traffic Flow V3 queue gap: 7.50m
+- red follower: 0.00m/s
+- green follower: 7.46m/s
 - Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
 
-WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari FPS testing.
+WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari hardware FPS testing.
 
 ## Architecture
 
@@ -142,23 +184,24 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 - `src/rendering/` — adaptive quality
 - `src/audio/` — procedural Web Audio
 - `src/vfx/` — lightweight particles and speed feedback
-- `src/ui/` — HUD, navigation, stage transition and replay momentum
+- `src/ui/` — HUD, navigation, stage transition, replay momentum and Award Presentation
 
-## Known limitations
+## Submission status
 
-- Ambient traffic is visual-only; it does not collide with the player.
-- Traffic uses paired modeled lanes rather than a full road-network planner.
-- Lane changing and overtaking are not modeled.
-- Signal behavior remains limited to the existing central signal grid.
-- Ghosts remain local-device/local-browser only.
-- Weather cycles remain deferred.
-- Audio remains procedural.
-- Real-world OSM mode is not restored as an authoritative active branch.
-- Real-device Safari visual/FPS/input/audio-feel acceptance remains a manual gate.
+V0.9 is the first **Award Candidate**, not the final frozen submission.
+
+Still required before a final competition package:
+
+- real Mac Safari hardware verification
+- final visual QA pass on desktop and mobile
+- representative screenshots
+- 30–60 second gameplay capture
+- concise project statement / design rationale
+- final submission build freeze
 
 ## Repository safety
 
 - `main` is not modified directly.
-- PR #1–#6 remain independent and unmerged.
-- PR #7 remains Draft while V0.8.5 validation is active.
+- PR #1–#7 remain independent and unmerged.
+- PR #8 remains Draft while V0.9 validation is active.
 - Immutable rollback previews must not be overwritten or deleted.

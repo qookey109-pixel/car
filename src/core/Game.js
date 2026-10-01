@@ -74,7 +74,7 @@ export class Game{
   }
 
   restart(){
-    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraSteer=0;this.cameraRoll=0;this.flipTimer=0;this.recoveryCooldown=0;this.ghostReplay?.start(this.challenges.routeName);this.hud.showGame();this.hud.toast(`${this.challenges.routeName} · START`);
+    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraSteer=0;this.cameraRoll=0;this.flipTimer=0;this.recoveryCooldown=0;this.ghostReplay?.start(this.challenges.routeName);this.hud.showGame();this.hud.showRouteIntro({name:this.challenges.routeName,style:this.challenges.routeStyle,focus:this.challenges.routeFocus,index:this.challenges.routeIndex,total:this.challenges.routes.length});this.hud.toast(`${this.challenges.routeName} · START`);
   }
   pause(){if(this.state!=='running')return;this.state='paused';this.vehicle.setInput({throttle:0,steer:0,handbrake:true,nitro:false});this.hud.showPause()}
   resume(){if(this.state!=='paused')return;this.state='running';this.clock.getDelta();this.hud.hidePause();this.hud.showGame()}

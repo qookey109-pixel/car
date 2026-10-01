@@ -1,8 +1,8 @@
 # Neon Racer — 三蘆夜行
 
-V0.8.2 Ghost Replay development line for `qookey109-pixel/car`.
+V0.8.3 Ambient Traffic development line for `qookey109-pixel/car`.
 
-This branch builds on the validated V0.8.1 city/replay polish and adds route-specific personal-best ghost pursuit while preserving the existing driving, scoring and render-budget contracts.
+This branch builds on the validated V0.8.2 Ghost Replay candidate and adds low-cost moving city traffic while preserving the existing vehicle, route, replay and render-budget contracts.
 
 ## Current features
 
@@ -14,34 +14,34 @@ This branch builds on the validated V0.8.1 city/replay polish and adds route-spe
   - 河岸東環 — 高速長彎 / HIGH SPEED
   - 霓虹西環 — 密集轉向 / TECHNICAL
   - 高架折返 — 煞車節奏 / BRAKE FLOW
-- Route-specific PBs for score / time / combo plus per-route S-rank clear counts
+- Route-specific PBs for score / time / combo plus per-route S-rank clears
 - Replay Momentum V3 with score + time pursuit targets
-- Main-menu next-route identity + PB summary
-- V0.8.2 PB Ghost Replay:
-  - same-route PB trajectory only
-  - live AHEAD / BEHIND / EVEN delta
-  - only new route-best time replaces the saved ghost
-  - separate backward-compatible localStorage store
-  - one translucent visual-only ghost mesh
-  - no physics body or collider
+- PB Ghost Replay with same-route trajectories and live AHEAD / BEHIND / EVEN delta
+- V0.8.3 Ambient Traffic:
+  - 18 deterministic visual city cars
+  - one shared InstancedMesh render batch
+  - existing-road movement only
+  - 24m near-player visual exclusion
+  - 0 physics bodies / 0 colliders / 0 camera occluders
+  - slow movement remains visible in the menu city scene
 - District Awareness, Objective Compass, checkpoint feedback and stage transitions
 - Desktop keyboard, mobile multi-touch and gamepad input
-- Progressive touch steering while direct keyboard A/D steering remains unchanged
+- Progressive touch steering with direct keyboard A/D preserved
 - Procedural audio, traffic-signal phases, facade-light rhythm and lightweight VFX
 - Adaptive quality + debug HUD
 - Immutable SHA-specific GitHub Pages previews
 
 ## Current validated base preview
 
-The V0.8.2 branch is based on the fully validated V0.8.1 candidate:
+V0.8.3 is based on the fully validated V0.8.2 candidate:
 
-https://qookey109-pixel.github.io/car/v0.8.1-116daef/
+https://qookey109-pixel.github.io/car/v0.8.2-d9f7fc4/
 
 Base exact SHA:
 
-`116daefc58722aae788cda147dbab1b6627c4309`
+`d9f7fc44442a1139cb106cfcb51f0b96b65c9fcd`
 
-The V0.8.2 preview is published only after its final exact branch head passes the full Chromium + WebKit acceptance matrix.
+A V0.8.3 preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
 
 ## Installation
 
@@ -71,13 +71,17 @@ npm run preview
 - `F3`: debug HUD
 - Gamepad: left stick steering, right stick camera, triggers throttle/brake
 
+## Ambient Traffic behavior
+
+Ambient Traffic is visual city atmosphere rather than collision gameplay.
+
+All 18 cars use one `InstancedMesh`. Their transforms move deterministically along existing road lanes. If a traffic car approaches within 24m of the player, that visual instance is moved below the scene so it cannot visibly pass through the player's car.
+
+The system does not create cannon-es bodies, colliders or camera occluders and therefore cannot change vehicle handling or scoring.
+
 ## Ghost Replay behavior
 
-Ghost Replay uses a separate `neon-racer-ghosts-v1` localStorage key.
-
-Each route stores at most one best-time trajectory. Samples are bounded and recorded at a low fixed cadence. A run that does not improve the route's best time cannot replace the existing ghost. The feature remains local to the current browser/device.
-
-The ghost is visual-only: it has no cannon-es body, collision response, camera-occluder role or gameplay authority.
+Ghost Replay continues to use the separate `neon-racer-ghosts-v1` localStorage key. Only a new same-route best time replaces a stored ghost; non-PB runs do not overwrite it.
 
 ## QA
 
@@ -86,23 +90,31 @@ npm test
 npm run build
 npm run test:browser
 node tests/ghost-replay-smoke.mjs
+node tests/ambient-traffic-smoke.mjs
 ```
 
-The V0.8.x workflow runs the gameplay contracts on Chromium and WebKit. Chromium SwiftShader also owns the numeric LOW render budget.
+The V0.8.x workflow runs all gameplay contracts on Chromium and WebKit.
 
-Hard LOW budget:
+Hard Chromium LOW budget:
 
 - draw calls <= 60
 - triangles <= 110,000
 
-Ghost-specific acceptance additionally verifies:
+V0.8.3 traffic acceptance verifies:
 
-- empty/legacy storage compatibility
-- route isolation
-- PB-only replacement
-- live HUD delta
-- 0 added physics bodies
-- active Ghost rendering remains inside the render budget
+- exactly 18 traffic instances
+- exactly one traffic render group
+- deterministic movement
+- 24m near-player exclusion
+- 0 physics-body changes
+- 0 camera-occluder changes
+- +1 draw call traffic cost
+- Ghost + Traffic combined stays inside the hard budget
+
+First code-gate evidence measured:
+
+- Ghost + Traffic: 57 calls / 95,136 triangles
+- Chromium high-speed LOW: 57 calls / 95,124 triangles / peak 180.7 km/h
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari FPS testing.
 
@@ -110,25 +122,19 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 
 - `src/core/` — game loop and input
 - `src/vehicle/` — RaycastVehicle and car visuals
-- `src/world/` — city/world generation and atmosphere
+- `src/world/` — city generation, atmosphere and ambient traffic
 - `src/gameplay/` — challenges, route logic and Ghost Replay
 - `src/rendering/` — adaptive quality
 - `src/audio/` — procedural Web Audio
 - `src/vfx/` — lightweight particles and speed feedback
 - `src/ui/` — HUD, navigation, stage transition and replay momentum
 
-## Asset and resource policy
-
-The active implementation is primarily procedural and does not redistribute unknown third-party game art or audio. External resources remain references until source license and provenance are explicitly reviewed.
-
-See `THIRD_PARTY_ASSETS.md` and `docs/RESOURCE_HUB_INTEGRATION.md`.
-
 ## Known limitations
 
-- Ghosts do not sync between devices.
-- Ghost visual is intentionally lightweight rather than a full cloned car.
-- Full traffic AI is deferred.
-- Weather cycles are deferred.
+- Ambient traffic is visual-only; it does not collide with the player.
+- Ambient traffic does not yet obey traffic-light phases.
+- Ghosts remain local-device/local-browser only.
+- Weather cycles remain deferred.
 - Audio remains procedural.
 - Real-world OSM mode is not restored as an authoritative active branch.
 - Real-device Safari visual/FPS/input/audio-feel acceptance remains a manual gate.
@@ -136,6 +142,6 @@ See `THIRD_PARTY_ASSETS.md` and `docs/RESOURCE_HUB_INTEGRATION.md`.
 ## Repository safety
 
 - `main` is not modified directly.
-- PR #1 / PR #2 / PR #3 remain independent and unmerged.
-- PR #4 remains Draft while V0.8.2 validation is active.
+- PR #1–#4 remain independent and unmerged.
+- PR #5 remains Draft while V0.8.3 validation is active.
 - Immutable rollback previews must not be overwritten or deleted.

@@ -6,53 +6,57 @@ Status date: 2026-10-01 (Asia/Taipei)
 
 - Repository: `qookey109-pixel/car`
 - Formal branch: `main` — do not write directly.
-- V0.8.0 branch / PR #1 remains open Draft and unmerged.
-- V0.8.1 branch / PR #2 remains open Draft and unmerged.
-- Tooling PR #3 remains open Draft and unmerged.
-- Current development branch: `feature/v0.8.2-ghost-replay` (PR #4, Draft).
-- V0.8.2 base authority: exact validated V0.8.1 SHA `116daefc58722aae788cda147dbab1b6627c4309`.
-- Last deployed immutable V0.8.1 preview: https://qookey109-pixel.github.io/car/v0.8.1-116daef/
+- PR #1 V0.8.0 remains open Draft and unmerged.
+- PR #2 V0.8.1 remains open Draft and unmerged.
+- PR #3 tooling remains open Draft and unmerged.
+- PR #4 V0.8.2 Ghost Replay remains open Draft and unmerged.
+- Current development branch: `feature/v0.8.3-ambient-traffic` (PR #5, Draft).
+- V0.8.3 base authority: exact validated V0.8.2 SHA `d9f7fc44442a1139cb106cfcb51f0b96b65c9fcd`.
+- Last deployed immutable V0.8.2 preview: https://qookey109-pixel.github.io/car/v0.8.2-d9f7fc4/
 - Do not merge automatically or overwrite/delete immutable rollback previews.
 
-## V0.8.2 — Ghost Replay
+## V0.8.3 — Ambient Traffic
 
-The current branch adds personal-best ghost pursuit without changing the validated vehicle, route or challenge contracts.
+The current branch adds low-cost moving city traffic without turning traffic into gameplay authority.
 
 Implemented:
 
-- Route-specific PB ghost storage in separate localStorage key `neon-racer-ghosts-v1`.
-- Existing saves with no ghost data remain valid and start with no ghost.
-- A ghost is available only for the same route that owns the stored PB trajectory.
-- Only a new route best time replaces that route's stored ghost.
-- Non-PB runs never overwrite the stored PB ghost.
-- Ghost trajectory samples are bounded to 900 records at approximately 0.2s cadence.
-- One translucent visual-only Three.js mesh represents the PB car.
-- Ghost adds no cannon-es body, collider or camera occluder.
-- Live HUD delta reports AHEAD / BEHIND / EVEN against the nearest monotonic PB trajectory sample.
-- Ghost playback is hidden outside active gameplay and when the route has no PB ghost.
-- Main shell is labeled V0.8.2 while the existing runtime snapshot compatibility contract remains preserved.
+- 18 deterministic ambient traffic cars.
+- One shared `InstancedMesh` render batch for the entire traffic layer.
+- Cars move along existing road corridors at deterministic urban speeds.
+- Traffic continues moving slowly while the main menu city camera is active.
+- 24m near-player exclusion moves visual traffic below the scene before it can pass directly through the player car.
+- Traffic adds 0 cannon-es bodies, 0 colliders and 0 camera occluders.
+- Traffic cannot alter score, route progression, player input or vehicle physics.
+- Existing Ghost Replay can render concurrently with traffic.
 
 ## Preserved contracts
 
 - A = physical left, D = physical right.
 - Reverse remains about 41.4 km/h and HUD gear remains `R`.
-- Progressive touch steering from V0.8.1 remains intact.
+- Progressive touch steering remains intact.
 - Route coordinates, checkpoint radii, challenge order and scoring thresholds are unchanged.
-- District Awareness V3, Objective Compass, Checkpoint Feedback, Stage Transition and Replay Momentum V3 remain intact.
-- City atmosphere, traffic signal phases, facade rhythm, camera behavior, VFX and procedural audio remain intact.
-- No new physics body, decorative collider or camera occluder is added.
+- Replay Momentum V3 and V0.8.2 PB Ghost Replay remain intact.
+- District Awareness V3, Objective Compass, Checkpoint Feedback and Stage Transition remain intact.
+- Procedural city atmosphere, traffic-signal phases, facade rhythm, camera, VFX and audio remain intact.
 
-## Performance target
+## Performance evidence
 
-- Software LOW hard budget remains <= 60 draw calls / <= 110,000 triangles.
-- Ghost acceptance explicitly measures inactive vs active rendering and requires <=2-call delta plus absolute <=60 calls.
-- The first V0.8.2 code-gate run measured Ghost rendering at 55→56 calls with 0 added physics bodies.
-- Chromium numeric LOW remained 56 calls / 94,908 triangles / peak 180.7 km/h.
+First V0.8.3 code-gate run:
+
+- Chromium + WebKit: 26/26 steps SUCCESS on each engine.
+- Ambient Traffic acceptance: 18 cars / one InstancedMesh / 8.5m deterministic movement probe.
+- Near-player exclusion: hidden transform `y=-12.0`.
+- Traffic render cost: +1 draw call.
+- Ghost + Traffic combined: 57 calls / 95,136 triangles.
+- Chromium numeric LOW at high speed: 57 calls / 95,124 triangles / peak 180.7 km/h.
+- Hard LOW budget remains <=60 calls / <=110,000 triangles.
+- No physics body or camera-occluder count changes.
 - WebKit CI is browser-engine regression evidence only, not real Mac Safari hardware FPS.
 
 ## Validation gate
 
-The final exact PR #4 head must pass:
+The final exact PR #5 head must pass:
 
 1. Static smoke
 2. Production build
@@ -60,21 +64,23 @@ The final exact PR #4 head must pass:
 4. A/D + reverse contract
 5. City / District / Camera / VFX / Compass
 6. Checkpoint / Stage Transition / Replay Momentum V3
-7. Ghost Replay route isolation, PB persistence, live delta and render budget
-8. Audio
-9. Software LOW numeric budget
-10. 844x390 mobile layout/input evidence
+7. Ghost Replay
+8. Ambient Traffic movement / near-player exclusion / render isolation
+9. Audio
+10. Software LOW numeric budget
+11. 844x390 mobile layout/input evidence
 
 ## Known limitations
 
-- Ghost data is local-device/local-browser only; there is no account cloud sync.
-- Ghost is a lightweight translucent silhouette, not a full duplicate vehicle model.
-- Full traffic AI remains deferred.
+- Ambient traffic is visual-only and intentionally does not collide with the player.
+- Cars use a lightweight stylized silhouette rather than full AI vehicle models.
+- Traffic does not currently obey individual traffic-light phases; signals remain visual city rhythm.
+- Ghost data remains local-browser/local-device only.
 - Weather cycles remain deferred.
 - Audio remains procedural.
 - Real-world OSM mode is not restored as an authoritative active branch.
-- Real Mac Safari visual/FPS/input/audio-feel acceptance remains a separate manual gate.
+- Real Mac Safari hardware FPS/input/audio-feel acceptance remains a separate manual gate.
 
 ## Next action
 
-Run the final exact-head Chromium + WebKit acceptance matrix for PR #4. If fully green, publish a new SHA-specific immutable Pages preview while preserving all earlier preview bytes, then record the exact SHA, artifacts and publication run in PR #4.
+Run the final exact-head Chromium + WebKit acceptance matrix for PR #5. If fully green, publish a new SHA-specific immutable Pages preview while preserving all earlier preview bytes, then record the exact SHA, artifacts and publication run in PR #5.

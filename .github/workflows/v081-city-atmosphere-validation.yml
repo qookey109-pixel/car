@@ -5,6 +5,7 @@ on:
     branches:
       - feature/v0.8.1-city-atmosphere-polish
       - feature/v0.8.2-ghost-replay
+      - feature/v0.8.3-ambient-traffic
   workflow_dispatch:
 
 jobs:
@@ -81,6 +82,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/ghost-replay-smoke.mjs
+      - name: Ambient traffic acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/ambient-traffic-smoke.mjs
       - name: Audio feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

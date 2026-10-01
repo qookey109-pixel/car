@@ -5,7 +5,7 @@
 .first-run-title{margin-top:2px;font-size:24px;line-height:1;font-weight:1000;letter-spacing:.04em;}
 .first-run-line{margin-top:5px;font-size:11px;line-height:1.45;color:rgba(244,251,255,.68);}
 @media (orientation:landscape) and (max-height:480px){
-  .first-run-director{padding-bottom:max(74px,env(safe-area-inset-bottom));}
+  .first-run-director{padding-bottom:max(100px,env(safe-area-inset-bottom));}
   .first-run-cue{min-width:min(420px,58vw);max-width:460px;padding:9px 14px 10px;border-radius:13px;}
   .first-run-kicker{font-size:7px}
   .first-run-title{font-size:19px}

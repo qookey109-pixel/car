@@ -35,11 +35,11 @@ const firstRunDirector=new FirstRunDirector(game);
 game.firstRunDirector=firstRunDirector;
 const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
-  version:'0.9.0',
+  version:'0.9.2',
   game,
   compass,
   snapshot:()=>({
-    version:'0.9.0',
+    version:'0.9.2',
     state:game.state,
     speedKmh:game.vehicle.speedKmh,
     position:{x:game.vehicle.position.x,y:game.vehicle.position.y,z:game.vehicle.position.z},

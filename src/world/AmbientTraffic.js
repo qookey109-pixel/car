@@ -37,6 +37,7 @@ export class AmbientTraffic{
     this.mesh.castShadow=false;
     this.mesh.receiveShadow=false;
     this.mesh.frustumCulled=false;
+    this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.dummy=new THREE.Object3D();
     this.color=new THREE.Color();
     this.visibleCount=0;

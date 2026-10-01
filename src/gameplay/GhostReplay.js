@@ -16,7 +16,7 @@ export class GhostReplay{
     this.ghost=null;
     this.recording=[];
     this.startedAt=0;
-    this.nextSampleAt=0;
+    this.nextSampleAt=this.sampleInterval;
     this.playIndex=0;
     this.matchIndex=0;
     this.delta=null;
@@ -72,6 +72,7 @@ export class GhostReplay{
     this.matchIndex=0;
     this.delta=null;
     this.mesh.visible=Boolean(this.ghost?.samples?.length>=2);
+    if(this.ghost)this._play(0);
     if(this.deltaEl){
       this.deltaEl.classList.toggle('hidden',!this.ghost);
       this.deltaEl.classList.remove('ahead','behind');

@@ -7,6 +7,7 @@ on:
       - feature/v0.8.2-ghost-replay
       - feature/v0.8.3-ambient-traffic
       - feature/v0.8.4-traffic-behavior
+      - feature/v0.8.5-traffic-flow
   workflow_dispatch:
 
 jobs:

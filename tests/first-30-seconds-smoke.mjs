@@ -18,7 +18,7 @@ try{
   const armed=await page.evaluate(()=>window.__NEON_RACER__.snapshot().firstRun);
   if(armed.profile!=='first-30-seconds-v1'||!armed.active||armed.stage!=='armed'||!armed.seenThisSession)throw new Error(`First-run arm failed: ${JSON.stringify(armed)}`);
 
-  await page.waitForTimeout(3050);
+  await page.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'),null,{timeout:6500});
   const launch=await page.evaluate(()=>{
     const p=window.__NEON_RACER__.game.firstRunDirector, cue=p.cue, mobile=document.getElementById('mobileControls');
     const rect=o=>{const r=o.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};

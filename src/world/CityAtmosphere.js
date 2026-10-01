@@ -220,7 +220,7 @@ export class CityAtmosphere{
   }
 
   _trafficSignals(){
-    const roads=this.city.roadPositions.filter(p=>Math.abs(p)<=120);
+    const roads=this.city.roadPositions.filter(p=>Math.abs(p)<=120);this.signalRoads=roads.slice();
     const poleGeo=new THREE.BoxGeometry(.12,3.7,.12);
     const headGeo=new THREE.BoxGeometry(.38,.8,.18);
     const lensGeo=new THREE.CircleGeometry(.11,8);
@@ -277,6 +277,14 @@ export class CityAtmosphere{
     this._signalDummy.scale.set(1,1,1);
     this._signalDummy.updateMatrix();
     mesh.setMatrixAt(index,this._signalDummy.matrix);
+  }
+
+  isSignalGreen(vertical,road,crossing,phase=this.signalPhase){
+    const ix=this.signalRoads?.indexOf(road)??-1,iz=this.signalRoads?.indexOf(crossing)??-1;
+    if(ix<0||iz<0)return true;
+    const verticalGreen0=((ix+iz)&1)===0;
+    const green0=vertical?verticalGreen0:!verticalGreen0;
+    return phase?!green0:green0;
   }
 
   setSignalPhase(phase){

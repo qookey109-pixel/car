@@ -1,8 +1,8 @@
 # Neon Racer — 三蘆夜行
 
-V0.8.3 Ambient Traffic development line for `qookey109-pixel/car`.
+V0.8.4 Traffic Behavior Polish development line for `qookey109-pixel/car`.
 
-This branch builds on the validated V0.8.2 Ghost Replay candidate and adds low-cost moving city traffic while preserving the existing vehicle, route, replay and render-budget contracts.
+This branch builds on the validated V0.8.3 Ambient Traffic candidate and makes visual traffic obey the existing city signal rhythm while preserving the player vehicle, route, replay and render-budget contracts.
 
 ## Current features
 
@@ -17,13 +17,16 @@ This branch builds on the validated V0.8.2 Ghost Replay candidate and adds low-c
 - Route-specific PBs for score / time / combo plus per-route S-rank clears
 - Replay Momentum V3 with score + time pursuit targets
 - PB Ghost Replay with same-route trajectories and live AHEAD / BEHIND / EVEN delta
-- V0.8.3 Ambient Traffic:
+- V0.8.4 Signal-aware Ambient Traffic:
   - 18 deterministic visual city cars
-  - one shared InstancedMesh render batch
-  - existing-road movement only
-  - 24m near-player visual exclusion
+  - existing CityAtmosphere signal phase is the single authority
+  - red-light deceleration and stop
+  - green-light acceleration resume
+  - one InstancedMesh for vehicle bodies
+  - one InstancedMesh for headlights
+  - one InstancedMesh for taillights
+  - 24m near-player exclusion applies to body + lights
   - 0 physics bodies / 0 colliders / 0 camera occluders
-  - slow movement remains visible in the menu city scene
 - District Awareness, Objective Compass, checkpoint feedback and stage transitions
 - Desktop keyboard, mobile multi-touch and gamepad input
 - Progressive touch steering with direct keyboard A/D preserved
@@ -33,15 +36,15 @@ This branch builds on the validated V0.8.2 Ghost Replay candidate and adds low-c
 
 ## Current validated base preview
 
-V0.8.3 is based on the fully validated V0.8.2 candidate:
+V0.8.4 is based on the fully validated V0.8.3 candidate:
 
-https://qookey109-pixel.github.io/car/v0.8.2-d9f7fc4/
+https://qookey109-pixel.github.io/car/v0.8.3-64d1567/
 
 Base exact SHA:
 
-`d9f7fc44442a1139cb106cfcb51f0b96b65c9fcd`
+`64d15677647243fe7b4adcc8f1d92e2003cd604f`
 
-A V0.8.3 preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
+A V0.8.4 preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
 
 ## Installation
 
@@ -71,13 +74,15 @@ npm run preview
 - `F3`: debug HUD
 - Gamepad: left stick steering, right stick camera, triggers throttle/brake
 
-## Ambient Traffic behavior
+## Traffic behavior
 
-Ambient Traffic is visual city atmosphere rather than collision gameplay.
+Ambient traffic remains visual city atmosphere, not collision gameplay.
 
-All 18 cars use one `InstancedMesh`. Their transforms move deterministically along existing road lanes. If a traffic car approaches within 24m of the player, that visual instance is moved below the scene so it cannot visibly pass through the player's car.
+The central signal grid is still owned by `CityAtmosphere`. Ambient traffic only reads that existing authority through `isSignalGreen(...)`, avoiding a duplicate traffic-light model.
 
-The system does not create cannon-es bodies, colliders or camera occluders and therefore cannot change vehicle handling or scoring.
+Cars on signalized central roads reduce their own visual speed as they approach a red stop line and resume when the same signal turns green. Roads outside the modeled signal grid continue uninterrupted ambient flow.
+
+Headlights and taillights are each one shared `InstancedMesh`, so all 18 cars use only three traffic render groups total.
 
 ## Ghost Replay behavior
 
@@ -100,21 +105,25 @@ Hard Chromium LOW budget:
 - draw calls <= 60
 - triangles <= 110,000
 
-V0.8.3 traffic acceptance verifies:
+V0.8.4 traffic acceptance verifies:
 
-- exactly 18 traffic instances
-- exactly one traffic render group
-- deterministic movement
-- 24m near-player exclusion
+- existing traffic-signal authority mapping
+- red-light stop
+- green-light resume
+- 18 traffic bodies in one InstancedMesh
+- 36 headlight instances in one InstancedMesh
+- 36 taillight instances in one InstancedMesh
+- near-player exclusion for body + lights
 - 0 physics-body changes
 - 0 camera-occluder changes
-- +1 draw call traffic cost
-- Ghost + Traffic combined stays inside the hard budget
+- Ghost + Traffic + Lights stays inside the hard budget
 
 First code-gate evidence measured:
 
-- Ghost + Traffic: 57 calls / 95,136 triangles
-- Chromium high-speed LOW: 57 calls / 95,124 triangles / peak 180.7 km/h
+- red-light stop: 0.08 m/s
+- green-light resume: 8.48 m/s
+- Ghost + Traffic + Lights: 59 calls / 96,000 triangles
+- Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari FPS testing.
 
@@ -122,7 +131,7 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 
 - `src/core/` — game loop and input
 - `src/vehicle/` — RaycastVehicle and car visuals
-- `src/world/` — city generation, atmosphere and ambient traffic
+- `src/world/` — city generation, atmosphere and signal-aware ambient traffic
 - `src/gameplay/` — challenges, route logic and Ghost Replay
 - `src/rendering/` — adaptive quality
 - `src/audio/` — procedural Web Audio
@@ -132,7 +141,8 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 ## Known limitations
 
 - Ambient traffic is visual-only; it does not collide with the player.
-- Ambient traffic does not yet obey traffic-light phases.
+- Only the existing central signal grid controls traffic stopping.
+- Ambient traffic does not perform lane changes, overtakes or route planning.
 - Ghosts remain local-device/local-browser only.
 - Weather cycles remain deferred.
 - Audio remains procedural.
@@ -142,6 +152,6 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 ## Repository safety
 
 - `main` is not modified directly.
-- PR #1–#4 remain independent and unmerged.
-- PR #5 remains Draft while V0.8.3 validation is active.
+- PR #1–#5 remain independent and unmerged.
+- PR #6 remains Draft while V0.8.4 validation is active.
 - Immutable rollback previews must not be overwritten or deleted.

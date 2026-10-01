@@ -6,6 +6,7 @@ on:
       - feature/v0.8.1-city-atmosphere-polish
       - feature/v0.8.2-ghost-replay
       - feature/v0.8.3-ambient-traffic
+      - feature/v0.8.4-traffic-behavior
   workflow_dispatch:
 
 jobs:

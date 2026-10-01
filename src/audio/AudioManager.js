@@ -80,6 +80,23 @@ export class AudioManager{
     if(!fromFeedback&&performance.now()-this._feedbackAt<140){this.feedback.suppressedFallbacks++;return}
     this.feedback.successCues++;this.feedback.lastKind='milestone';this.beep(610,.07,.06);setTimeout(()=>this.beep(805,.08,.055),78);setTimeout(()=>this.beep(1040,.11,.05),158)
   }
+
+  routeStart(routeIndex=0){
+    if(!this.ctx||!this.enabled)return;
+    const roots=[196,220,174],root=roots[Math.abs(Number(routeIndex)||0)%roots.length];
+    this.beep(root,.075,.035);
+    setTimeout(()=>this.beep(root*1.5,.085,.04),92);
+    setTimeout(()=>this.beep(root*2,.11,.034),188);
+  }
+
+  finishStinger(rank='C',fresh=false){
+    if(!this.ctx||!this.enabled)return;
+    const roots={S:392,A:349,B:330,C:294},root=roots[String(rank||'C').toUpperCase()]||294;
+    this.beep(root,.09,.048);
+    setTimeout(()=>this.beep(root*1.25,.1,.045),92);
+    setTimeout(()=>this.beep(root*1.5,.12,.048),188);
+    if(fresh)setTimeout(()=>this.beep(root*2,.16,.052),300);
+  }
   setVolume(v){if(this.master&&this.ctx)this.master.gain.setTargetAtTime(clamp(Number(v)||0,0,1),this.ctx.currentTime,.05)}
   snapshot(){return{enabled:this.enabled,contextState:this.ctx?.state||'uninitialized',...this.state,feedback:{...this.feedback}}}
 }

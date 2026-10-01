@@ -1,4 +1,4 @@
-name: V0.8.0 Audio Feel Validation
+name: V0.9 Audio Feel Validation
 
 on:
   pull_request:

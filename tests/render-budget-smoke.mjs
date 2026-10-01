@@ -12,7 +12,7 @@ const browser=await chromium.launch({
 try{
   const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
   await page.goto(base,{waitUntil:'networkidle'});
-  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.0');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
 

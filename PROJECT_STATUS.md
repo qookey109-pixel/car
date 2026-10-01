@@ -6,99 +6,144 @@ Status date: 2026-10-01 (Asia/Taipei)
 
 - Repository: `qookey109-pixel/car`
 - Formal branch: `main` — do not write directly.
-- PR #1 V0.8.0 remains open Draft and unmerged.
-- PR #2 V0.8.1 remains open Draft and unmerged.
-- PR #3 tooling remains open Draft and unmerged.
-- PR #4 V0.8.2 Ghost Replay remains open Draft and unmerged.
-- PR #5 V0.8.3 Ambient Traffic remains open Draft and unmerged.
-- PR #6 V0.8.4 Traffic Behavior remains open Draft and unmerged.
-- Current development branch: `feature/v0.8.5-traffic-flow` (PR #7, Draft).
-- V0.8.5 base authority: exact validated V0.8.4 SHA `bb85eef880a3dfb60bd7f6ca684277097d953a92`.
-- Last deployed immutable V0.8.4 preview: https://qookey109-pixel.github.io/car/v0.8.4-bb85eef/
+- PR #1–#7 remain open Draft and unmerged.
+- Current development branch: `feature/v0.9.0-award-candidate` (PR #8, Draft).
+- V0.9 base authority: exact validated V0.8.5 SHA `9d41669c9fb87ee86638d1dbfe90b75102ba193d`.
+- Last deployed immutable V0.8.5 preview: https://qookey109-pixel.github.io/car/v0.8.5-9d41669/
 - Do not merge automatically or overwrite/delete immutable rollback previews.
 
-## V0.8.5 — Traffic Flow Polish
+## Product direction
 
-The current branch deepens ambient traffic behavior without adding any render group or gameplay authority.
+V0.9 changes the project standard from "feature-complete prototype" to "award-candidate playable work".
 
-Implemented:
+The core design target is a short, memorable night-driving experience where the player recognizes the identity of the route, feels a clean driving rhythm within seconds, and receives a strong audiovisual payoff when finishing or beating a personal best.
 
-- 18 visual traffic cars are organized as 9 modeled lanes × 2 cars per lane.
-- Existing `CityAtmosphere.signalPhase` remains the single traffic-signal authority.
-- Each car has independent cruise speed and velocity state.
-- Same-lane front-car detection uses deterministic forward distance on the wrapped traffic corridor.
-- Configured safe following gap: 7.5m.
-- Configured active following distance: 24m.
-- Red-light queues now form behind the lead car rather than multiple cars collapsing onto one stop line.
-- Green-light release propagates naturally as the lead car accelerates away.
-- Brake lights use per-instance tail-light color:
-  - bright red during real deceleration / stop
-  - dim red after acceleration resumes
-- Brake-light behavior adds 0 draw calls; the traffic layer remains exactly 3 InstancedMesh groups:
-  - vehicle bodies
-  - headlights
-  - taillights
-- Body + lights retain the 24m near-player exclusion.
-- Traffic remains 0 physics bodies, 0 colliders and 0 camera occluders.
+The project should be judged by:
 
-## Preserved contracts
+1. First-30-second clarity
+2. Driving feel
+3. Route identity
+4. Visual/audio cohesion
+5. Replay motivation
+6. Mobile/desktop polish
+7. Performance stability
+8. Submission-quality presentation
+
+## V0.9 — Award Candidate Presentation
+
+Implemented in this line:
+
+- Runtime/package/debug identity upgraded to `0.9.0`.
+- Title screen reframed as `三蘆夜行 · Award Candidate`.
+- Main CTA changed from generic "開始旅程" to "進入夜行".
+- New DOM-only `AwardPresentation` layer with zero Three.js render groups.
+- Three route-specific cinematic intro identities:
+  - 河岸東環 — RIVER EAST LOOP / 高速長彎 / FLOW
+  - 霓虹西環 — NEON WEST LOOP / 密集轉向 / PRECISION
+  - 高架折返 — VIADUCT RETURN / 煞車節奏 / RHYTHM
+- Each route receives its own short editorial line rather than a generic START toast alone.
+- Route intro never locks controls and uses `pointer-events:none`.
+- New finish climax keyed to rank:
+  - S — NIGHT MASTERED
+  - A — CITY FLOW
+  - B — NIGHT RUN COMPLETE
+  - C — ROUTE CLEARED
+- Finish climax distinguishes new personal best from ordinary clear.
+- Finish presentation is explicitly stacked above the result screen.
+- New procedural route-start audio stinger.
+- New procedural finish stinger with rank root and additional PB note.
+- Existing result screen, Replay Momentum V3, Ghost Replay and route PB systems remain authoritative.
+- No new 3D object, collider, physics body or draw call is introduced by the presentation layer.
+
+## Preserved gameplay contracts
 
 - A = physical left, D = physical right.
 - Reverse remains about 41.4 km/h and HUD gear remains `R`.
 - Progressive touch steering remains intact.
-- Route coordinates, checkpoint radii, challenge order and scoring thresholds are unchanged.
-- Replay Momentum V3 and PB Ghost Replay remain intact.
+- Three route coordinates, checkpoint radii and scoring thresholds are unchanged.
+- Replay Momentum V3 remains intact.
+- PB Ghost Replay remains intact.
+- Traffic Flow V3 remains intact:
+  - 9 modeled lanes
+  - 18 cars
+  - 7.5m safe queue gap
+  - dynamic brake lights
+  - signal-aware stop/release
 - District Awareness V3, Objective Compass, Checkpoint Feedback and Stage Transition remain intact.
-- Procedural city atmosphere, facade rhythm, camera, VFX and audio remain intact.
+- Existing camera, VFX, procedural audio and adaptive quality contracts remain intact.
 
-## Performance evidence
+## First V0.9 code-gate evidence
 
-First V0.8.5 code-gate run:
+Validated code candidate:
 
-- Chromium + WebKit: 26/26 steps SUCCESS on each engine.
-- Traffic Flow V3: PASS.
-- Queue safe-gap probe: 7.50m.
-- Red-light follower stop: 0.00 m/s.
-- Green-light follower resume: 7.46 m/s.
-- Dynamic brake-light state: PASS.
-- Traffic render groups remain exactly 3.
-- Chromium numeric LOW at high speed: 59 calls / 95,988 triangles / peak 180.7 km/h.
+`c910c75aa48382719833fd31bfef5e15dbd11b6e`
+
+Run:
+
+https://github.com/qookey109-pixel/car/actions/runs/36822636450
+
+Results:
+
+- Chromium: 27/27 steps SUCCESS.
+- WebKit: 27/27 steps SUCCESS.
+- Independent Audio Feel: SUCCESS.
+- Independent Objective Compass: SUCCESS.
+- Award Presentation: PASS.
+- Three route identities: 3/3.
+- Rank/PB finish states: PASS.
+- Presentation pointer events: none.
+- Presentation WebGL draw-call delta: 0.
+- Finish presentation z-index > result screen: PASS.
+- Browser smoke: 103.9 km/h after 3s.
+- A left: -50.0m.
+- D right: +49.4m.
+- Reverse peak: 41.4 km/h.
+- City atmosphere: 100 signals.
+- Traffic Flow V3 queue gap: 7.50m.
+- Red follower: 0.00m/s.
+- Green follower: 7.46m/s.
+- Chromium LOW: 59 calls / 95,988 triangles / peak 180.7 km/h.
 - Hard LOW budget remains <=60 calls / <=110,000 triangles.
-- Physics-body and camera-occluder counts remain unchanged.
-- WebKit CI is browser-engine regression evidence only, not real Mac Safari hardware FPS.
 
-## Validation gate
+Artifacts:
 
-The final exact PR #7 head must pass:
+- Chromium QA: `11143978623`
+  - SHA256 `92015bfc335a8583a4afba5d9d9daf46072beb2bfbb56a620ed45fa7a1482c62`
+- WebKit QA: `11144018303`
+  - SHA256 `885dbfe32eff17466d2e4fb98d08155fe354c8f06d86a1755617105b28960440`
+
+WebKit CI remains browser-engine regression evidence only, not real Mac Safari hardware FPS.
+
+## Final validation gate
+
+The final exact PR #8 head must pass:
 
 1. Static smoke
 2. Production build
 3. Chromium + WebKit browser play
-4. A/D + reverse contract
-5. City / District / Camera / VFX / Compass
-6. Checkpoint / Stage Transition / Replay Momentum V3
-7. Ghost Replay
-8. Traffic V3 red stop / green release
-9. 7.5m queue spacing
-10. Dynamic brake lights
-11. Near-player exclusion for body + lights
-12. Audio
-13. Software LOW numeric budget
-14. 844x390 mobile layout/input evidence
+4. V0.9 runtime/package identity
+5. A/D + reverse contract
+6. City / District / Camera / VFX / Compass
+7. Checkpoint / Stage Transition / Replay Momentum V3
+8. Ghost Replay
+9. Traffic Flow V3
+10. Award Presentation route intro / rank-PB finish / stacking / input transparency
+11. Audio
+12. Software LOW numeric budget
+13. 844x390 mobile layout/input evidence
 
 ## Known limitations
 
-- Ambient traffic remains visual-only and intentionally cannot collide with the player.
-- Traffic uses paired modeled lanes rather than a full road-network planner.
-- No lane changing or overtaking is modeled.
-- Signal-aware behavior remains limited to the existing central signal grid.
-- Vehicle light geometry stays intentionally minimal to preserve the render budget.
+- Award Presentation is a first presentation pass; it is not yet the complete submission package.
+- Ambient traffic remains visual-only and does not collide with the player.
+- Traffic uses paired modeled lanes rather than full route planning.
 - Ghost data remains local-browser/local-device only.
 - Weather cycles remain deferred.
-- Audio remains procedural.
+- Audio remains fully procedural.
 - Real-world OSM mode is not restored as an authoritative active branch.
 - Real Mac Safari hardware FPS/input/audio-feel acceptance remains a separate manual gate.
+- Award submission screenshots, capture video and final submission copy are not yet frozen.
 
 ## Next action
 
-Run the final exact-head Chromium + WebKit acceptance matrix for PR #7. If fully green, publish a new SHA-specific immutable Pages preview while preserving all earlier preview bytes, then record the exact SHA, artifacts and publication run in PR #7.
+Run the final exact-head V0.9 acceptance matrix. If fully green, publish a new SHA-specific immutable Pages preview while preserving all previous previews byte-for-byte, then record final SHA/artifacts/publication evidence in PR #8.

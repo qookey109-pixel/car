@@ -10,7 +10,7 @@ try{
   const page=await browser.newPage({viewport:{width:1280,height:720}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
   await page.goto(base,{waitUntil:'networkidle'});
-  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
+  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.0');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().audio?.initialized===true);

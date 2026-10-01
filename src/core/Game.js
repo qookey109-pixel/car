@@ -181,7 +181,7 @@ export class Game{
     this.debugVisible=new URLSearchParams(location.search).has('debug');this.debug=document.createElement('pre');this.debug.style.cssText='position:fixed;z-index:90;left:8px;top:8px;margin:0;padding:8px 10px;border-radius:9px;background:#000a;color:#9ff;font:10px/1.45 ui-monospace,monospace;pointer-events:none;white-space:pre-wrap';document.body.appendChild(this.debug);this.debug.style.display=this.debugVisible?'block':'none';this.fpsAvg=60
   }
   toggleDebug(){this.debugVisible=!this.debugVisible;this.debug.style.display=this.debugVisible?'block':'none'}
-  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,Math.min(.05,dt));const info=this.renderer.info.render;this.debug.textContent=`V0.9.0 DEBUG\
+  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,Math.min(.05,dt));const info=this.renderer.info.render;this.debug.textContent=`V0.9.2 DEBUG\
 FPS ${this.fpsAvg.toFixed(0)} · calls ${info.calls} · tris ${info.triangles}\
 speed ${this.vehicle.speedKmh.toFixed(0)} km/h · nitro ${(this.vehicle.nitro*100).toFixed(0)}%\
 pos ${this.vehicle.position.x.toFixed(1)}, ${this.vehicle.position.y.toFixed(1)}, ${this.vehicle.position.z.toFixed(1)}\

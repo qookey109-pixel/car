@@ -4,8 +4,8 @@ const $=id=>document.getElementById(id);
 
 export class HUD{
   constructor(){
-    this.el={boot:$('boot'),loading:$('loading'),hud:$('hud'),pause:$('pause'),settings:$('settings'),controls:$('controlsModal'),complete:$('complete'),speed:$('speed'),gear:$('gear'),nitro:$('nitroBar'),score:$('score'),combo:$('combo'),objectiveTitle:$('objectiveTitle'),objectiveText:$('objectiveText'),progress:$('progressBar'),toast:$('challengeToast'),quality:$('qualityBadge'),mobile:$('mobileControls'),resolution:$('resolutionScale'),resolutionValue:$('resolutionValue'),qualitySelect:$('qualitySelect'),bloom:$('bloomToggle'),shadow:$('shadowToggle'),motion:$('motionToggle'),bootRecord:$('bootRecord'),finalRecord:$('finalRecord'),finalRoute:$('finalRoute')};
-    this.toastTimer=0;this.checkpointTimer=0;this.handlers={};this._bind();
+    this.el={boot:$('boot'),loading:$('loading'),hud:$('hud'),pause:$('pause'),settings:$('settings'),controls:$('controlsModal'),complete:$('complete'),speed:$('speed'),gear:$('gear'),nitro:$('nitroBar'),score:$('score'),combo:$('combo'),objectiveTitle:$('objectiveTitle'),objectiveText:$('objectiveText'),progress:$('progressBar'),toast:$('challengeToast'),quality:$('qualityBadge'),mobile:$('mobileControls'),resolution:$('resolutionScale'),resolutionValue:$('resolutionValue'),qualitySelect:$('qualitySelect'),bloom:$('bloomToggle'),shadow:$('shadowToggle'),motion:$('motionToggle'),bootRecord:$('bootRecord'),finalRecord:$('finalRecord'),finalRoute:$('finalRoute'),routeIntro:$('routeIntro'),routeIntroKicker:$('routeIntroKicker'),routeIntroName:$('routeIntroName'),routeIntroStyle:$('routeIntroStyle'),resultSeal:$('resultSeal')};
+    this.toastTimer=0;this.checkpointTimer=0;this.routeIntroTimer=0;this.handlers={};this._bind();
     this.districtLabel=$('districtLabel');this.districtTarget=$('districtTarget');this.district=null;this.targetDistrict=null;
     this.navigationTargetKey=null;this.navigationDistance=null;this.navigationTrend=null;
   }
@@ -31,7 +31,16 @@ export class HUD{
 
   showLoading(title='正在建立三蘆夜景…',detail='道路、建築、車輛與挑戰系統'){$('loadingTitle').textContent=title;$('loadingDetail').textContent=detail;this.showOnly('loading')}
   showGame(){['boot','loading','pause','settings','controls','complete'].forEach(n=>this.el[n]?.classList.remove('visible','screen-visible'));this.el.hud.classList.remove('hidden');this.el.mobile.classList.remove('hidden')}
-  hideGame(){this.el.hud.classList.add('hidden');this.el.mobile.classList.add('hidden')}
+  showRouteIntro({name='CITY LOOP',style='',focus='',index=0,total=3}={}){
+    const root=this.el.routeIntro;if(!root)return;
+    clearTimeout(this.routeIntroTimer);root.classList.remove('hidden','show');
+    this.el.routeIntroKicker.textContent=`ROUTE ${String(index+1).padStart(2,'0')} / ${String(total).padStart(2,'0')}`;
+    this.el.routeIntroName.textContent=name;
+    this.el.routeIntroStyle.textContent=[style,focus].filter(Boolean).join(' · ')||'CITY LOOP';
+    void root.offsetWidth;root.classList.add('show');
+    this.routeIntroTimer=setTimeout(()=>root.classList.remove('show'),1650);
+  }
+  hideGame(){this.el.hud.classList.add('hidden');this.el.mobile.classList.add('hidden');clearTimeout(this.routeIntroTimer);this.el.routeIntro?.classList.remove('show')}
   showPause(){this.showOnly('pause')}
   hidePause(){this.el.pause.classList.remove('visible')}
   openSettings(fromPause=false){this.settingsReturn=fromPause?'pause':'boot';this.showOnly('settings')}
@@ -118,8 +127,9 @@ export class HUD{
   }
 
   showComplete(summary){
-    this.hideGame();$('finalRank').textContent=summary.rank;$('finalScore').textContent=summary.score.toLocaleString();$('finalCombo').textContent=`x${summary.bestCombo.toFixed(1)}`;$('finalTime').textContent=this._formatTime(summary.time);if(this.el.finalRoute)this.el.finalRoute.textContent=`ROUTE · ${summary.routeName||'CITY LOOP'}`;
-    const r=summary.records||{};if(this.el.finalRecord){const fresh=[];if(r.newScore)fresh.push('SCORE');if(r.newTime)fresh.push('TIME');if(r.newCombo)fresh.push('COMBO');this.el.finalRecord.classList.toggle('new-best',Boolean(r.first||fresh.length));this.el.finalRecord.textContent=r.first?'FIRST CLEAR · PERSONAL BEST CREATED':fresh.length?`NEW PERSONAL BEST · ${fresh.join(' · ')}`:`BEST · ${Number(r.bestScore||summary.score).toLocaleString()} pts · ${this._formatTime(r.bestTime||summary.time)} · x${Number(r.bestCombo||summary.bestCombo).toFixed(1)} · ${r.runs||1} clears`}
+    this.hideGame();const rank=String(summary.rank||'C').toUpperCase();$('finalRank').textContent=rank;this.el.complete.dataset.rank=rank;$('finalScore').textContent=summary.score.toLocaleString();$('finalCombo').textContent=`x${summary.bestCombo.toFixed(1)}`;$('finalTime').textContent=this._formatTime(summary.time);if(this.el.finalRoute)this.el.finalRoute.textContent=`ROUTE · ${summary.routeName||'CITY LOOP'}`;
+    const r=summary.records||{};if(this.el.finalRecord){const fresh=[];if(r.newScore)fresh.push('SCORE');if(r.newTime)fresh.push('TIME');if(r.newCombo)fresh.push('COMBO');this.el.finalRecord.classList.toggle('new-best',Boolean(r.first||fresh.length));this.el.finalRecord.textContent=r.first?'FIRST CLEAR · PERSONAL BEST CREATED':fresh.length?`NEW PERSONAL BEST · ${fresh.join(' · ')}`:`BEST · ${Number(r.bestScore||summary.score).toLocaleString()} pts · ${this._formatTime(r.bestTime||summary.time)} · x${Number(r.bestCombo||summary.bestCombo).toFixed(1)} · ${r.runs||1} clears`;this.el.complete.dataset.newBest=String(Boolean(r.first||fresh.length))}
+    if(this.el.resultSeal)this.el.resultSeal.textContent=`SANLU · ${summary.routeName||'CITY LOOP'} · ${rank} RANK`;
     this.showOnly('complete')
   }
 

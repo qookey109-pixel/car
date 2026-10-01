@@ -1,74 +1,69 @@
 # Project Status
 
-Status date: 2026-09-09 (UTC)
+Status date: 2026-10-01 (Asia/Taipei)
 
 ## Authority
 
 - Repository: `qookey109-pixel/car`
-- Formal branch: `main`
-- Current development branch: `feature/v0.8.1-city-atmosphere-polish` (PR #2, Draft, base PR #1 branch)
-- PR #1 remains the independent V0.8.0 manual Safari candidate at `201b9f721fe04fa9e4df040afa44aa363a60ed3b`.
-- Previous fully validated V0.8.1 candidate: `7aac4c3052422f75ce9430912b597d781ad06dd2`.
-- Do not modify `main`, merge either PR, or replace/delete fixed rollback previews.
-- The repository was recreated on 2026-09-08. Lost historical V0.7.x branches are not assumed recovered.
+- Formal branch: `main` (do not write directly)
+- Current development branch: `feature/v0.8.1-city-atmosphere-polish` (PR #2, Draft)
+- PR #1 remains the independent V0.8.0 Safari/manual candidate at `201b9f721fe04fa9e4df040afa44aa363a60ed3b`.
+- Last fully validated and deployed V0.8.1 candidate before the current polish pass: `0c20859a29b3c9d278a2fe9799dad31f32dbca78`.
+- Current immutable preview: https://qookey109-pixel.github.io/car/v0.8.1-0c20859/
+- Do not merge automatically or delete/replace immutable rollback previews.
 
-## Current development baseline
+## Current baseline
 
-V0.8.1 — City Atmosphere Polish, layered on V0.8.0
+V0.8.1 — City Atmosphere + Replayability Polish, layered on the validated V0.8.0 game loop.
 
-District awareness candidate adds a current district HUD label, active objective district,
-shared spatial classification and per-route checkpoint/drift/speed district metadata.
-HUD boundary hysteresis is 4m; static metadata and visual classification use exact existing
-72m core / 32m avenue boundaries. Route positions, scoring, challenge order and physics are unchanged.
-The existing speed gates are in Avenue; this pass does not claim Core-specific gameplay.
+Implemented and preserved:
 
-Candidate validation is pending until exact-SHA CI and visual QA are recorded in PR #2.
-The workflow runs Chromium and WebKit against the same contracts, including district
-boundaries, all three routes, restart, completion and 844×390 layout. Only Chromium
-SwiftShader numeric counters establish the <=60 calls / <=110,000 triangles LOW budget.
-WebKit engine acceptance never represents real Mac Safari FPS.
+- Three.js + cannon-es RaycastVehicle
+- A = left, D = right; reverse remains about 41.4 km/h with HUD `R`
+- Three rotating routes with route-specific PBs
+- District Awareness V3 and Objective Compass
+- Checkpoint Feedback V1 and Stage Transition V1
+- Replay Momentum V3:
+  - route-specific score/time pursuit
+  - route identity: 河岸東環 = 高速長彎, 霓虹西環 = 密集轉向, 高架折返 = 煞車節奏
+  - per-route S-rank clear count
+  - next-route identity + PB shown on the main menu
+- Progressive mobile steering for touch only; keyboard/gamepad contracts remain unchanged
+- Procedural city atmosphere, traffic-signal phases and facade-light rhythm
+- Inline SVG favicon; no `favicon.ico` network request
+- Adaptive quality and deterministic Chromium/WebKit QA
 
-Preserved V0.8.1 contracts: 100 traffic signals / four groups; near-street-v2 has
-936 instances / one group; district-rhythm-v1 retains 9 core / 34 avenue / 56 edge
-buildings; cameraOccluders, A-left/D-right, ~41.4 km/h reverse and persistent HUD R,
-Box ground, -Z vehicle forward and no transmission material.
+## Performance contracts
 
-Last validated preview: https://qookey109-pixel.github.io/car/v0.8.1-7aac4c3/
-V0.8.0 Safari candidate: https://qookey109-pixel.github.io/car/v0.8.0-201b9f/
+- Software LOW hard budget: <= 60 draw calls / <= 110,000 triangles
+- Previous validated candidate: about 56 calls / 94,908 triangles at high speed
+- No decorative collider or camera-occluder additions in the current polish pass
+- WebKit CI is browser-engine regression evidence, not real Mac Safari hardware FPS
 
-Implemented on the development branch:
+## Validation state
 
-- Three.js / Vite modular web game
-- cannon-es RaycastVehicle driving physics
-- third-person dynamic camera
-- drift, nitro, combo and score
-- three sequential challenges
-- start / pause / restart / settings / completion flow
-- procedural city art, atmosphere, audio and lightweight VFX
-- desktop, mobile multi-touch and gamepad input
-- adaptive quality and debug HUD
-- static, production-build and browser-play QA gates
+The previous `0c20859a...` candidate passed the full Chromium + WebKit matrix and was published immutably.
 
-## Current gate
+The current Replay Momentum V3 / route-identity / mobile-control polish must pass the same gates before receiving a new immutable preview:
 
-Do not call V0.8.0 release-ready until all of the following are true:
-
-1. GitHub Actions static smoke PASS
-2. Production build PASS
-3. Chromium desktop play smoke PASS
-4. 844×390 multi-touch smoke PASS
-5. Visual QA screenshots inspected
-6. Real Safari visual/FPS acceptance completed
+1. Static smoke
+2. Production build
+3. Chromium + WebKit browser play
+4. A/D + reverse contract
+5. City / District / Camera / VFX / Compass
+6. Checkpoint / Stage Transition / Replay Momentum
+7. Audio
+8. LOW render budget
+9. 844x390 mobile layout/input evidence
 
 ## Known limitations
 
-- Traffic AI, weather cycle and persistent progression are deferred.
-- Current audio is procedural.
-- Real-world OSM mode is not yet restored as an authoritative branch in the recreated repository.
-- V53 recovery ZIP is treated as a recovery candidate only, not as proof that lost experimental history was restored.
+- Full traffic AI is still deferred; current city life comes from procedural signals, lighting rhythm and static urban detail.
+- Weather cycle is deferred.
+- Audio remains procedural.
+- Real-world OSM mode is not restored as an authoritative active branch.
+- Real Mac Safari visual/FPS/input/audio-feel acceptance remains a separate manual gate.
 
 ## Next action
 
-Validate the district-awareness candidate, inspect screenshots, then publish its immutable
-preview and record the exact SHA in PR #2. Later district-specific route selection must be
-versioned separately. Real Mac Safari visual/FPS/input/audio acceptance remains pending.
+Run the exact-head Chromium + WebKit acceptance matrix for the current polish pass. Fix only measured regressions, then publish a new SHA-specific immutable preview while preserving all existing preview bytes.

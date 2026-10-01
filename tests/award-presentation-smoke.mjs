@@ -33,12 +33,16 @@ try{
       line:p.root.querySelector('.award-route-line')?.textContent,
       calls:g.renderer.info.render.calls,
       triangles:g.renderer.info.render.triangles,
+      completeZ:Number(getComputedStyle(document.getElementById('complete')).zIndex||0),
+      presentationZ:Number(getComputedStyle(p.root).zIndex||0),
       pointer:getComputedStyle(p.root).pointerEvents,
+      zIndex:Number(getComputedStyle(p.root).zIndex||0),
       audio:{routeStart:typeof g.audio.routeStart,finishStinger:typeof g.audio.finishStinger}
     };
   });
   if(!intro.snapshot.routeVisible||intro.snapshot.introCount<1||intro.title!=='河岸東環'||intro.style!=='高速長彎'||!intro.line.includes('夜色'))throw new Error(`Route intro failed: ${JSON.stringify(intro)}`);
   if(intro.pointer!=='none')throw new Error(`Presentation blocks input: ${intro.pointer}`);
+  if(intro.zIndex<=50)throw new Error(`Presentation must sit above result screens: z-index ${intro.zIndex}`);
   if(intro.audio.routeStart!=='function'||intro.audio.finishStinger!=='function')throw new Error(`Award audio methods missing: ${JSON.stringify(intro.audio)}`);
 
   const routes=await page.evaluate(()=>{
@@ -60,6 +64,7 @@ try{
 
   const finish=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game,p=g.awardPresentation;
+    document.getElementById('complete').classList.add('visible');
     p.finish({rank:'S',routeName:'河岸東環'},{first:false,newScore:true,newTime:true,newCombo:false});
     g.renderer.info.reset();g._render();
     return{
@@ -74,6 +79,7 @@ try{
   });
   if(!finish.snapshot.finishVisible||finish.snapshot.finishCount!==1||finish.snapshot.lastRank!=='S'||!finish.snapshot.lastPB)throw new Error(`Finish state failed: ${JSON.stringify(finish.snapshot)}`);
   if(finish.title!=='NIGHT MASTERED'||!finish.route.includes('RANK S')||!finish.pb.includes('PERSONAL BEST')||finish.fresh!=='true')throw new Error(`Finish copy failed: ${JSON.stringify(finish)}`);
+  if(finish.presentationZ<=finish.completeZ)throw new Error(`Finish climax hidden behind results: ${JSON.stringify({presentationZ:finish.presentationZ,completeZ:finish.completeZ})}`);
   if(finish.calls!==intro.calls||finish.triangles!==intro.triangles)throw new Error(`DOM presentation changed WebGL cost: ${JSON.stringify({intro:{calls:intro.calls,triangles:intro.triangles},finish:{calls:finish.calls,triangles:finish.triangles}})}`);
 
   const normal=await page.evaluate(()=>{

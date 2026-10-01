@@ -179,15 +179,25 @@ async function runMobile(browser){
   await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.8.0');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
-  const gas=page.locator('[data-control="gas"]'),drift=page.locator('[data-control="drift"]');
+  const gas=page.locator('[data-control="gas"]'),drift=page.locator('[data-control="drift"]'),left=page.locator('[data-control="left"]');
   await gas.dispatchEvent('pointerdown',{pointerId:11,pointerType:'touch',isPrimary:true});
   await drift.dispatchEvent('pointerdown',{pointerId:12,pointerType:'touch',isPrimary:false});
   await page.waitForTimeout(200);
   const simultaneous=await page.evaluate(()=>({gas:window.__NEON_RACER__.game.input.touch.gas,drift:window.__NEON_RACER__.game.input.touch.drift}));
   if(!simultaneous.gas||!simultaneous.drift)throw new Error(`Simultaneous mobile touch failed: ${JSON.stringify(simultaneous)}`);
+  await left.dispatchEvent('pointerdown',{pointerId:13,pointerType:'touch',isPrimary:false});
+  const steerRamp=await page.evaluate(async()=>{
+    const input=window.__NEON_RACER__.game.input,values=[];
+    for(let i=0;i<6;i++){await new Promise(r=>setTimeout(r,20));values.push(input.sample().steer)}
+    return values;
+  });
+  if(!(steerRamp[0]>0&&steerRamp[0]<.9&&steerRamp.at(-1)>steerRamp[0]&&steerRamp.at(-1)<=1))throw new Error(`Mobile steering ramp failed: ${JSON.stringify(steerRamp)}`);
+  await left.dispatchEvent('pointerup',{pointerId:13,pointerType:'touch'});
   await gas.dispatchEvent('pointerup',{pointerId:11,pointerType:'touch'});
   await drift.dispatchEvent('pointerup',{pointerId:12,pointerType:'touch'});
   await page.waitForTimeout(100);
+  const steerReleased=await page.evaluate(()=>{const input=window.__NEON_RACER__.game.input;for(let i=0;i<12;i++)input.sample();return input.touchSteer});
+  if(Math.abs(steerReleased)>.35)throw new Error(`Mobile steering release damping failed: ${steerReleased}`);
   await shot(page,'test-results/mobile-844x390.png');
   if(errors.length)throw new Error(errors.join('\n'));
   await page.close();

@@ -1,4 +1,4 @@
-.award-presentation{position:fixed;inset:0;z-index:48;pointer-events:none;overflow:hidden}
+.award-presentation{position:fixed;inset:0;z-index:70;pointer-events:none;overflow:hidden}
 .award-route-card,.award-finish-card{position:absolute;left:50%;opacity:0;pointer-events:none}
 .award-route-card{top:50%;width:min(760px,88vw);transform:translate(-50%,-44%);text-align:center;padding:18px 22px}
 .award-route-card::before,.award-route-card::after{content:"";position:absolute;left:50%;width:min(620px,72vw);height:1px;background:linear-gradient(90deg,transparent,rgba(116,241,255,.58),transparent);transform:translateX(-50%) scaleX(.25);opacity:0}

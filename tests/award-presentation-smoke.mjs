@@ -33,8 +33,6 @@ try{
       line:p.root.querySelector('.award-route-line')?.textContent,
       calls:g.renderer.info.render.calls,
       triangles:g.renderer.info.render.triangles,
-      completeZ:Number(getComputedStyle(document.getElementById('complete')).zIndex||0),
-      presentationZ:Number(getComputedStyle(p.root).zIndex||0),
       pointer:getComputedStyle(p.root).pointerEvents,
       zIndex:Number(getComputedStyle(p.root).zIndex||0),
       audio:{routeStart:typeof g.audio.routeStart,finishStinger:typeof g.audio.finishStinger}
@@ -74,7 +72,9 @@ try{
       pb:p.root.querySelector('.award-finish-pb').textContent,
       fresh:p.root.querySelector('.award-finish-pb').dataset.fresh,
       calls:g.renderer.info.render.calls,
-      triangles:g.renderer.info.render.triangles
+      triangles:g.renderer.info.render.triangles,
+      completeZ:Number(getComputedStyle(document.getElementById('complete')).zIndex||0),
+      presentationZ:Number(getComputedStyle(p.root).zIndex||0)
     };
   });
   if(!finish.snapshot.finishVisible||finish.snapshot.finishCount!==1||finish.snapshot.lastRank!=='S'||!finish.snapshot.lastPB)throw new Error(`Finish state failed: ${JSON.stringify(finish.snapshot)}`);

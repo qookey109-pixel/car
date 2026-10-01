@@ -4,6 +4,7 @@ import './objective-compass.css';
 import './district.css';
 import './checkpoint-feedback.css';
 import './award-presentation.css';
+import './award-hud.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {StageTransition} from './ui/StageTransition.js';

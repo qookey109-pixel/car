@@ -1,0 +1,111 @@
+/* V0.9.1 Award HUD — presentation-only polish, zero WebGL cost */
+.hud .glass{
+  background:linear-gradient(180deg,rgba(5,10,17,.54),rgba(4,8,14,.30));
+  border-color:rgba(255,255,255,.07);
+  box-shadow:0 14px 42px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter:blur(13px);
+}
+.hud-top-left{
+  width:min(326px,46vw);
+  padding:12px 14px 11px;
+  border-radius:16px;
+}
+.hud-kicker{
+  font-size:8px;
+  letter-spacing:.25em;
+  opacity:.72;
+}
+.objective-title{
+  margin-top:3px;
+  font-size:17px;
+  letter-spacing:-.015em;
+}
+.objective-text{
+  margin-top:3px;
+  max-width:290px;
+  color:rgba(255,255,255,.58);
+  line-height:1.35;
+}
+.district-target{
+  opacity:.74;
+}
+.progress-track{
+  margin-top:8px;
+  height:3px;
+  background:rgba(255,255,255,.07);
+}
+.speed-panel{
+  min-width:142px;
+  padding:10px 12px;
+  border-radius:16px;
+}
+.speed-panel #speed{
+  font-size:46px;
+  letter-spacing:-.075em;
+}
+.speed-panel small{
+  opacity:.72;
+}
+.speed-panel #gear{
+  color:#9af7ff;
+  opacity:.92;
+}
+.score-panel{
+  border-radius:15px;
+  padding:9px 12px;
+  gap:5px 10px;
+}
+.score-panel span{
+  opacity:.52;
+  letter-spacing:.12em;
+}
+.score-panel b{
+  font-variant-numeric:tabular-nums;
+}
+.ghost-delta{
+  background:rgba(5,12,19,.48);
+  border-color:rgba(121,242,255,.15);
+  backdrop-filter:blur(10px);
+}
+.quality-badge{
+  opacity:.22;
+  transform:scale(.92);
+  transform-origin:bottom right;
+}
+.hud:not(.debug-visible) .quality-badge{
+  filter:saturate(.45);
+}
+@media (max-width:900px){
+  .hud-top-left{width:min(304px,47vw)}
+  .speed-panel{min-width:132px}
+  .speed-panel #speed{font-size:40px}
+}
+@media (orientation:landscape) and (max-height:480px){
+  .hud-top-left{
+    top:max(8px,env(safe-area-inset-top));
+    left:max(8px,env(safe-area-inset-left));
+    width:286px;
+    padding:9px 11px;
+    border-radius:13px;
+  }
+  .hud-kicker{font-size:7px}
+  .objective-title{font-size:14px}
+  .objective-text{font-size:9px;max-width:255px}
+  .district-target{font-size:8px}
+  .progress-track{margin-top:6px;height:2px}
+  .speed-panel{
+    top:max(8px,env(safe-area-inset-top));
+    right:max(8px,env(safe-area-inset-right));
+    min-width:118px;
+    padding:8px 10px;
+    border-radius:13px;
+  }
+  .speed-panel #speed{font-size:34px}
+  .score-panel{
+    bottom:max(8px,env(safe-area-inset-bottom));
+    left:max(8px,env(safe-area-inset-left));
+    padding:7px 10px;
+    border-radius:12px;
+  }
+  .quality-badge{opacity:.12}
+}

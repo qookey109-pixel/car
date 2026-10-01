@@ -1,9 +1,10 @@
-name: V0.8.1 City Atmosphere Validation
+name: V0.8.x Gameplay Validation
 
 on:
   push:
     branches:
       - feature/v0.8.1-city-atmosphere-polish
+      - feature/v0.8.2-ghost-replay
   workflow_dispatch:
 
 jobs:
@@ -76,6 +77,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/replay-momentum-smoke.mjs
+      - name: Ghost replay acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/ghost-replay-smoke.mjs
       - name: Audio feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

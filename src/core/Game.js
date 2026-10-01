@@ -74,11 +74,11 @@ export class Game{
   }
 
   restart(){
-    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraSteer=0;this.cameraRoll=0;this.flipTimer=0;this.recoveryCooldown=0;this.hud.showGame();this.hud.toast(`${this.challenges.routeName} · START`);
+    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraSteer=0;this.cameraRoll=0;this.flipTimer=0;this.recoveryCooldown=0;this.ghostReplay?.start(this.challenges.routeName);this.hud.showGame();this.hud.toast(`${this.challenges.routeName} · START`);
   }
   pause(){if(this.state!=='running')return;this.state='paused';this.vehicle.setInput({throttle:0,steer:0,handbrake:true,nitro:false});this.hud.showPause()}
   resume(){if(this.state!=='paused')return;this.state='running';this.clock.getDelta();this.hud.hidePause();this.hud.showGame()}
-  menu(){this.state='menu';this.vehicle.setInput({throttle:0,steer:0,handbrake:true,nitro:false});this.hud.hideGame();this.hud.showOnly('boot')}
+  menu(){this.state='menu';this.vehicle.setInput({throttle:0,steer:0,handbrake:true,nitro:false});this.ghostReplay?.hide();this.hud.hideGame();this.hud.showOnly('boot')}
   _complete(summary){
     this.state='complete';this.vehicle.setInput({throttle:0,steer:0,handbrake:false,nitro:false});
     const prev=this.records,first=prev.runs===0;
@@ -90,6 +90,7 @@ export class Game{
     const routeNewScore=routeFirst||summary.score>Number(oldRoute.bestScore||0);
     const routeNewTime=routeFirst||Number(oldRoute.bestTime||0)<=0||summary.time<Number(oldRoute.bestTime||0);
     const routeNewCombo=routeFirst||summary.bestCombo>Number(oldRoute.bestCombo||1);
+    this.ghostReplay?.finish(summary,routeNewTime);
     const routeBest={clears:Number(oldRoute.clears||0)+1,bestScore:routeNewScore?summary.score:Number(oldRoute.bestScore||0),bestTime:routeNewTime?summary.time:Number(oldRoute.bestTime||0),bestCombo:routeNewCombo?summary.bestCombo:Number(oldRoute.bestCombo||1),sClears:Number(oldRoute.sClears||0)+(summary.rank==='S'?1:0)};
     routeBests[summary.routeName]=routeBest;
     this.records={runs:prev.runs+1,bestScore:newScore?summary.score:prev.bestScore,bestTime:newTime?summary.time:prev.bestTime,bestCombo:newCombo?summary.bestCombo:prev.bestCombo,lastRoute:summary.routeName,routes,routeBests};
@@ -132,7 +133,7 @@ export class Game{
     while(this.accumulator>=this.fixedDt&&steps<15){this.vehicle.update(this.fixedDt);this.physics.step(this.fixedDt);this.accumulator-=this.fixedDt;steps++}
     if(steps>=15&&this.accumulator>=this.fixedDt)this.accumulator%=this.fixedDt;
     const simDt=Math.max(visualDt,steps*this.fixedDt);
-    this.vehicle._syncVisuals();this._recovery(simDt);this.challenges.update(simDt,this.vehicle);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
+    this.vehicle._syncVisuals();this._recovery(simDt);this.challenges.update(simDt,this.vehicle);this.ghostReplay?.update(simDt);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
     this.cameraSteer=damp(this.cameraSteer,input.steer||0,6.5,visualDt);this.cameraYaw=damp(this.cameraYaw,input.cameraX*.8,2.4,visualDt);this.cameraPitch=damp(this.cameraPitch,.13+input.cameraY*.14,2.2,visualDt);
     if(this.vehicle.position.y<-4||Math.abs(this.vehicle.position.x)>225||Math.abs(this.vehicle.position.z)>225)this.resetVehicle();
   }

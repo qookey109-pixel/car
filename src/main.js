@@ -7,6 +7,7 @@ import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {StageTransition} from './ui/StageTransition.js';
 import {ReplayMomentum} from './ui/ReplayMomentum.js';
+import {GhostReplay} from './gameplay/GhostReplay.js';
 import {CityAtmosphere} from './world/CityAtmosphere.js';
 
 const app=document.getElementById('app');
@@ -16,6 +17,8 @@ const stageTransition=new StageTransition(game.hud);
 game.stageTransition=stageTransition;
 const replayMomentum=new ReplayMomentum(game);
 game.replayMomentum=replayMomentum;
+const ghostReplay=new GhostReplay(game);
+game.ghostReplay=ghostReplay;
 const atmosphere=new CityAtmosphere(game.city);
 game.cityAtmosphere=atmosphere;
 const compass=new ObjectiveCompass(game);
@@ -38,6 +41,7 @@ window.__NEON_RACER__={
     completed:game.challenges.completed,
     records:{...game.records},
     replay:replayMomentum.snapshot(),
+    ghost:ghostReplay.snapshot(),
     recovery:{flipTimer:game.flipTimer,cooldown:game.recoveryCooldown},
     navigation:compass.snapshot(),
     stageTransition:stageTransition.snapshot(),

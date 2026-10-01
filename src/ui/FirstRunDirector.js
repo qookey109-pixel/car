@@ -14,6 +14,7 @@ export class FirstRunDirector{
     this.stage='idle';
     this.shown=[];
     this.firstCheckpoint=false;
+    this.seenThisSession=false;
     this.timer=0;
     this.root=document.createElement('div');
     this.root.className='first-run-director';
@@ -43,7 +44,8 @@ export class FirstRunDirector{
     this.completed=false;
     this.firstCheckpoint=false;
     this.startedAt=performance.now();
-    this.active=Boolean(firstRun);
+    this.active=Boolean(firstRun&&!this.seenThisSession);
+    if(firstRun)this.seenThisSession=true;
     this.stage=this.active?'armed':'returning';
     this.shown=[];
     if(!this.active)return;
@@ -52,7 +54,11 @@ export class FirstRunDirector{
 
   _show(stage,hold=1600){
     if(!this.active)return;
-    const copy=COPY[stage]||COPY.launch;
+    const base=COPY[stage]||COPY.launch;
+    const touch=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
+    const copy={...base};
+    if(stage==='launch')copy.line=touch?'按住 GAS，跟著青色 Gate。':'按住 W / ↑，跟著青色 Gate。';
+    if(stage==='speed')copy.line=touch?'直線按 N₂O；先守住路線，再追速度。':'直線按 Shift；先守住路線，再追速度。';
     this.stage=stage;
     if(!this.shown.includes(stage))this.shown.push(stage);
     this.root.querySelector('.first-run-kicker').textContent=copy.kicker;
@@ -97,6 +103,7 @@ export class FirstRunDirector{
       stage:this.stage,
       firstCheckpoint:this.firstCheckpoint,
       shown:[...this.shown],
+      seenThisSession:this.seenThisSession,
       renderGroups:0
     };
   }

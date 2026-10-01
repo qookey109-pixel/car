@@ -6,144 +6,145 @@ Status date: 2026-10-01 (Asia/Taipei)
 
 - Repository: `qookey109-pixel/car`
 - Formal branch: `main` — do not write directly.
-- PR #1–#7 remain open Draft and unmerged.
-- Current development branch: `feature/v0.9.0-award-candidate` (PR #8, Draft).
-- V0.9 base authority: exact validated V0.8.5 SHA `9d41669c9fb87ee86638d1dbfe90b75102ba193d`.
-- Last deployed immutable V0.8.5 preview: https://qookey109-pixel.github.io/car/v0.8.5-9d41669/
+- PR #1–#11 remain open Draft and unmerged.
+- Current development branch: `feature/v0.9.2-first-30-seconds` (PR #11, Draft).
+- V0.9.2 base authority: exact validated V0.9.1 SHA `8d569a5f9e6414dbe591616a07eae54e025783f6`.
+- Last deployed immutable preview: https://qookey109-pixel.github.io/car/v0.9.1-8d569a5/
 - Do not merge automatically or overwrite/delete immutable rollback previews.
 
-## Product direction
+## Award-candidate direction
 
-V0.9 changes the project standard from "feature-complete prototype" to "award-candidate playable work".
+The project is now evaluated as a submission-quality playable work, not as a feature prototype.
 
-The core design target is a short, memorable night-driving experience where the player recognizes the identity of the route, feels a clean driving rhythm within seconds, and receives a strong audiovisual payoff when finishing or beating a personal best.
-
-The project should be judged by:
+Primary design criteria:
 
 1. First-30-second clarity
 2. Driving feel
 3. Route identity
 4. Visual/audio cohesion
-5. Replay motivation
-6. Mobile/desktop polish
-7. Performance stability
-8. Submission-quality presentation
+5. Finish payoff
+6. Replay motivation
+7. Desktop/mobile polish
+8. Performance stability
+9. Submission presentation
 
-## V0.9 — Award Candidate Presentation
+## V0.9.2 — First 30 Seconds
 
-Implemented in this line:
+V0.9.2 improves the first-run experience without adding a tutorial modal or blocking control.
 
-- Runtime/package/debug identity upgraded to `0.9.0`.
-- Title screen reframed as `三蘆夜行 · Award Candidate`.
-- Main CTA changed from generic "開始旅程" to "進入夜行".
-- New DOM-only `AwardPresentation` layer with zero Three.js render groups.
-- Three route-specific cinematic intro identities:
-  - 河岸東環 — RIVER EAST LOOP / 高速長彎 / FLOW
-  - 霓虹西環 — NEON WEST LOOP / 密集轉向 / PRECISION
-  - 高架折返 — VIADUCT RETURN / 煞車節奏 / RHYTHM
-- Each route receives its own short editorial line rather than a generic START toast alone.
-- Route intro never locks controls and uses `pointer-events:none`.
-- New finish climax keyed to rank:
-  - S — NIGHT MASTERED
-  - A — CITY FLOW
-  - B — NIGHT RUN COMPLETE
-  - C — ROUTE CLEARED
-- Finish climax distinguishes new personal best from ordinary clear.
-- Finish presentation is explicitly stacked above the result screen.
-- New procedural route-start audio stinger.
-- New procedural finish stinger with rank root and additional PB note.
-- Existing result screen, Replay Momentum V3, Ghost Replay and route PB systems remain authoritative.
-- No new 3D object, collider, physics body or draw call is introduced by the presentation layer.
+Implemented:
+
+- Existing route cinematic remains the first presentation beat.
+- A DOM-only `FirstRunDirector` follows the route card on a first-ever run.
+- The onboarding is `pointer-events:none` and never pauses or locks the player.
+- First cue: `GO` with device-aware input copy:
+  - touch: `GAS`
+  - desktop: `W / ↑`
+- When speed builds, the cue changes to a short N₂O hint:
+  - touch: `N₂O`
+  - desktop: `Shift`
+- First checkpoint hit produces a short `CLEAN` confirmation and ends onboarding.
+- Onboarding is once-per-session and does not repeatedly interrupt returning/restarted players.
+- The cue automatically stops if the player does not reach the first gate within the onboarding window.
+- Compact 844×390 landscape uses a 110px bottom safety corridor so onboarding never overlaps mobile controls.
+- FirstRunDirector adds 0 Three.js render groups and has no physics, score, route, Ghost or traffic authority.
+
+## Preserved award systems
+
+- V0.9 Award Presentation:
+  - route-specific FLOW / PRECISION / RHYTHM identities
+  - rank-adaptive finish climax
+  - PB finish treatment
+  - procedural route/finish stingers
+- V0.9.1 Award HUD:
+  - reduced engineering-panel weight
+  - stronger speed hierarchy
+  - compact 844×390 layout
+  - de-emphasized quality badge
+- Replay Momentum V3
+- PB Ghost Replay
+- Traffic Flow V3
+- District Awareness V3
+- Objective Compass
+- Checkpoint Feedback
+- Stage Transition
 
 ## Preserved gameplay contracts
 
 - A = physical left, D = physical right.
-- Reverse remains about 41.4 km/h and HUD gear remains `R`.
+- Reverse remains about 41.4 km/h with HUD `R`.
 - Progressive touch steering remains intact.
-- Three route coordinates, checkpoint radii and scoring thresholds are unchanged.
-- Replay Momentum V3 remains intact.
-- PB Ghost Replay remains intact.
-- Traffic Flow V3 remains intact:
-  - 9 modeled lanes
-  - 18 cars
-  - 7.5m safe queue gap
-  - dynamic brake lights
-  - signal-aware stop/release
-- District Awareness V3, Objective Compass, Checkpoint Feedback and Stage Transition remain intact.
-- Existing camera, VFX, procedural audio and adaptive quality contracts remain intact.
+- Route coordinates, checkpoint radii and scoring thresholds are unchanged.
+- Traffic remains visual-only with 0 physics bodies / 0 colliders / 0 camera occluders.
+- Existing camera, VFX, procedural audio and adaptive-quality contracts remain intact.
 
-## First V0.9 code-gate evidence
+## V0.9.2 code-gate evidence
 
 Validated code candidate:
 
-`c910c75aa48382719833fd31bfef5e15dbd11b6e`
+`e0548f7e6bd95b9959fbe481c5313bf0959cacab`
 
 Run:
 
-https://github.com/qookey109-pixel/car/actions/runs/36822636450
+https://github.com/qookey109-pixel/car/actions/runs/36830412803
 
 Results:
 
-- Chromium: 27/27 steps SUCCESS.
-- WebKit: 27/27 steps SUCCESS.
+- Chromium: 29/29 SUCCESS.
+- WebKit: 29/29 SUCCESS.
 - Independent Audio Feel: SUCCESS.
 - Independent Objective Compass: SUCCESS.
-- Award Presentation: PASS.
-- Three route identities: 3/3.
-- Rank/PB finish states: PASS.
-- Presentation pointer events: none.
-- Presentation WebGL draw-call delta: 0.
-- Finish presentation z-index > result screen: PASS.
+- First 30 Seconds: PASS.
+- Flow: `GO → N₂O hint → checkpoint CLEAN`.
+- First-run only / once-per-session suppression: PASS.
+- 844×390 mobile control corridor: PASS after subpixel-safe 110px clearance.
+- FirstRunDirector WebGL render groups: 0.
+- Award Presentation: PASS with 0 WebGL draw-call delta.
+- Award HUD: PASS.
 - Browser smoke: 103.9 km/h after 3s.
 - A left: -50.0m.
 - D right: +49.4m.
 - Reverse peak: 41.4 km/h.
-- City atmosphere: 100 signals.
-- Traffic Flow V3 queue gap: 7.50m.
-- Red follower: 0.00m/s.
-- Green follower: 7.46m/s.
 - Chromium LOW: 59 calls / 95,988 triangles / peak 180.7 km/h.
 - Hard LOW budget remains <=60 calls / <=110,000 triangles.
 
 Artifacts:
 
-- Chromium QA: `11143978623`
-  - SHA256 `92015bfc335a8583a4afba5d9d9daf46072beb2bfbb56a620ed45fa7a1482c62`
-- WebKit QA: `11144018303`
-  - SHA256 `885dbfe32eff17466d2e4fb98d08155fe354c8f06d86a1755617105b28960440`
+- Chromium QA: `11146738792`
+  - SHA256 `ddd4b4b07b5a9970d0b3d7608cc9c843a689ba78f041bd99f174a04ddb08ff67`
+- WebKit QA: `11147262027`
+  - SHA256 `fc37cef76ef929bdf33d577b6caf30623a634b28db2eae1ed751b8d6960c650c`
 
-WebKit CI remains browser-engine regression evidence only, not real Mac Safari hardware FPS.
+WebKit CI is browser-engine regression evidence only, not real Mac Safari hardware FPS.
 
-## Final validation gate
+## Final V0.9.2 gate
 
-The final exact PR #8 head must pass:
+The final exact PR #11 head must pass:
 
 1. Static smoke
 2. Production build
 3. Chromium + WebKit browser play
-4. V0.9 runtime/package identity
-5. A/D + reverse contract
-6. City / District / Camera / VFX / Compass
-7. Checkpoint / Stage Transition / Replay Momentum V3
-8. Ghost Replay
-9. Traffic Flow V3
-10. Award Presentation route intro / rank-PB finish / stacking / input transparency
-11. Audio
-12. Software LOW numeric budget
-13. 844x390 mobile layout/input evidence
+4. A/D + reverse contract
+5. City / District / Camera / VFX / Compass
+6. Checkpoint / Stage Transition / Replay Momentum
+7. Ghost Replay
+8. Traffic Flow V3
+9. Award Presentation
+10. Award HUD
+11. First 30 Seconds
+12. Audio
+13. Software LOW numeric budget
+14. 844×390 mobile input/layout evidence
 
-## Known limitations
+## Remaining submission work
 
-- Award Presentation is a first presentation pass; it is not yet the complete submission package.
-- Ambient traffic remains visual-only and does not collide with the player.
-- Traffic uses paired modeled lanes rather than full route planning.
-- Ghost data remains local-browser/local-device only.
-- Weather cycles remain deferred.
-- Audio remains fully procedural.
-- Real-world OSM mode is not restored as an authoritative active branch.
-- Real Mac Safari hardware FPS/input/audio-feel acceptance remains a separate manual gate.
-- Award submission screenshots, capture video and final submission copy are not yet frozen.
+- Real Mac Safari hardware verification.
+- Final desktop/mobile visual QA.
+- Freeze representative screenshots.
+- Produce a 30–60 second gameplay showcase.
+- Freeze project statement / design rationale.
+- Final submission build freeze.
 
 ## Next action
 
-Run the final exact-head V0.9 acceptance matrix. If fully green, publish a new SHA-specific immutable Pages preview while preserving all previous previews byte-for-byte, then record final SHA/artifacts/publication evidence in PR #8.
+Run the final exact-head V0.9.2 matrix after documentation sync. If fully green, publish a SHA-specific immutable Pages preview while preserving every prior preview byte-for-byte.

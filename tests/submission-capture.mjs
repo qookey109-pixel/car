@@ -59,7 +59,6 @@ await page.evaluate(()=>{
   const g=window.__NEON_RACER__.game,gr=g.ghostReplay;
   g.vehicle.reset({x:0,y:1.2,z:24},0);
   g.vehicle._syncVisuals();
-  g._camera(1/60);
   gr.routeName=g.challenges.routeName;
   gr.recording=[
     {t:0,x:0,y:1.2,z:14,yaw:0},
@@ -70,9 +69,14 @@ await page.evaluate(()=>{
   gr.start(g.challenges.routeName);
   gr.startedAt=performance.now()-900;
   gr.update();
+  g.state='paused';
+  g.camera.position.set(4.8,5.2,35);
+  g.camera.lookAt(0,1.15,6);
+  g._render();
 });
-await page.waitForTimeout(650);
+await page.waitForTimeout(120);
 await page.screenshot({path:`${frames}/05-ghost-pursuit.png`,animations:'disabled'});
+await page.evaluate(()=>{window.__NEON_RACER__.game.state='running'});
 
 await page.keyboard.down('Shift');
 await page.waitForTimeout(2200);

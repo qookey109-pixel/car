@@ -74,7 +74,7 @@ export class Game{
   }
 
   restart(){
-    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraSteer=0;this.cameraRoll=0;this.flipTimer=0;this.recoveryCooldown=0;this.ghostReplay?.start(this.challenges.routeName);this.hud.showGame();this.hud.toast(`${this.challenges.routeName} · START`);
+    this.vehicle.reset({x:0,y:1.2,z:24},0);this.challenges.reset();this.state='running';this.clock.getDelta();this.accumulator=0;this.cameraYaw=0;this.cameraPitch=.13;this.cameraSteer=0;this.cameraRoll=0;this.flipTimer=0;this.recoveryCooldown=0;this.ghostReplay?.start(this.challenges.routeName);this.hud.showGame();this.hud.showRouteIntro({name:this.challenges.routeName,style:this.challenges.routeStyle,focus:this.challenges.routeFocus,index:this.challenges.routeIndex,total:this.challenges.routes.length});this.hud.toast(`${this.challenges.routeName} · START`);
   }
   pause(){if(this.state!=='running')return;this.state='paused';this.vehicle.setInput({throttle:0,steer:0,handbrake:true,nitro:false});this.hud.showPause()}
   resume(){if(this.state!=='paused')return;this.state='running';this.clock.getDelta();this.hud.hidePause();this.hud.showGame()}
@@ -181,7 +181,7 @@ export class Game{
     this.debugVisible=new URLSearchParams(location.search).has('debug');this.debug=document.createElement('pre');this.debug.style.cssText='position:fixed;z-index:90;left:8px;top:8px;margin:0;padding:8px 10px;border-radius:9px;background:#000a;color:#9ff;font:10px/1.45 ui-monospace,monospace;pointer-events:none;white-space:pre-wrap';document.body.appendChild(this.debug);this.debug.style.display=this.debugVisible?'block':'none';this.fpsAvg=60
   }
   toggleDebug(){this.debugVisible=!this.debugVisible;this.debug.style.display=this.debugVisible?'block':'none'}
-  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,Math.min(.05,dt));const info=this.renderer.info.render;this.debug.textContent=`V0.8.0 DEBUG\
+  _updateDebug(dt){if(!this.debugVisible)return;this.fpsAvg=damp(this.fpsAvg,1/Math.max(.001,dt),2,Math.min(.05,dt));const info=this.renderer.info.render;this.debug.textContent=`V0.9.0 AWARD CANDIDATE DEBUG\
 FPS ${this.fpsAvg.toFixed(0)} · calls ${info.calls} · tris ${info.triangles}\
 speed ${this.vehicle.speedKmh.toFixed(0)} km/h · nitro ${(this.vehicle.nitro*100).toFixed(0)}%\
 pos ${this.vehicle.position.x.toFixed(1)}, ${this.vehicle.position.y.toFixed(1)}, ${this.vehicle.position.z.toFixed(1)}\

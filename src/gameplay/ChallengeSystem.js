@@ -11,16 +11,16 @@ export class ChallengeSystem{
     this.startedAt=performance.now();this.score=0;this.combo=1;this.bestCombo=1;this.totalDrift=0;this.completed=false;
     this.challengeIndex=0;this.sprintIndex=0;this.lastPosition=null;this._toastCooldown=0;this._speedHint=0;
     this.routes=[
-      {name:'河岸東環',points:[[0,0],[120,0],[120,-120],[0,-120]],drift:{x:-120,z:-120,radius:72},speed:{x:0,z:-180}},
-      {name:'霓虹西環',points:[[0,0],[-120,0],[-120,120],[0,120]],drift:{x:120,z:120,radius:72},speed:{x:0,z:180}},
-      {name:'高架折返',points:[[0,0],[0,-120],[-120,-120],[-120,0]],drift:{x:120,z:-120,radius:72},speed:{x:0,z:-180}}
+      {name:'河岸東環',focus:'HIGH SPEED',style:'高速長彎',points:[[0,0],[120,0],[120,-120],[0,-120]],drift:{x:-120,z:-120,radius:72},speed:{x:0,z:-180}},
+      {name:'霓虹西環',focus:'TECHNICAL',style:'密集轉向',points:[[0,0],[-120,0],[-120,120],[0,120]],drift:{x:120,z:120,radius:72},speed:{x:0,z:180}},
+      {name:'高架折返',focus:'BRAKE FLOW',style:'煞車節奏',points:[[0,0],[0,-120],[-120,-120],[-120,0]],drift:{x:120,z:-120,radius:72},speed:{x:0,z:-180}}
     ];
     this._applyRoute(this.runOffset%this.routes.length);
     this.challengeStartedAt=performance.now();this._buildMarkers();this._refreshMarkers();
   }
 
   _applyRoute(index){
-    this.routeIndex=((index%this.routes.length)+this.routes.length)%this.routes.length;const r=this.routes[this.routeIndex];this.routeName=r.name;
+    this.routeIndex=((index%this.routes.length)+this.routes.length)%this.routes.length;const r=this.routes[this.routeIndex];this.routeName=r.name;this.routeFocus=r.focus;this.routeStyle=r.style;
     this.challenges=[
       {id:'sprint',title:'霓虹街廓 · Time Attack',description:'依序穿越 4 個城市 Checkpoint',limit:75,points:r.points.map(p=>[...p])},
       {id:'drift',title:'河岸反打 · Drift Run',description:'在河岸街區累積 1,800 漂移分',target:1800,zone:{...r.drift}},
@@ -121,6 +121,6 @@ export class ChallengeSystem{
   }
   get targetDistrict(){const c=this.current;if(!c)return null;return c.id==='sprint'?this.routeDistricts.checkpoints[this.sprintIndex]||null:this.routeDistricts[c.id]||null}
   get progress(){const c=this.current;if(!c)return 1;if(c.id==='sprint')return this.sprintIndex/c.points.length;if(c.id==='drift')return clamp((this._driftMission||0)/c.target,0,1);if(c.id==='speed')return clamp((this._speedHint||0)/c.target,0,1);return 0}
-  get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:`${this.routeName} · 夜行完成`};if(c.id==='sprint')return{title:c.title,text:`${this.routeName} · Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${this.routeName} · ${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`${this.routeName} · ${Math.round(this._speedHint||0)} / ${c.target} km/h · 穿越綠色 Gate`}}
+  get objective(){const c=this.current;if(!c)return{title:'Journey Complete',text:`${this.routeName} · 夜行完成`};if(c.id==='sprint')return{title:c.title,text:`${this.routeName} · ${this.routeStyle} · Checkpoint ${Math.min(this.sprintIndex+1,4)} / 4 · ${Math.max(0,c.limit-(performance.now()-this.challengeStartedAt)/1000).toFixed(0)}s`};if(c.id==='drift')return{title:c.title,text:`${this.routeName} · ${this.routeStyle} · ${Math.round(this._driftMission||0)} / ${c.target} drift pts`};return{title:c.title,text:`${this.routeName} · ${this.routeStyle} · ${Math.round(this._speedHint||0)} / ${c.target} km/h · 穿越綠色 Gate`}}
   summary(){const elapsed=(performance.now()-this.startedAt)/1000;const rank=this.score>9000?'S':this.score>6500?'A':this.score>4500?'B':'C';return{score:Math.round(this.score),time:elapsed,bestCombo:this.bestCombo,rank,routeIndex:this.routeIndex,routeName:this.routeName}}
 }

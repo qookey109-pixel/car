@@ -11,27 +11,35 @@ Status date: 2026-10-01 (Asia/Taipei)
 - PR #3 tooling remains open Draft and unmerged.
 - PR #4 V0.8.2 Ghost Replay remains open Draft and unmerged.
 - PR #5 V0.8.3 Ambient Traffic remains open Draft and unmerged.
-- Current development branch: `feature/v0.8.4-traffic-behavior` (PR #6, Draft).
-- V0.8.4 base authority: exact validated V0.8.3 SHA `64d15677647243fe7b4adcc8f1d92e2003cd604f`.
-- Last deployed immutable V0.8.3 preview: https://qookey109-pixel.github.io/car/v0.8.3-64d1567/
+- PR #6 V0.8.4 Traffic Behavior remains open Draft and unmerged.
+- Current development branch: `feature/v0.8.5-traffic-flow` (PR #7, Draft).
+- V0.8.5 base authority: exact validated V0.8.4 SHA `bb85eef880a3dfb60bd7f6ca684277097d953a92`.
+- Last deployed immutable V0.8.4 preview: https://qookey109-pixel.github.io/car/v0.8.4-bb85eef/
 - Do not merge automatically or overwrite/delete immutable rollback previews.
 
-## V0.8.4 — Traffic Behavior Polish
+## V0.8.5 — Traffic Flow Polish
 
-The current branch makes ambient traffic visually obey the existing city signal rhythm while remaining completely outside gameplay physics.
+The current branch deepens ambient traffic behavior without adding any render group or gameplay authority.
 
 Implemented:
 
-- Existing `CityAtmosphere.signalPhase` remains the single signal authority.
-- `CityAtmosphere.isSignalGreen(...)` exposes read-only lane/intersection signal state to visual traffic.
-- 18 ambient cars retain independent visual speed state.
-- Cars approaching a red signal smoothly decelerate toward the existing stop line.
-- Cars resume acceleration when the same signal authority turns green.
-- Outer roads without modeled traffic signals continue normal ambient flow.
-- Two additional InstancedMesh groups add headlights and taillights for all 18 cars.
-- Vehicle body + headlights + taillights still follow the 24m near-player exclusion.
+- 18 visual traffic cars are organized as 9 modeled lanes × 2 cars per lane.
+- Existing `CityAtmosphere.signalPhase` remains the single traffic-signal authority.
+- Each car has independent cruise speed and velocity state.
+- Same-lane front-car detection uses deterministic forward distance on the wrapped traffic corridor.
+- Configured safe following gap: 7.5m.
+- Configured active following distance: 24m.
+- Red-light queues now form behind the lead car rather than multiple cars collapsing onto one stop line.
+- Green-light release propagates naturally as the lead car accelerates away.
+- Brake lights use per-instance tail-light color:
+  - bright red during real deceleration / stop
+  - dim red after acceleration resumes
+- Brake-light behavior adds 0 draw calls; the traffic layer remains exactly 3 InstancedMesh groups:
+  - vehicle bodies
+  - headlights
+  - taillights
+- Body + lights retain the 24m near-player exclusion.
 - Traffic remains 0 physics bodies, 0 colliders and 0 camera occluders.
-- Traffic cannot alter score, route progression, player input, player collision or vehicle handling.
 
 ## Preserved contracts
 
@@ -45,14 +53,15 @@ Implemented:
 
 ## Performance evidence
 
-First V0.8.4 code-gate run:
+First V0.8.5 code-gate run:
 
 - Chromium + WebKit: 26/26 steps SUCCESS on each engine.
-- Signal-aware Traffic V2: PASS.
-- Red-light stop probe: 0.08 m/s.
-- Green-light resume probe: 8.48 m/s.
-- Ambient traffic render groups: 3 total — body + headlights + taillights.
-- Ghost + Traffic + Lights: 59 calls / 96,000 triangles.
+- Traffic Flow V3: PASS.
+- Queue safe-gap probe: 7.50m.
+- Red-light follower stop: 0.00 m/s.
+- Green-light follower resume: 7.46 m/s.
+- Dynamic brake-light state: PASS.
+- Traffic render groups remain exactly 3.
 - Chromium numeric LOW at high speed: 59 calls / 95,988 triangles / peak 180.7 km/h.
 - Hard LOW budget remains <=60 calls / <=110,000 triangles.
 - Physics-body and camera-occluder counts remain unchanged.
@@ -60,7 +69,7 @@ First V0.8.4 code-gate run:
 
 ## Validation gate
 
-The final exact PR #6 head must pass:
+The final exact PR #7 head must pass:
 
 1. Static smoke
 2. Production build
@@ -69,18 +78,21 @@ The final exact PR #6 head must pass:
 5. City / District / Camera / VFX / Compass
 6. Checkpoint / Stage Transition / Replay Momentum V3
 7. Ghost Replay
-8. Traffic V2 signal mapping / red stop / green resume
-9. Near-player exclusion for body + lights
-10. Audio
-11. Software LOW numeric budget
-12. 844x390 mobile layout/input evidence
+8. Traffic V3 red stop / green release
+9. 7.5m queue spacing
+10. Dynamic brake lights
+11. Near-player exclusion for body + lights
+12. Audio
+13. Software LOW numeric budget
+14. 844x390 mobile layout/input evidence
 
 ## Known limitations
 
 - Ambient traffic remains visual-only and intentionally cannot collide with the player.
-- Signal-aware behavior is limited to intersections covered by the existing central traffic-signal grid.
-- Ambient traffic does not perform lane changes, overtakes or route planning.
-- Vehicle light geometry is intentionally minimal to preserve the render budget.
+- Traffic uses paired modeled lanes rather than a full road-network planner.
+- No lane changing or overtaking is modeled.
+- Signal-aware behavior remains limited to the existing central signal grid.
+- Vehicle light geometry stays intentionally minimal to preserve the render budget.
 - Ghost data remains local-browser/local-device only.
 - Weather cycles remain deferred.
 - Audio remains procedural.
@@ -89,4 +101,4 @@ The final exact PR #6 head must pass:
 
 ## Next action
 
-Run the final exact-head Chromium + WebKit acceptance matrix for PR #6. If fully green, publish a new SHA-specific immutable Pages preview while preserving all earlier preview bytes, then record the exact SHA, artifacts and publication run in PR #6.
+Run the final exact-head Chromium + WebKit acceptance matrix for PR #7. If fully green, publish a new SHA-specific immutable Pages preview while preserving all earlier preview bytes, then record the exact SHA, artifacts and publication run in PR #7.

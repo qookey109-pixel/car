@@ -1,0 +1,115 @@
+name: V0.8.5 9d41669 Traffic Flow Publish
+
+on:
+  push:
+    branches: [preview/v0.8.5-traffic-flow-9d41669]
+    paths: [.github/workflows/v085-9d41669-traffic-flow-publish.yml]
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: car-fixed-preview-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: v080-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Require exact Chromium + WebKit acceptance
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {data: run} = await github.rest.actions.getWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: 36812259091});
+            if (run.head_sha !== '9d41669c9fb87ee86638d1dbfe90b75102ba193d' || run.conclusion !== 'success') throw new Error('Exact Chromium + WebKit acceptance required');
+      - uses: actions/checkout@v6
+        with:
+          ref: 9d41669c9fb87ee86638d1dbfe90b75102ba193d
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build exact candidate
+        working-directory: candidate
+        run: npm install && npm test && npm run build
+      - name: Mirror currently deployed immutable Pages bytes
+        run: |
+          python - <<'PY'
+          import hashlib, json, re, urllib.request
+          from pathlib import Path
+          from urllib.parse import urljoin, urlparse
+          base='https://qookey109-pixel.github.io/car/'
+          previews=[
+            'v0.8.0-76e9378','v0.8.0-f3cabc','v0.8.0-201b9f',
+            'v0.8.1-0ae655','v0.8.1-74f1ce','v0.8.1-fa8e820','v0.8.1-db3b102',
+            'v0.8.1-0f7585b','v0.8.1-aa74ae8','v0.8.1-6b3dc5f','v0.8.1-b91adb9',
+            'v0.8.1-7aac4c3','v0.8.1-85eebfd','v0.8.1-16ac817','v0.8.1-7d936b2',
+            'v0.8.1-a357e98','v0.8.1-2865bf3','v0.8.1-91c615f','v0.8.1-caae89a',
+            'v0.8.1-d533c35','v0.8.1-aa01a44','v0.8.1-0c20859','v0.8.1-116daef',
+            'v0.8.2-d9f7fc4','v0.8.3-64d1567','v0.8.4-bb85eef'
+          ]
+          root=Path('site'); root.mkdir()
+          def get(url):
+            req=urllib.request.Request(url,headers={'User-Agent':'car-preview-preserver','Cache-Control':'no-cache'})
+            with urllib.request.urlopen(req,timeout=30) as r:
+              if r.status!=200: raise RuntimeError(f'{r.status} {url}')
+              return r.read()
+          def write(rel,data):
+            p=root/rel; p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(data)
+          def mirror_index(prefix):
+            index_rel=f'{prefix}/index.html' if prefix else 'index.html'
+            index_url=urljoin(base,index_rel)
+            data=get(index_url); write(index_rel,data)
+            html=data.decode('utf-8')
+            for link in re.findall(r'(?:src|href)=["\']([^"\']+)["\']',html):
+              if not ('.js' in link or '.css' in link): continue
+              u=urljoin(index_url,link)
+              path=urlparse(u).path
+              marker='/car/'
+              if marker not in path: continue
+              rel=path.split(marker,1)[1]
+              write(rel,get(u))
+          mirror_index('')
+          for prefix in previews:
+            mirror_index(prefix)
+            marker=get(urljoin(base,f'{prefix}/PREVIEW_SHA.txt'))
+            short=prefix.rsplit('-',1)[-1]
+            full=marker.decode().strip()
+            assert re.fullmatch(r'[0-9a-f]{40}',full), (prefix,full)
+            assert full.startswith(short), (prefix,full)
+            write(f'{prefix}/PREVIEW_SHA.txt',marker)
+          hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file()}
+          Path('preserved-hashes.json').write_text(json.dumps(hashes,sort_keys=True))
+          print(f'Mirrored and locked {len(hashes)} currently deployed files')
+          PY
+      - name: Append V0.8.5 preview without changing preserved bytes
+        run: |
+          test ! -e site/v0.8.5-9d41669
+          mkdir site/v0.8.5-9d41669
+          cp -R candidate/dist/. site/v0.8.5-9d41669/
+          printf '%s\n' '9d41669c9fb87ee86638d1dbfe90b75102ba193d' > site/v0.8.5-9d41669/PREVIEW_SHA.txt
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          hashes=json.loads(Path('preserved-hashes.json').read_text())
+          for name,digest in hashes.items():
+              got=hashlib.sha256((Path('site')/name).read_bytes()).hexdigest()
+              assert got==digest,(name,digest,got)
+          marker=Path('site/v0.8.5-9d41669/PREVIEW_SHA.txt').read_text().strip()
+          assert marker=='9d41669c9fb87ee86638d1dbfe90b75102ba193d'
+          print(f'Preserved all {len(hashes)} previous files byte-for-byte; appended v0.8.5-9d41669 only')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy preserved root and fixed previews
+        id: deployment
+        uses: actions/deploy-pages@v4

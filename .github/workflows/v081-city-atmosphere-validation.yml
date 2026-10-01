@@ -8,6 +8,7 @@ on:
       - feature/v0.8.3-ambient-traffic
       - feature/v0.8.4-traffic-behavior
       - feature/v0.8.5-traffic-flow
+      - feature/v0.9.0-award-candidate
   workflow_dispatch:
 
 jobs:
@@ -88,6 +89,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/ambient-traffic-smoke.mjs
+      - name: Award presentation acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/award-presentation-smoke.mjs
       - name: Audio feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

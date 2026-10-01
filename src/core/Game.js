@@ -133,7 +133,7 @@ export class Game{
     while(this.accumulator>=this.fixedDt&&steps<15){this.vehicle.update(this.fixedDt);this.physics.step(this.fixedDt);this.accumulator-=this.fixedDt;steps++}
     if(steps>=15&&this.accumulator>=this.fixedDt)this.accumulator%=this.fixedDt;
     const simDt=Math.max(visualDt,steps*this.fixedDt);
-    this.vehicle._syncVisuals();this._recovery(simDt);this.challenges.update(simDt,this.vehicle);this.ghostReplay?.update(simDt);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
+    this.vehicle._syncVisuals();this._recovery(simDt);this.challenges.update(simDt,this.vehicle);this.ghostReplay?.update(simDt);this.ambientTraffic?.update(simDt);this.audio.update(this.vehicle.speedKmh,input.throttle,this.vehicle.nitroActive);this.hud.update(this.vehicle,this.challenges);
     this.cameraSteer=damp(this.cameraSteer,input.steer||0,6.5,visualDt);this.cameraYaw=damp(this.cameraYaw,input.cameraX*.8,2.4,visualDt);this.cameraPitch=damp(this.cameraPitch,.13+input.cameraY*.14,2.2,visualDt);
     if(this.vehicle.position.y<-4||Math.abs(this.vehicle.position.x)>225||Math.abs(this.vehicle.position.z)>225)this.resetVehicle();
   }
@@ -146,7 +146,7 @@ export class Game{
 
   _ambient(dt){
     if(this.state==='menu'){const t=performance.now()*.00016;this.camera.position.set(Math.sin(t)*45,25,Math.cos(t)*45+10);this.camera.lookAt(0,4,0)}
-    this.audio.update(0,0,false);
+    this.ambientTraffic?.update(dt*.45);this.audio.update(0,0,false);
   }
 
   _camera(dt){

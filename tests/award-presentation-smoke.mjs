@@ -67,6 +67,7 @@ try{
   if(complete.rank!=='S'||complete.rankState!=='S'||complete.newBest!=='true')throw new Error(`Award result state failed: ${JSON.stringify(complete)}`);
   if(!/河岸東環 · S RANK/.test(complete.seal)||!/^NEW PERSONAL BEST/.test(complete.record)||complete.eyebrow!=='NIGHT RUN COMPLETE')throw new Error(`Award result hierarchy failed: ${JSON.stringify(complete)}`);
   await desktop.screenshot({path:'test-results/award-presentation/result-s-desktop.png',animations:'disabled'});
+  await desktop.close();
 
   const mobile=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
   await mobile.addInitScript(()=>{try{localStorage.removeItem('neon-racer-records')}catch{}});
@@ -106,5 +107,5 @@ try{
 
   if(errors.length)throw new Error(errors.join('\n'));
   console.log(`Award Presentation PASS · opening identity · route title card · S/PB result ceremony · engineering labels removed · quality badge hidden · 844x390 clear · render calls <=60`);
-  await desktop.close();await mobile.close();
+  await mobile.close();
 }finally{await browser.close()}

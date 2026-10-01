@@ -8,7 +8,7 @@ const near=(v,target,tol)=>Math.abs(v-target)<=tol;
 async function start(page){
   await page.addInitScript(()=>{try{localStorage.removeItem('neon-racer-records')}catch{}});
   await page.goto(base,{waitUntil:'networkidle'});
-  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.0');
+  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.2');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().navigation?.visible===true);

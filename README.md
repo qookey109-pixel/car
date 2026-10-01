@@ -1,53 +1,69 @@
-# Neon Racer — 三蘆夜行
+# 三蘆夜行 — Neon Racer
 
-V0.8.5 Traffic Flow Polish development line for `qookey109-pixel/car`.
+V0.9.0 Award Candidate Presentation line for `qookey109-pixel/car`.
 
-This branch builds on the validated V0.8.4 signal-aware traffic candidate and improves queueing, car-following and brake-light behavior without adding any new render group.
+The project is now being treated as a complete game work intended for design-award submission, not as a technology demo. V0.9.0 keeps the validated V0.8.5 driving/traffic foundation and focuses on the first 30 seconds, route identity, completion ceremony and presentation hierarchy.
 
-## Current features
+## Creative premise
 
-- Three.js + cannon-es RaycastVehicle
-- Stylized Sanchong/Luzhou-inspired night city
-- Third-person dynamic camera with collision avoidance and dynamic FOV
-- Drift, nitro, score and combo systems
-- Three rotating routes with distinct driving identities:
-  - 河岸東環 — 高速長彎 / HIGH SPEED
-  - 霓虹西環 — 密集轉向 / TECHNICAL
-  - 高架折返 — 煞車節奏 / BRAKE FLOW
-- Route-specific PBs for score / time / combo plus per-route S-rank clears
-- Replay Momentum V3 with score + time pursuit targets
-- PB Ghost Replay with same-route trajectories and live AHEAD / BEHIND / EVEN delta
-- V0.8.5 Traffic Flow:
-  - 18 deterministic visual city cars
-  - 9 modeled lanes × 2 cars per lane
-  - existing CityAtmosphere signal phase remains the single traffic-signal authority
-  - red-light queue formation
-  - green-light queue release
-  - 7.5m configured safe following gap
-  - 24m active following distance
-  - per-car cruise-speed variation
-  - dynamic brake-light brightness using instance colors
-  - exactly 3 traffic render groups: body + headlights + taillights
-  - 24m near-player exclusion applies to body + lights
-  - 0 physics bodies / 0 colliders / 0 camera occluders
-- District Awareness, Objective Compass, checkpoint feedback and stage transitions
-- Desktop keyboard, mobile multi-touch and gamepad input
-- Progressive touch steering with direct keyboard A/D preserved
-- Procedural audio, traffic-signal phases, facade-light rhythm and lightweight VFX
-- Adaptive quality + debug HUD
-- Immutable SHA-specific GitHub Pages previews
+**AFTER RAIN · BEFORE DAWN**
+
+雨停之後，城市還沒睡。穿過河岸、高架與密集街廓，在天亮以前留下最快的一次夜行。
+
+The player cycles through three recognizable city-driving identities:
+
+- 河岸東環 — 高速長彎 / HIGH SPEED
+- 霓虹西環 — 密集轉向 / TECHNICAL
+- 高架折返 — 煞車節奏 / BRAKE FLOW
+
+## V0.9.0 presentation pass
+
+- Opening screen prioritizes the game identity instead of implementation technology.
+- Main opening no longer exposes RaycastVehicle / Gamepad / PB Ghost / Traffic Flow as player-facing feature chips.
+- 三條路線 become the primary opening vocabulary.
+- Main CTA: `進入夜行`.
+- Route-start title cards show route number, name and driving identity.
+- Normal player HUD hides the engineering-oriented quality badge.
+- Completion presentation uses `NIGHT RUN COMPLETE`.
+- Result seal carries route + rank identity.
+- S-rank, A-rank and new-PB states have differentiated presentation.
+- 844×390 mobile landscape has dedicated compact presentation rules.
+- Runtime exposes `release:'0.9.0'` and `presentation:'award-candidate-v1'`.
+- Legacy `version:'0.8.0'` remains for compatibility with existing tests/integrations.
+
+## Validated gameplay foundation
+
+- Three.js + cannon-es RaycastVehicle.
+- Third-person dynamic camera with collision avoidance and dynamic FOV.
+- Drift, nitro, score and combo systems.
+- Three-route challenge rotation.
+- Replay Momentum V3.
+- PB Ghost Replay with AHEAD / BEHIND / EVEN delta.
+- Traffic Flow V3:
+  - 18 visual cars across 9 modeled lanes
+  - signal-aware red stop / green release
+  - 7.5m queue gap
+  - dynamic brake-light instance colors
+  - exactly 3 traffic render groups
+  - 0 physics bodies / colliders / camera occluders
+- District Awareness V3.
+- Objective Compass.
+- Checkpoint feedback and Stage Transition.
+- Desktop keyboard, mobile multi-touch and gamepad input.
+- Procedural vehicle/audio feedback.
+- Immutable SHA-specific GitHub Pages previews.
 
 ## Current validated base preview
 
-V0.8.5 is based on the fully validated V0.8.4 candidate:
+V0.9.0 is based on the fully validated V0.8.5 candidate:
 
-https://qookey109-pixel.github.io/car/v0.8.4-bb85eef/
+https://qookey109-pixel.github.io/car/v0.8.5-9d41669/
 
 Base exact SHA:
 
-`bb85eef880a3dfb60bd7f6ca684277097d953a92`
+`9d41669c9fb87ee86638d1dbfe90b75102ba193d`
 
-A V0.8.5 preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
+A V0.9.0 preview is published only after its final exact feature head passes the complete Chromium + WebKit matrix.
 
 ## Installation
 
@@ -77,20 +93,6 @@ npm run preview
 - `F3`: debug HUD
 - Gamepad: left stick steering, right stick camera, triggers throttle/brake
 
-## Traffic flow behavior
-
-Ambient traffic remains visual city atmosphere rather than collision gameplay.
-
-The traffic signal grid is still owned by `CityAtmosphere`. Cars only read the existing signal authority.
-
-V0.8.5 pairs cars on modeled lanes so a real queue can form. Each follower measures wrapped forward distance to the same-lane lead car. Within 24m it gradually matches the leader, while a 7.5m safe gap prevents stacked cars at red lights.
-
-Brake lights remain in the existing taillight InstancedMesh. Per-instance colors switch to bright red only during actual deceleration or stopping, then return to a dim running-light red after acceleration resumes. This adds no draw call.
-
-## Ghost Replay behavior
-
-Ghost Replay continues to use the separate `neon-racer-ghosts-v1` localStorage key. Only a new same-route best time replaces a stored ghost; non-PB runs do not overwrite it.
-
 ## QA
 
 ```bash
@@ -99,66 +101,73 @@ npm run build
 npm run test:browser
 node tests/ghost-replay-smoke.mjs
 node tests/ambient-traffic-smoke.mjs
+node tests/award-presentation-smoke.mjs
 ```
 
-The V0.8.x workflow runs all gameplay contracts on Chromium and WebKit.
+The full V0.9.0 workflow runs the gameplay and presentation contracts on Chromium and WebKit.
 
-Hard Chromium LOW budget:
+Award-presentation acceptance verifies:
+
+- opening identity and manifesto
+- route-based rather than engineering-based opening vocabulary
+- route title card
+- S/PB result ceremony
+- hidden player-facing quality badge
+- desktop presentation screenshots
+- 844×390 opening / route title / result visibility
+- LOW render-budget compliance
+
+First V0.9.0 code gate:
+
+- Run: `36825204400`
+- Chromium: 27/27 SUCCESS
+- WebKit: 27/27 SUCCESS
+- Chromium LOW: 60 calls / 96,428 triangles / peak 180.7 km/h
+
+Hard LOW budget:
 
 - draw calls <= 60
 - triangles <= 110,000
 
-V0.8.5 traffic acceptance verifies:
-
-- exactly 18 cars across exactly 9 modeled lanes
-- existing signal-authority mapping
-- red-light lead-car stop
-- queued follower stop
-- 7.5m safe-gap tolerance
-- green-light queue release
-- dynamic bright/dim brake-light state
-- exactly three traffic render groups
-- near-player exclusion for body + lights
-- 0 physics-body changes
-- 0 camera-occluder changes
-- overall LOW budget remains unchanged
-
-First code-gate evidence measured:
-
-- queue gap: 7.50m
-- red-light follower: 0.00 m/s
-- green-light follower: 7.46 m/s
-- dynamic brake-light transition: PASS
-- Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
-
-WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari FPS testing.
+The V0.9.0 presentation layer adds no Three.js world object or independent render group. Because the current LOW measurement can reach the 60-call ceiling, subsequent world-art additions should reuse/merge existing batches or first remove a draw call.
 
 ## Architecture
 
 - `src/core/` — game loop and input
 - `src/vehicle/` — RaycastVehicle and car visuals
-- `src/world/` — city generation, atmosphere and traffic flow
-- `src/gameplay/` — challenges, route logic and Ghost Replay
+- `src/world/` — city, atmosphere and traffic flow
+- `src/gameplay/` — challenge routes and Ghost Replay
 - `src/rendering/` — adaptive quality
 - `src/audio/` — procedural Web Audio
-- `src/vfx/` — lightweight particles and speed feedback
-- `src/ui/` — HUD, navigation, stage transition and replay momentum
+- `src/vfx/` — speed / drift feedback
+- `src/ui/` — HUD, route title, stage transition and replay momentum
+
+## Award-candidate direction
+
+The next passes should be judged by whether a reviewer remembers the game after a short session, not by feature count.
+
+Priorities after V0.9.0 Presentation Pass 1:
+
+- stronger authored soundscape without masking driving feedback
+- more distinctive 三蘆 visual motifs using existing render batches
+- route-specific audiovisual rhythm
+- final opening-to-finish pacing
+- final submission screenshots / gameplay reel / project statement
+- real Mac Safari final acceptance
 
 ## Known limitations
 
-- Ambient traffic is visual-only; it does not collide with the player.
-- Traffic uses paired modeled lanes rather than a full road-network planner.
-- Lane changing and overtaking are not modeled.
-- Signal behavior remains limited to the existing central signal grid.
+- Traffic remains visual-only and does not collide with the player.
+- Traffic uses modeled paired lanes rather than a full road-network planner.
 - Ghosts remain local-device/local-browser only.
-- Weather cycles remain deferred.
-- Audio remains procedural.
+- Audio is procedural and not yet a final authored soundscape.
+- Weather choreography is deferred.
 - Real-world OSM mode is not restored as an authoritative active branch.
 - Real-device Safari visual/FPS/input/audio-feel acceptance remains a manual gate.
 
 ## Repository safety
 
 - `main` is not modified directly.
-- PR #1–#6 remain independent and unmerged.
-- PR #7 remains Draft while V0.8.5 validation is active.
+- Earlier PRs remain independent and unmerged.
+- PR #9 remains Draft while V0.9.0 validation is active.
 - Immutable rollback previews must not be overwritten or deleted.

@@ -1,7 +1,7 @@
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class Input{
-  constructor(){this.keys=new Set();this.touch={left:false,right:false,gas:false,brake:false,drift:false,nitro:false};this.camera={x:0,y:0};this._bind()}
+  constructor(){this.keys=new Set();this.touch={left:false,right:false,gas:false,brake:false,drift:false,nitro:false};this.camera={x:0,y:0};this.touchSteer=0;this.lastSampleAt=performance.now();this._bind()}
   _bind(){
     addEventListener('keydown',e=>{this.keys.add(e.code);if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault()},{passive:false});
     addEventListener('keyup',e=>this.keys.delete(e.code));
@@ -13,10 +13,14 @@ export class Input{
     });
   }
   sample(){
+    const now=performance.now(),dt=Math.min(.05,Math.max(1/240,(now-this.lastSampleAt)/1000||1/60));this.lastSampleAt=now;
     let throttle=(this.keys.has('KeyW')||this.keys.has('ArrowUp')||this.touch.gas?1:0)-(this.keys.has('KeyS')||this.keys.has('ArrowDown')||this.touch.brake?1:0);
     // RaycastVehicle's positive steering angle turns the car toward world-left from the
     // default -Z heading, so logical LEFT inputs must map to +1 and RIGHT inputs to -1.
-    let steer=(this.keys.has('KeyA')||this.keys.has('ArrowLeft')||this.touch.left?1:0)-(this.keys.has('KeyD')||this.keys.has('ArrowRight')||this.touch.right?1:0);
+    const keySteer=(this.keys.has('KeyA')||this.keys.has('ArrowLeft')?1:0)-(this.keys.has('KeyD')||this.keys.has('ArrowRight')?1:0);
+    const touchTarget=(this.touch.left?1:0)-(this.touch.right?1:0),touchRate=touchTarget===0?8.5:5.8;
+    this.touchSteer+=(touchTarget-this.touchSteer)*Math.min(1,touchRate*dt);
+    let steer=keySteer||this.touchSteer;
     let handbrake=this.keys.has('Space')||this.touch.drift,nitro=this.keys.has('ShiftLeft')||this.keys.has('ShiftRight')||this.touch.nitro;
     let cameraX=0,cameraY=0;
     const pads=navigator.getGamepads?.()||[];const p=[...pads].find(Boolean);

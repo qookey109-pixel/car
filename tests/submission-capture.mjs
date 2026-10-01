@@ -29,6 +29,7 @@ await page.screenshot({path:`${frames}/01-title-screen.png`,animations:'disabled
 await page.click('#startGame');
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().state==='running');
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().awardPresentation?.routeVisible===true);
+await page.waitForTimeout(700);
 await page.screenshot({path:`${frames}/02-route-identity.png`,animations:'disabled'});
 
 await page.evaluate(()=>{const p=window.__NEON_RACER__.game.firstRunDirector;p.active=true;p.completed=false;p.firstCheckpoint=false;p._show('launch',5000)});
@@ -55,19 +56,21 @@ await page.waitForTimeout(1400);
 
 await page.evaluate(()=>{
   const g=window.__NEON_RACER__.game,gr=g.ghostReplay;
-  const p=g.vehicle.position;
+  g.vehicle.reset({x:0,y:1.2,z:24},0);
+  g.vehicle._syncVisuals();
+  g._camera(1/60);
   gr.routeName=g.challenges.routeName;
   gr.recording=[
-    {t:0,x:p.x-1.6,y:1.2,z:p.z+10,yaw:0},
-    {t:1,x:p.x-1.1,y:1.2,z:p.z+2,yaw:0},
-    {t:2,x:p.x-.6,y:1.2,z:p.z-7,yaw:0}
+    {t:0,x:0,y:1.2,z:14,yaw:0},
+    {t:1,x:0,y:1.2,z:6,yaw:0},
+    {t:2,x:0,y:1.2,z:-2,yaw:0}
   ];
   gr.finish({routeName:g.challenges.routeName,time:3},true);
   gr.start(g.challenges.routeName);
-  gr.startedAt=performance.now()-1000;
+  gr.startedAt=performance.now()-900;
   gr.update();
 });
-await page.waitForTimeout(350);
+await page.waitForTimeout(650);
 await page.screenshot({path:`${frames}/05-ghost-pursuit.png`,animations:'disabled'});
 
 await page.keyboard.down('Shift');
@@ -88,12 +91,17 @@ await page.keyboard.up('w');
 
 await page.evaluate(()=>{
   const g=window.__NEON_RACER__.game;
+  g.vehicle.reset({x:0,y:1.2,z:24},0);
+  g.vehicle._syncVisuals();
+  g._camera(1/60);
+  g.ghostReplay?.hide();
   g.awardPresentation.finish(
     {rank:'S',routeName:g.challenges.routeName},
     {first:false,newScore:true,newTime:true,newCombo:true}
   );
 });
-await page.waitForTimeout(180);
+await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().awardPresentation?.finishVisible===true);
+await page.waitForTimeout(520);
 await page.screenshot({path:`${frames}/06-finish-climax.png`,animations:'disabled'});
 await page.waitForTimeout(2400);
 

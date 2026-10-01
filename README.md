@@ -1,8 +1,8 @@
 # Neon Racer — 三蘆夜行
 
-V0.8.4 Traffic Behavior Polish development line for `qookey109-pixel/car`.
+V0.8.5 Traffic Flow Polish development line for `qookey109-pixel/car`.
 
-This branch builds on the validated V0.8.3 Ambient Traffic candidate and makes visual traffic obey the existing city signal rhythm while preserving the player vehicle, route, replay and render-budget contracts.
+This branch builds on the validated V0.8.4 signal-aware traffic candidate and improves queueing, car-following and brake-light behavior without adding any new render group.
 
 ## Current features
 
@@ -17,14 +17,17 @@ This branch builds on the validated V0.8.3 Ambient Traffic candidate and makes v
 - Route-specific PBs for score / time / combo plus per-route S-rank clears
 - Replay Momentum V3 with score + time pursuit targets
 - PB Ghost Replay with same-route trajectories and live AHEAD / BEHIND / EVEN delta
-- V0.8.4 Signal-aware Ambient Traffic:
+- V0.8.5 Traffic Flow:
   - 18 deterministic visual city cars
-  - existing CityAtmosphere signal phase is the single authority
-  - red-light deceleration and stop
-  - green-light acceleration resume
-  - one InstancedMesh for vehicle bodies
-  - one InstancedMesh for headlights
-  - one InstancedMesh for taillights
+  - 9 modeled lanes × 2 cars per lane
+  - existing CityAtmosphere signal phase remains the single traffic-signal authority
+  - red-light queue formation
+  - green-light queue release
+  - 7.5m configured safe following gap
+  - 24m active following distance
+  - per-car cruise-speed variation
+  - dynamic brake-light brightness using instance colors
+  - exactly 3 traffic render groups: body + headlights + taillights
   - 24m near-player exclusion applies to body + lights
   - 0 physics bodies / 0 colliders / 0 camera occluders
 - District Awareness, Objective Compass, checkpoint feedback and stage transitions
@@ -36,15 +39,15 @@ This branch builds on the validated V0.8.3 Ambient Traffic candidate and makes v
 
 ## Current validated base preview
 
-V0.8.4 is based on the fully validated V0.8.3 candidate:
+V0.8.5 is based on the fully validated V0.8.4 candidate:
 
-https://qookey109-pixel.github.io/car/v0.8.3-64d1567/
+https://qookey109-pixel.github.io/car/v0.8.4-bb85eef/
 
 Base exact SHA:
 
-`64d15677647243fe7b4adcc8f1d92e2003cd604f`
+`bb85eef880a3dfb60bd7f6ca684277097d953a92`
 
-A V0.8.4 preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
+A V0.8.5 preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
 
 ## Installation
 
@@ -74,15 +77,15 @@ npm run preview
 - `F3`: debug HUD
 - Gamepad: left stick steering, right stick camera, triggers throttle/brake
 
-## Traffic behavior
+## Traffic flow behavior
 
-Ambient traffic remains visual city atmosphere, not collision gameplay.
+Ambient traffic remains visual city atmosphere rather than collision gameplay.
 
-The central signal grid is still owned by `CityAtmosphere`. Ambient traffic only reads that existing authority through `isSignalGreen(...)`, avoiding a duplicate traffic-light model.
+The traffic signal grid is still owned by `CityAtmosphere`. Cars only read the existing signal authority.
 
-Cars on signalized central roads reduce their own visual speed as they approach a red stop line and resume when the same signal turns green. Roads outside the modeled signal grid continue uninterrupted ambient flow.
+V0.8.5 pairs cars on modeled lanes so a real queue can form. Each follower measures wrapped forward distance to the same-lane lead car. Within 24m it gradually matches the leader, while a 7.5m safe gap prevents stacked cars at red lights.
 
-Headlights and taillights are each one shared `InstancedMesh`, so all 18 cars use only three traffic render groups total.
+Brake lights remain in the existing taillight InstancedMesh. Per-instance colors switch to bright red only during actual deceleration or stopping, then return to a dim running-light red after acceleration resumes. This adds no draw call.
 
 ## Ghost Replay behavior
 
@@ -105,24 +108,27 @@ Hard Chromium LOW budget:
 - draw calls <= 60
 - triangles <= 110,000
 
-V0.8.4 traffic acceptance verifies:
+V0.8.5 traffic acceptance verifies:
 
-- existing traffic-signal authority mapping
-- red-light stop
-- green-light resume
-- 18 traffic bodies in one InstancedMesh
-- 36 headlight instances in one InstancedMesh
-- 36 taillight instances in one InstancedMesh
+- exactly 18 cars across exactly 9 modeled lanes
+- existing signal-authority mapping
+- red-light lead-car stop
+- queued follower stop
+- 7.5m safe-gap tolerance
+- green-light queue release
+- dynamic bright/dim brake-light state
+- exactly three traffic render groups
 - near-player exclusion for body + lights
 - 0 physics-body changes
 - 0 camera-occluder changes
-- Ghost + Traffic + Lights stays inside the hard budget
+- overall LOW budget remains unchanged
 
 First code-gate evidence measured:
 
-- red-light stop: 0.08 m/s
-- green-light resume: 8.48 m/s
-- Ghost + Traffic + Lights: 59 calls / 96,000 triangles
+- queue gap: 7.50m
+- red-light follower: 0.00 m/s
+- green-light follower: 7.46 m/s
+- dynamic brake-light transition: PASS
 - Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari FPS testing.
@@ -131,7 +137,7 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 
 - `src/core/` — game loop and input
 - `src/vehicle/` — RaycastVehicle and car visuals
-- `src/world/` — city generation, atmosphere and signal-aware ambient traffic
+- `src/world/` — city generation, atmosphere and traffic flow
 - `src/gameplay/` — challenges, route logic and Ghost Replay
 - `src/rendering/` — adaptive quality
 - `src/audio/` — procedural Web Audio
@@ -141,8 +147,9 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 ## Known limitations
 
 - Ambient traffic is visual-only; it does not collide with the player.
-- Only the existing central signal grid controls traffic stopping.
-- Ambient traffic does not perform lane changes, overtakes or route planning.
+- Traffic uses paired modeled lanes rather than a full road-network planner.
+- Lane changing and overtaking are not modeled.
+- Signal behavior remains limited to the existing central signal grid.
 - Ghosts remain local-device/local-browser only.
 - Weather cycles remain deferred.
 - Audio remains procedural.
@@ -152,6 +159,6 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 ## Repository safety
 
 - `main` is not modified directly.
-- PR #1–#5 remain independent and unmerged.
-- PR #6 remains Draft while V0.8.4 validation is active.
+- PR #1–#6 remain independent and unmerged.
+- PR #7 remains Draft while V0.8.5 validation is active.
 - Immutable rollback previews must not be overwritten or deleted.

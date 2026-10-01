@@ -9,6 +9,7 @@ import {StageTransition} from './ui/StageTransition.js';
 import {ReplayMomentum} from './ui/ReplayMomentum.js';
 import {GhostReplay} from './gameplay/GhostReplay.js';
 import {CityAtmosphere} from './world/CityAtmosphere.js';
+import {AmbientTraffic} from './world/AmbientTraffic.js';
 
 const app=document.getElementById('app');
 const game=new Game(app);
@@ -21,6 +22,8 @@ const ghostReplay=new GhostReplay(game);
 game.ghostReplay=ghostReplay;
 const atmosphere=new CityAtmosphere(game.city);
 game.cityAtmosphere=atmosphere;
+const ambientTraffic=new AmbientTraffic(game);
+game.ambientTraffic=ambientTraffic;
 const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
   version:'0.8.0',
@@ -49,6 +52,7 @@ window.__NEON_RACER__={
     audio:game.audio.snapshot(),
     quality:{requested:game.quality.requested,effective:game.quality.effective},
     city:game.city.stats,
+    traffic:ambientTraffic.snapshot(),
     renderer:{calls:game.renderer.info.render.calls,triangles:game.renderer.info.render.triangles}
   })
 };

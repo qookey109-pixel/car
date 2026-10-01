@@ -31,7 +31,9 @@ await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().state==='runn
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().awardPresentation?.routeVisible===true);
 await page.screenshot({path:`${frames}/02-route-identity.png`,animations:'disabled'});
 
-await page.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'),null,{timeout:6500});
+await page.evaluate(()=>{const p=window.__NEON_RACER__.game.firstRunDirector;p.active=true;p.completed=false;p.firstCheckpoint=false;p._show('launch',5000)});
+await page.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'));
+await page.waitForTimeout(900);
 await page.screenshot({path:`${frames}/03-first-30-seconds.png`,animations:'disabled'});
 
 await page.keyboard.down('w');
@@ -71,6 +73,17 @@ await page.screenshot({path:`${frames}/05-ghost-pursuit.png`,animations:'disable
 await page.keyboard.down('Shift');
 await page.waitForTimeout(2200);
 await page.keyboard.up('Shift');
+await page.keyboard.down('d');
+await page.waitForTimeout(1400);
+await page.keyboard.up('d');
+await page.waitForTimeout(2200);
+await page.keyboard.down('a');
+await page.waitForTimeout(1400);
+await page.keyboard.up('a');
+await page.keyboard.down('Shift');
+await page.waitForTimeout(2300);
+await page.keyboard.up('Shift');
+await page.waitForTimeout(1800);
 await page.keyboard.up('w');
 
 await page.evaluate(()=>{
@@ -101,7 +114,8 @@ await mobilePage.addInitScript(()=>{try{localStorage.removeItem('neon-racer-reco
 await mobilePage.goto(base,{waitUntil:'networkidle'});
 await mobilePage.click('#startGame');
 await mobilePage.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().state==='running');
-await mobilePage.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'),null,{timeout:6500});
+await mobilePage.evaluate(()=>{const p=window.__NEON_RACER__.game.firstRunDirector;p.active=true;p.completed=false;p.firstCheckpoint=false;p._show('launch',5000)});
+await mobilePage.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'));
 await mobilePage.screenshot({path:`${frames}/07-mobile-844x390.png`,animations:'disabled'});
 await mobile.close();
 

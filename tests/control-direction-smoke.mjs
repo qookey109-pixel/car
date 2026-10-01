@@ -29,11 +29,12 @@ try{
       return value;
     };
     const sampleTouch=key=>{
-      input.touch.left=false;input.touch.right=false;
+      input.touch.left=false;input.touch.right=false;input.touchSteer=0;
       input.touch[key]=true;
-      const value=input.sample().steer;
+      const values=[];
+      for(let i=0;i<6;i++){input.lastSampleAt=performance.now()-1000/60;values.push(input.sample().steer)}
       input.touch[key]=false;
-      return value;
+      return{first:values[0],last:values.at(-1)};
     };
     const mapping={
       keyA:sampleKey('KeyA'),keyD:sampleKey('KeyD'),
@@ -74,7 +75,7 @@ try{
   fs.writeFileSync('test-results/control-direction/contract.json',JSON.stringify(result,null,2));
 
   const m=result.mapping;
-  if(!(m.keyA===1&&m.arrowLeft===1&&m.touchLeft===1&&m.keyD===-1&&m.arrowRight===-1&&m.touchRight===-1))throw new Error(`Logical steering mapping failed: ${JSON.stringify(m)}`);
+  if(!(m.keyA===1&&m.arrowLeft===1&&m.keyD===-1&&m.arrowRight===-1&&m.touchLeft.first>0&&m.touchLeft.first<1&&m.touchLeft.last>m.touchLeft.first&&m.touchRight.first<0&&m.touchRight.first>-1&&m.touchRight.last<m.touchRight.first))throw new Error(`Logical steering mapping failed: ${JSON.stringify(m)}`);
   if(!(result.left.x<-10&&result.right.x>10))throw new Error(`Physical A/D steering direction failed: ${JSON.stringify({left:result.left,right:result.right})}`);
   if(!(result.reverse.peakKmh>25&&result.reverse.peakKmh<48&&result.reverse.z>40&&result.reverse.minRaw>=-1))throw new Error(`Reverse envelope failed: ${JSON.stringify(result.reverse)}`);
   if(result.reverse.gearAbove20!=='R'||result.reverse.finalGear!=='R')throw new Error(`Reverse HUD gear must stay R above 20 km/h: ${JSON.stringify(result.reverse)}`);

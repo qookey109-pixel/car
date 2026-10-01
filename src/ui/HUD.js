@@ -113,8 +113,8 @@ export class HUD{
     if(!this.el.bootRecord)return;
     const list=Array.isArray(routes)?routes:[];
     if(!list.length){this.el.bootRecord.textContent=records.runs>0?`PERSONAL BEST · ${Number(records.bestScore||0).toLocaleString()} pts · ${this._formatTime(records.bestTime)} · x${Number(records.bestCombo||1).toFixed(1)} · ${records.runs} clears`:'PERSONAL BEST · 尚未建立';return}
-    const next=list[((Number(records.runs)||0)%list.length+list.length)%list.length],name=next?.name||'CITY LOOP',best=records.routeBests?.[name];
-    this.el.bootRecord.textContent=best?`NEXT ROUTE · ${name} · PB ${Number(best.bestScore||0).toLocaleString()} pts · ${this._formatTime(best.bestTime)} · x${Number(best.bestCombo||1).toFixed(1)}`:`NEXT ROUTE · ${name} · PB 尚未建立`;
+    const next=list[((Number(records.runs)||0)%list.length+list.length)%list.length],name=next?.name||'CITY LOOP',identity=next?.style||next?.focus||'CITY LOOP',best=records.routeBests?.[name];
+    this.el.bootRecord.textContent=best?`NEXT ROUTE · ${name} · ${identity} · PB ${Number(best.bestScore||0).toLocaleString()} pts · ${this._formatTime(best.bestTime)} · x${Number(best.bestCombo||1).toFixed(1)} · S×${Number(best.sClears||0)}`:`NEXT ROUTE · ${name} · ${identity} · PB 尚未建立`;
   }
 
   showComplete(summary){

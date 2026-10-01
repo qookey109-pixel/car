@@ -29,8 +29,9 @@ await page.screenshot({path:`${frames}/01-title-screen.png`,animations:'disabled
 await page.click('#startGame');
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().state==='running');
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().awardPresentation?.routeVisible===true);
-await page.waitForTimeout(700);
-await page.screenshot({path:`${frames}/02-route-identity.png`,animations:'disabled'});
+await page.evaluate(()=>{const g=window.__NEON_RACER__.game;for(let i=0;i<45;i++)g._camera(1/60);g.awardPresentation.routeIntro({name:g.challenges.routeName,style:g.challenges.routeStyle,focus:g.challenges.routeFocus})});
+await page.waitForTimeout(480);
+await page.screenshot({path:`${frames}/02-route-identity.png`});
 
 await page.evaluate(()=>{const p=window.__NEON_RACER__.game.firstRunDirector;p.active=true;p.completed=false;p.firstCheckpoint=false;p._show('launch',5000)});
 await page.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'));
@@ -93,7 +94,7 @@ await page.evaluate(()=>{
   const g=window.__NEON_RACER__.game;
   g.vehicle.reset({x:0,y:1.2,z:24},0);
   g.vehicle._syncVisuals();
-  g._camera(1/60);
+  for(let i=0;i<75;i++)g._camera(1/60);
   g.ghostReplay?.hide();
   g.awardPresentation.finish(
     {rank:'S',routeName:g.challenges.routeName},
@@ -102,7 +103,7 @@ await page.evaluate(()=>{
 });
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().awardPresentation?.finishVisible===true);
 await page.waitForTimeout(520);
-await page.screenshot({path:`${frames}/06-finish-climax.png`,animations:'disabled'});
+await page.screenshot({path:`${frames}/06-finish-climax.png`});
 await page.waitForTimeout(2400);
 
 const render=await page.evaluate(()=>{

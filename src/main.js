@@ -27,10 +27,14 @@ game.ambientTraffic=ambientTraffic;
 const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
   version:'0.8.0',
+  release:'0.9.0',
+  presentation:'award-candidate-v1',
   game,
   compass,
   snapshot:()=>({
     version:'0.8.0',
+    release:'0.9.0',
+    presentation:'award-candidate-v1',
     state:game.state,
     speedKmh:game.vehicle.speedKmh,
     position:{x:game.vehicle.position.x,y:game.vehicle.position.y,z:game.vehicle.position.z},

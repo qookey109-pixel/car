@@ -163,7 +163,7 @@ body.award-finish-active .award-presentation::after{opacity:1}
 }
 @media(orientation:landscape) and (max-height:480px){
   #boot .hero-card{padding:14px 20px}
-  .first-run-director{padding-bottom:max(96px,env(safe-area-inset-bottom))}
+  .first-run-director{padding-bottom:max(116px,env(safe-area-inset-bottom))}
   .first-run-cue{min-width:min(390px,50vw);max-width:420px;padding:9px 14px 10px;border-radius:12px;background:linear-gradient(180deg,rgba(3,11,18,.58),rgba(2,7,12,.34))}
   #boot .hero-copy{max-width:560px}
   #boot .route-signatures{margin:8px auto;gap:6px}

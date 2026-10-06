@@ -11,7 +11,7 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
   await page.goto(base,{waitUntil:'networkidle'});
-  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.2');
+  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.3');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
 

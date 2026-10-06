@@ -188,3 +188,96 @@ body.award-finish-active .award-presentation::after{opacity:1}
 @media(prefers-reduced-motion:reduce){
   #hud .hud-top-left,#hud .speed-panel,#hud .score-panel,#hud .ghost-delta,#hud .challenge-toast,#hud .objective-compass,#mobileControls,.award-presentation::before,.award-presentation::after{transition-duration:.01ms}
 }
+
+/* V0.9.5 polish pass — clearer hierarchy without touching gameplay/render cost. */
+#boot .eyebrow{
+  color:rgba(214,247,255,.52);
+  letter-spacing:.24em;
+}
+#boot h1{
+  margin:.12em 0 .18em;
+  font-size:clamp(58px,10vw,116px);
+  line-height:.82;
+  letter-spacing:-.075em;
+  text-wrap:balance;
+  text-shadow:0 10px 42px rgba(0,0,0,.34);
+}
+#boot .hero-copy{
+  margin-inline:auto;
+  font-size:clamp(14px,1.35vw,17px);
+  line-height:1.7;
+  text-wrap:balance;
+}
+#boot .route-signatures span:nth-child(1){border-top-color:rgba(101,242,255,.48)}
+#boot .route-signatures span:nth-child(2){border-top-color:rgba(255,105,232,.48)}
+#boot .route-signatures span:nth-child(3){border-top-color:rgba(255,193,92,.50)}
+#boot .route-signatures span:nth-child(1) b{color:#baf9ff}
+#boot .route-signatures span:nth-child(2) b{color:#ffd0f8}
+#boot .route-signatures span:nth-child(3) b{color:#ffe0aa}
+
+#boot .menu-actions button,
+#complete .menu-actions button{
+  min-height:46px;
+  transform:translateY(0);
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+#boot .menu-actions .primary{
+  box-shadow:0 12px 36px rgba(62,221,255,.12);
+}
+@media(hover:hover) and (pointer:fine){
+  #boot .menu-actions button:hover,
+  #complete .menu-actions button:hover{
+    transform:translateY(-2px);
+    border-color:rgba(183,246,255,.34);
+  }
+  #boot .menu-actions .primary:hover{
+    box-shadow:0 16px 44px rgba(62,221,255,.19);
+  }
+}
+#boot .menu-actions button:focus-visible,
+#complete .menu-actions button:focus-visible,
+.mobile-controls button:focus-visible{
+  outline:2px solid var(--route-accent,#79f2ff);
+  outline-offset:3px;
+}
+
+#bootRecord{
+  opacity:.72;
+  letter-spacing:.09em;
+}
+#complete .eyebrow{
+  letter-spacing:.22em;
+  opacity:.64;
+}
+#complete .result-grid div{
+  min-width:0;
+}
+#complete .result-grid b{
+  font-variant-numeric:tabular-nums;
+}
+#complete .record-strip{
+  font-variant-numeric:tabular-nums;
+}
+
+@media(max-width:760px){
+  #boot{
+    padding-left:max(12px,env(safe-area-inset-left));
+    padding-right:max(12px,env(safe-area-inset-right));
+  }
+  #boot h1{font-size:clamp(52px,16vw,78px)}
+  #boot .hero-copy{font-size:14px;line-height:1.55}
+  #boot .route-signatures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+  #boot .route-signatures span{min-width:0;padding:9px 7px}
+  #boot .route-signatures b{font-size:10px;letter-spacing:.12em}
+}
+@media(orientation:landscape) and (max-height:480px){
+  #boot h1{font-size:clamp(42px,9vh,64px);margin:.05em 0 .1em}
+  #boot .hero-copy{font-size:11px;line-height:1.4}
+  #bootRecord{font-size:9px}
+  #boot .menu-actions button{min-height:38px}
+  #complete{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+}
+@media(prefers-reduced-motion:reduce){
+  #boot .menu-actions button,
+  #complete .menu-actions button{transition-duration:.01ms;transform:none!important}
+}

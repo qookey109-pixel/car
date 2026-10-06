@@ -12,6 +12,7 @@ on:
       - feature/v0.9.1-award-hud
       - feature/v0.9.2-first-30-seconds
       - feature/v0.9.3-submission-package
+      - feature/v0.9.4-route-signature
   workflow_dispatch:
 
 jobs:
@@ -104,6 +105,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/first-30-seconds-smoke.mjs
+      - name: Route signature acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/route-signature-smoke.mjs
       - name: Audio feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

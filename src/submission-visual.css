@@ -2,12 +2,16 @@
    Presentation-only layer over the validated V0.9.4 route-signature build.
    No new WebGL geometry, render groups, physics bodies, colliders or camera occluders. */
 
+#boot{
+  background:radial-gradient(circle at 50% 42%,rgba(3,13,22,.28),rgba(1,5,9,.66) 72%,rgba(1,3,6,.82));
+}
 #boot .hero-card{
-  width:min(860px,94vw);
+  width:min(900px,94vw);
   padding:clamp(28px,4.4vw,54px);
-  background:linear-gradient(180deg,rgba(7,16,26,.70),rgba(4,10,17,.54));
-  border-color:rgba(255,255,255,.07);
-  box-shadow:0 40px 120px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.035);
+  background:radial-gradient(ellipse at 50% 46%,rgba(3,12,20,.64),rgba(3,10,17,.28) 66%,transparent 100%);
+  border-color:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
 }
 #boot .hero-copy{max-width:610px;color:rgba(238,248,255,.66)}
 #boot .route-signatures{gap:8px;margin:22px auto 18px;max-width:690px}
@@ -17,8 +21,8 @@
   gap:5px;
   padding:10px 14px;
   border-color:rgba(118,239,255,.10);
-  border-radius:14px;
-  background:linear-gradient(180deg,rgba(8,24,35,.34),rgba(4,13,22,.20));
+  border-radius:10px;
+  background:linear-gradient(180deg,rgba(8,24,35,.26),rgba(4,13,22,.12));
   color:rgba(237,251,255,.58);
   font:700 10px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;
   letter-spacing:.08em;
@@ -36,6 +40,7 @@
 #hud .score-panel,
 #hud .ghost-delta,
 #hud .challenge-toast,
+#hud .objective-compass,
 #mobileControls{
   transition:opacity .26s ease,transform .26s ease,filter .26s ease;
 }
@@ -43,11 +48,19 @@ body.award-route-active #hud .hud-top-left,
 body.award-route-active #hud .speed-panel,
 body.award-route-active #hud .score-panel,
 body.award-route-active #hud .ghost-delta,
-body.award-route-active #hud .challenge-toast{
+body.award-route-active #hud .challenge-toast,
+body.award-route-active #hud .objective-compass,
+body.award-finish-active #hud .hud-top-left,
+body.award-finish-active #hud .speed-panel,
+body.award-finish-active #hud .score-panel,
+body.award-finish-active #hud .ghost-delta,
+body.award-finish-active #hud .challenge-toast,
+body.award-finish-active #hud .objective-compass{
   opacity:0!important;
   filter:blur(2px);
 }
-body.award-route-active #mobileControls{
+body.award-route-active #mobileControls,
+body.award-finish-active #mobileControls{
   opacity:.18;
   filter:saturate(.55);
 }
@@ -149,7 +162,9 @@ body.award-finish-active .award-presentation::after{opacity:1}
   #boot .route-signatures span{min-width:0;flex:1 1 30%}
 }
 @media(orientation:landscape) and (max-height:480px){
-  #boot .hero-card{padding:16px 20px}
+  #boot .hero-card{padding:14px 20px}
+  .first-run-director{padding-bottom:max(96px,env(safe-area-inset-bottom))}
+  .first-run-cue{min-width:min(390px,50vw);max-width:420px;padding:9px 14px 10px;border-radius:12px;background:linear-gradient(180deg,rgba(3,11,18,.58),rgba(2,7,12,.34))}
   #boot .hero-copy{max-width:560px}
   #boot .route-signatures{margin:8px auto;gap:6px}
   #boot .route-signatures span{padding:6px 9px;font-size:8px;border-radius:10px}
@@ -171,5 +186,5 @@ body.award-finish-active .award-presentation::after{opacity:1}
   #complete .menu-actions{margin-top:10px}
 }
 @media(prefers-reduced-motion:reduce){
-  #hud .hud-top-left,#hud .speed-panel,#hud .score-panel,#hud .ghost-delta,#hud .challenge-toast,#mobileControls,.award-presentation::before,.award-presentation::after{transition-duration:.01ms}
+  #hud .hud-top-left,#hud .speed-panel,#hud .score-panel,#hud .ghost-delta,#hud .challenge-toast,#hud .objective-compass,#mobileControls,.award-presentation::before,.award-presentation::after{transition-duration:.01ms}
 }

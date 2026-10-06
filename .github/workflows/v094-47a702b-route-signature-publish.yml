@@ -90,6 +90,7 @@ jobs:
               write(rel,get(u))
           mirror_index('')
           for prefix in previews:
+            print(f'CHECK {prefix}',flush=True)
             mirror_index(prefix)
             marker=get(urljoin(base,f'{prefix}/PREVIEW_SHA.txt'))
             short=prefix.rsplit('-',1)[-1]

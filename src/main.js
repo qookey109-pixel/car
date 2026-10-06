@@ -61,6 +61,7 @@ window.__NEON_RACER__={
     audio:game.audio.snapshot(),
     quality:{requested:game.quality.requested,effective:game.quality.effective},
     city:game.city.stats,
+    routeSignature:atmosphere.routeSignatureSnapshot(),
     traffic:ambientTraffic.snapshot(),
     awardPresentation:awardPresentation.snapshot(),
     firstRun:firstRunDirector.snapshot(),

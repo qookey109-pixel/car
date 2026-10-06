@@ -20,6 +20,7 @@ try{
     g.state='paused';
     const bodiesBefore=g.physics.bodies.length;
     const occludersBefore=g.city.cameraOccluders.length;
+    const initial={...window.__NEON_RACER__.snapshot().routeSignature};
     const routes=[
       {name:'河岸東環',style:'高速長彎',focus:'HIGH SPEED'},
       {name:'霓虹西環',style:'密集轉向',focus:'TECHNICAL'},
@@ -53,7 +54,7 @@ try{
       });
     }
     return{
-      initial:window.__NEON_RACER__.snapshot().routeSignature,
+      initial,
       routes:out,
       physics:{before:bodiesBefore,after:g.physics.bodies.length},
       occluders:{before:occludersBefore,after:g.city.cameraOccluders.length},

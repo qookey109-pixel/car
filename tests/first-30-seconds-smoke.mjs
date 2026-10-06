@@ -49,7 +49,7 @@ try{
     return{snapshot:p.snapshot(),title:p.cue.querySelector('.first-run-title').textContent,line:p.cue.querySelector('.first-run-line').textContent,visible:p.cue.classList.contains('show')};
   });
   if(!checkpoint.snapshot.firstCheckpoint||checkpoint.snapshot.stage!=='checkpoint'||checkpoint.title!=='CLEAN'||!checkpoint.visible)throw new Error(`Checkpoint onboarding finish failed: ${JSON.stringify(checkpoint)}`);
-  await page.waitForTimeout(1450);
+  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().firstRun?.stage==='done',null,{timeout:3500});
   const done=await page.evaluate(()=>window.__NEON_RACER__.snapshot().firstRun);
   if(done.active||!done.completed||done.stage!=='done')throw new Error(`First-run completion failed: ${JSON.stringify(done)}`);
 

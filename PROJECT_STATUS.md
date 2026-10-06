@@ -87,20 +87,20 @@ This includes package metadata, runtime snapshot, F3 debug label and version-awa
 - Traffic remains visual-only with 0 physics bodies / 0 colliders / 0 camera occluders.
 - Existing camera, VFX, procedural audio and adaptive-quality contracts remain intact.
 
-## Pre-final code-gate evidence
+## Final V0.9.2 acceptance evidence
 
-Validated pre-documentation candidate:
+Final accepted feature/documentation candidate before publication:
 
-`7cd65f4566a7fbce84f90e92f46fabde29f9cb6c`
+`a84a54f6fcf9fb3e9dcc09c1783e96da218c9dfe`
 
 Main validation:
 
-https://github.com/qookey109-pixel/car/actions/runs/36831816336
+https://github.com/qookey109-pixel/car/actions/runs/36832765400
 
 Independent validation:
 
-- Audio Feel: https://github.com/qookey109-pixel/car/actions/runs/36831821241
-- Objective Compass: https://github.com/qookey109-pixel/car/actions/runs/36831821268
+- Audio Feel: https://github.com/qookey109-pixel/car/actions/runs/36832771881
+- Objective Compass: https://github.com/qookey109-pixel/car/actions/runs/36832771884
 
 Results:
 
@@ -110,7 +110,7 @@ Results:
 - Objective Compass: SUCCESS.
 - First 30 Seconds: PASS.
 - Flow: `GO → N₂O hint → checkpoint CLEAN`.
-- 844×390 mobile control corridor: PASS.
+- 844×390 mobile control corridor: PASS with 108px bottom safety corridor.
 - FirstRunDirector WebGL render groups: 0.
 - Award Presentation: PASS with 0 WebGL draw-call delta.
 - Award HUD: PASS.
@@ -125,35 +125,18 @@ Results:
 - Chromium LOW: 59 calls / 95,988 triangles / peak 180.7 km/h.
 - Hard LOW budget remains <=60 calls / <=110,000 triangles.
 
-Pre-final QA artifacts:
+Final QA artifacts:
 
-- Chromium QA: `11147401328`
-  - SHA256 `283630bfd1df48069b725af1ff09ee0c9efc2566191396947c9d416f026432f1`
-- WebKit QA: `11146614769`
-  - SHA256 `35f1aa8fc2376db930cc319fb0765bb7db5a987b50ce113103e893cb49e4ea77`
+- Chromium QA: `11147937177`
+  - SHA256 `b639536079a1c86bb56a62f4ea43ed464ecafe2dc04704ee6f780d50bdf3b656`
+- WebKit QA: `11148426920`
+  - SHA256 `d9d0f92692819db5222640fffb67a66c272b7c86c00453a29a0f612415e05610`
 
 WebKit CI is browser-engine regression evidence only, not real Mac Safari hardware FPS.
 
-## Final V0.9.2 gate
+## Publication gate
 
-The final exact PR #11 head must pass:
-
-1. Static smoke
-2. Production build
-3. Chromium + WebKit browser play
-4. A/D + reverse
-5. City / District / Camera / VFX / Compass
-6. Checkpoint / Stage Transition / Replay Momentum
-7. Ghost Replay
-8. Traffic Flow V3
-9. Award Presentation
-10. Award HUD
-11. First 30 Seconds
-12. Audio
-13. Software LOW numeric budget
-14. 844×390 mobile input/layout evidence
-
-After that gate, publish one SHA-specific immutable V0.9.2 Pages preview and record final evidence in PR #11 without modifying the accepted feature SHA.
+The code/presentation acceptance gate is complete. After this documentation sync, rerun the exact-head matrix once so the published SHA includes both accepted implementation and final evidence. Publish one SHA-specific immutable V0.9.2 Pages preview only after that run succeeds.
 
 ## Remaining submission work
 

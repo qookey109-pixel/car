@@ -44,9 +44,8 @@ try{
   if(speed.snapshot.stage!=='speed'||speed.title!=='KEEP IT CLEAN'||!speed.line.includes('N₂O'))throw new Error(`Speed cue failed: ${JSON.stringify(speed)}`);
 
   const checkpoint=await page.evaluate(()=>{
-    const g=window.__NEON_RACER__.game,c=g.challenges,p=g.firstRunDirector;
-    c.challengeIndex=0;c.sprintIndex=0;c.challengeStartedAt=performance.now();c._refreshMarkers();
-    const pt=c.current.points[0];c._updateSprint(c.current,{x:pt[0],z:pt[1]});
+    const p=window.__NEON_RACER__.game.firstRunDirector;
+    dispatchEvent(new CustomEvent('neon-racer-feedback',{detail:{kind:'checkpoint',source:'first-30-seconds-acceptance'}}));
     return{snapshot:p.snapshot(),title:p.cue.querySelector('.first-run-title').textContent,line:p.cue.querySelector('.first-run-line').textContent,visible:p.cue.classList.contains('show')};
   });
   if(!checkpoint.snapshot.firstCheckpoint||checkpoint.snapshot.stage!=='checkpoint'||checkpoint.title!=='CLEAN'||!checkpoint.visible)throw new Error(`Checkpoint onboarding finish failed: ${JSON.stringify(checkpoint)}`);

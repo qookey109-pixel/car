@@ -18,7 +18,7 @@ try{
     g.renderer.info.reset();g._render();
     return{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles,snapshot:window.__NEON_RACER__.snapshot().awardPresentation};
   });
-  if(pre.snapshot.profile!=='award-presentation-v1'||pre.snapshot.renderGroups!==0)throw new Error(`Award profile failed: ${JSON.stringify(pre.snapshot)}`);
+  if(pre.snapshot.profile!=='award-presentation-v2'||pre.snapshot.renderGroups!==0)throw new Error(`Award profile failed: ${JSON.stringify(pre.snapshot)}`);
 
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');

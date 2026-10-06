@@ -1,0 +1,160 @@
+/* V0.9.3 Submission Visual Polish — DOM/CSS only, zero WebGL cost */
+
+/* Editorial menu: present the game, not the implementation stack. */
+#boot .hero-card{
+  width:min(820px,94vw);
+  background:linear-gradient(180deg,rgba(8,17,27,.78),rgba(5,10,17,.70));
+  border-color:rgba(255,255,255,.08);
+  box-shadow:0 36px 110px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.04);
+}
+#boot .hero-copy{max-width:600px;color:rgba(238,248,255,.66)}
+#boot .route-signatures{gap:10px;margin:18px 0 16px}
+#boot .route-signatures span{
+  min-width:150px;
+  padding:8px 12px;
+  border-color:rgba(118,239,255,.12);
+  background:rgba(5,18,27,.34);
+  color:rgba(237,251,255,.72);
+  font:800 10px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.08em;
+}
+#boot .tiny-note{letter-spacing:.08em;color:rgba(255,255,255,.34)}
+
+/* Route intro becomes a clean cinematic beat. */
+#hud .hud-top-left,
+#hud .speed-panel,
+#hud .score-panel,
+#hud .ghost-delta,
+#hud .challenge-toast,
+#mobileControls{
+  transition:opacity .26s ease,transform .26s ease,filter .26s ease;
+}
+body.award-route-active #hud .hud-top-left,
+body.award-route-active #hud .speed-panel,
+body.award-route-active #hud .score-panel,
+body.award-route-active #hud .ghost-delta,
+body.award-route-active #hud .challenge-toast{
+  opacity:0!important;
+  filter:blur(2px);
+}
+body.award-route-active #mobileControls{
+  opacity:.18;
+  filter:saturate(.55);
+}
+.award-presentation::before,
+.award-presentation::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;
+  height:7vh;
+  min-height:22px;
+  opacity:0;
+  background:linear-gradient(180deg,rgba(1,4,8,.76),rgba(1,4,8,0));
+  transition:opacity .24s ease;
+}
+.award-presentation::before{top:0}
+.award-presentation::after{bottom:0;transform:rotate(180deg)}
+body.award-route-active .award-presentation::before,
+body.award-route-active .award-presentation::after,
+body.award-finish-active .award-presentation::before,
+body.award-finish-active .award-presentation::after{opacity:1}
+
+/* Remove engineering telemetry from the normal player-facing composition. */
+#qualityBadge{display:none!important}
+
+/* Mobile keeps hit areas, but loses the heavy dashboard look. */
+.mobile-controls button{
+  background:rgba(4,12,20,.38);
+  border-color:rgba(255,255,255,.12);
+  box-shadow:0 8px 24px rgba(0,0,0,.16);
+  backdrop-filter:blur(9px);
+  font-size:14px;
+}
+.mobile-controls .gas{
+  background:linear-gradient(180deg,rgba(73,255,193,.10),rgba(4,12,20,.42));
+  border-color:rgba(74,255,187,.30);
+}
+.mobile-controls .brake{border-color:rgba(255,120,120,.22)}
+.mobile-controls .nitro{border-color:rgba(87,231,255,.26)}
+.mobile-controls .drift{border-color:rgba(255,215,87,.24)}
+.mobile-controls button.active{background:rgba(108,242,255,.12)}
+
+/* Result screen: poster-like hierarchy instead of dashboard cards. */
+#complete{background:radial-gradient(circle at 50% 35%,rgba(23,91,115,.16),rgba(2,5,10,.92) 58%,#02050a)}
+#complete .result-card{
+  width:min(900px,94vw);
+  padding:clamp(28px,4vw,52px);
+  border:0;
+  background:linear-gradient(180deg,rgba(7,15,24,.48),rgba(4,9,15,.28));
+  box-shadow:none;
+  backdrop-filter:blur(10px);
+}
+#complete .result-card h1{
+  margin:4px 0 2px;
+  font-size:clamp(48px,7.5vw,78px);
+  letter-spacing:-.055em;
+}
+#complete .result-route{
+  margin-top:4px;
+  color:rgba(145,242,255,.72);
+  font:900 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.22em;
+}
+#complete .result-rank{
+  margin:8px 0 14px;
+  font-size:clamp(92px,12vw,138px);
+  line-height:.8;
+  text-shadow:0 0 46px rgba(87,236,255,.24);
+}
+#complete .result-grid{
+  margin:18px auto;
+  max-width:700px;
+  gap:0;
+  border-top:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+#complete .result-grid div{
+  padding:13px 18px;
+  border:0;
+  border-left:1px solid rgba(255,255,255,.07);
+  border-radius:0;
+  background:transparent;
+}
+#complete .result-grid div:first-child{border-left:0}
+#complete .result-grid span{color:rgba(255,255,255,.34)}
+#complete .result-grid b{font-size:19px}
+#complete #finalRecord{
+  max-width:620px;
+  margin-inline:auto;
+  background:rgba(4,14,21,.24);
+  border-color:rgba(121,242,255,.13);
+}
+#complete #replayMomentum{max-width:620px;margin-inline:auto}
+#complete .menu-actions{margin-top:20px}
+
+/* Compact landscape: strip secondary live telemetry and keep the road readable. */
+@media(orientation:landscape) and (max-height:480px){
+  #boot .hero-card{padding:16px 20px}
+  #boot .hero-copy{max-width:560px}
+  #boot .route-signatures{margin:8px 0;gap:6px}
+  #boot .route-signatures span{min-width:0;padding:6px 9px;font-size:8px}
+  #boot .tiny-note{margin-top:9px;font-size:9px}
+  #hud .score-panel{display:none!important}
+  .mobile-controls button{
+    background:rgba(4,12,20,.30);
+    box-shadow:0 5px 16px rgba(0,0,0,.13);
+    font-size:13px;
+  }
+  body.award-route-active #mobileControls{opacity:.12}
+  #complete .result-card{padding:14px 18px}
+  #complete .result-card h1{font-size:38px}
+  #complete .result-rank{font-size:70px;margin:5px 0 8px}
+  #complete .result-grid{margin:10px auto}
+  #complete .result-grid div{padding:8px 10px}
+  #complete .result-grid b{font-size:16px}
+  #complete .menu-actions{margin-top:10px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #hud .hud-top-left,#hud .speed-panel,#hud .score-panel,#hud .ghost-delta,#hud .challenge-toast,#mobileControls,.award-presentation::before,.award-presentation::after{transition-duration:.01ms}
+}

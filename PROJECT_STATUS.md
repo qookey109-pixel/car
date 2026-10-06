@@ -1,6 +1,6 @@
 # Project Status
 
-Status date: 2026-10-01 (Asia/Taipei)
+Status date: 2026-10-06 (Asia/Taipei)
 
 ## Authority
 
@@ -89,18 +89,18 @@ This includes package metadata, runtime snapshot, F3 debug label and version-awa
 
 ## Final V0.9.2 acceptance evidence
 
-Final accepted feature/documentation candidate before publication:
+Latest validated implementation candidate before this documentation sync:
 
-`a84a54f6fcf9fb3e9dcc09c1783e96da218c9dfe`
+`9da22108fde50aa2120c9aa4e71b8411b4939c9f`
 
 Main validation:
 
-https://github.com/qookey109-pixel/car/actions/runs/36832765400
+https://github.com/qookey109-pixel/car/actions/runs/37409902149
 
 Independent validation:
 
-- Audio Feel: https://github.com/qookey109-pixel/car/actions/runs/36832771881
-- Objective Compass: https://github.com/qookey109-pixel/car/actions/runs/36832771884
+- Audio Feel: https://github.com/qookey109-pixel/car/actions/runs/37409906685
+- Objective Compass: https://github.com/qookey109-pixel/car/actions/runs/37409906708
 
 Results:
 
@@ -127,10 +127,10 @@ Results:
 
 Final QA artifacts:
 
-- Chromium QA: `11147937177`
-  - SHA256 `b639536079a1c86bb56a62f4ea43ed464ecafe2dc04704ee6f780d50bdf3b656`
-- WebKit QA: `11148426920`
-  - SHA256 `d9d0f92692819db5222640fffb67a66c272b7c86c00453a29a0f612415e05610`
+- Chromium QA: `11388184603`
+  - SHA256 `e23fffe418b26ec8b8abb09c06aa1dfee54eb238fe2b6fc815f0da8d86a9e0ad`
+- WebKit QA: `11388129552`
+  - SHA256 `e30045476971d36cdce63ac6fafcc5d27772992256005e94fb7cc77add204917`
 
 WebKit CI is browser-engine regression evidence only, not real Mac Safari hardware FPS.
 

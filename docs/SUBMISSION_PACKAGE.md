@@ -1,55 +1,68 @@
 # 三蘆夜行 — Submission Package
 
-Status date: 2026-10-01 (Asia/Taipei)
+Status date: 2026-10-06 (Asia/Taipei)
 
 ## One-line pitch
 
-**三蘆夜行**是一款以三重／蘆洲夜間城市節奏為核心的短篇瀏覽器駕駛遊戲：玩家不是征服一張大地圖，而是在三條不同性格的路線中讀懂速度、街廓與自己的節奏。
+**三蘆夜行**是一款以三重／蘆洲夜間城市節奏為核心的短篇瀏覽器駕駛遊戲：玩家不是征服一張大地圖，而是在三條不同性格的路線中讀懂速度、街廓、夜色與自己的節奏。
 
 ## Short description
 
-三蘆夜行把都市夜間駕駛拆成三種可重玩的節奏：FLOW、PRECISION、RHYTHM。玩家從路線身份、Gate、速度與車流中自然理解目標，完成後再透過 Rank、Route PB、Replay Momentum 與 Ghost Replay 持續追逐更乾淨的跑法。作品以瀏覽器原生方式運作，支援鍵盤、觸控與手把，並在嚴格 LOW render budget 下維持完整城市感。
+三蘆夜行把都市夜間駕駛拆成三種可重玩的節奏：FLOW、PRECISION、RHYTHM。玩家從路線身份、Gate、速度、車流與城市色彩自然理解目標，完成後再透過 Rank、Route PB、Replay Momentum 與 Ghost Replay 追逐更乾淨的跑法。作品以瀏覽器原生方式運作，支援鍵盤、觸控與手把，並在嚴格 LOW render budget 下維持完整城市感。
 
 ## Design statement
 
-這個專案的核心不是「做一個更大的城市」，而是「讓有限的城市元素形成可以被駕駛讀懂的節奏」。
+核心不是「做一個更大的城市」，而是「讓有限的城市元素形成可以被駕駛讀懂、也能被記住的節奏」。
 
-設計上有三個主要原則：
-
-1. **城市要參與遊戲，而不是只當背景。** 號誌、車流、街區亮度、道路方向與 checkpoint 導引共同影響玩家對速度與下一步的判讀。
-2. **每條路線必須有可被記住的性格。** 河岸東環偏 FLOW，霓虹西環偏 PRECISION，高架折返偏 RHYTHM；差異來自道路形狀、節奏與決策壓力，而不是單純換名字。
-3. **短局要有重玩的理由。** Route PB、S Rank、Replay Momentum 與 PB Ghost 讓玩家不是只追「破關」，而是追更乾淨、更快、更像自己的跑法。
+1. **城市要參與遊戲，而不是只當背景。** 號誌、車流、街區亮度、道路方向、checkpoint 導引與 route signature 共同影響玩家對速度與下一步的判讀。
+2. **每條路線要有駕駛性格，也要有視覺性格。** FLOW、PRECISION、RHYTHM 不只存在於文字；同一座城市會以不同 fog、lighting、facade、road accent 與 HUD accent 呈現。
+3. **短局要有重玩的理由。** Route PB、S Rank、Replay Momentum 與 PB Ghost 讓玩家追求更乾淨、更快、更像自己的跑法。
 
 ## First-30-second philosophy
 
 評審第一次打開作品時，不應先讀一段教學。
 
-因此 V0.9.2 的首次體驗採用：
-
 - 路線 cinematic 先建立身份。
 - 短暫 GO cue 告訴玩家開始。
 - 控制提示依裝置改寫。
-- 速度起來後只提醒一次現有 Nitro 操作。
+- 速度起來後只提醒一次 Nitro。
 - 第一個 checkpoint 命中後顯示 CLEAN，教學立即退出。
 - 所有提示使用 pointer-events:none，不暫停、不鎖輸入。
 - 同一 session 不重複打擾回鍋玩家。
 
-## Route identities
+## Route signatures
 
 ### 河岸東環 — FLOW
-RIVER EAST LOOP / 高速長彎
+**RIVER EAST LOOP / 高速長彎**
 
-目標是建立連續速度，不被彎道打斷節奏。
+- 冷青夜空
+- 暖色路燈
+- cyan road / HUD accent
+- 目標：連續速度
 
 ### 霓虹西環 — PRECISION
-NEON WEST LOOP / 密集轉向
+**NEON WEST LOOP / 密集轉向**
 
-目標是用乾淨的轉向與路線判讀穿過緊密街廓。
+- 洋紅霧色
+- cyan + magenta facade rhythm
+- pink HUD / presentation accent
+- 目標：精準路線判讀
 
 ### 高架折返 — RHYTHM
-VIADUCT RETURN / 煞車節奏
+**VIADUCT RETURN / 煞車節奏**
 
-目標是用煞車點與回正時機維持節奏。
+- steel-blue 夜色
+- amber facade / road accent
+- warm amber HUD accent
+- 目標：煞車點與回正節奏
+
+三個 signature 都只重調既有材質、fog、lighting 與 DOM CSS variable：
+
+- 0 new geometry
+- 0 new draw groups
+- 0 physics bodies
+- 0 colliders
+- 0 camera occluders
 
 ## Replay structure
 
@@ -62,84 +75,67 @@ VIADUCT RETURN / 煞車節奏
 
 ## Technical constraints as design material
 
-The project intentionally keeps a strict Chromium software LOW budget:
+Strict Chromium software LOW budget:
 
 - Draw calls: <= 60
 - Triangles: <= 110,000
 
-Current V0.9.2 accepted candidate:
+V0.9.4 pre-final evidence:
 
-- 59 draw calls
-- 95,988 triangles
-- peak 180.7 km/h
-- 18 visual traffic cars
-- 9 modeled traffic lanes
-- 0 traffic physics bodies
-- 0 traffic colliders
-- 0 traffic camera occluders
-- Award Presentation / Award HUD / FirstRunDirector: 0 WebGL render groups
+- Route Signature: PASS
+- Three palettes measurably distinct
+- Signature switch: 0 physics / 0 camera-occluder delta
+- Route-signature render sample: 58 calls / 95,988 triangles
+- Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
+- Traffic Flow V3: 18 cars / 9 modeled lanes / 0 traffic physics bodies
+- Award Presentation / Award HUD / FirstRunDirector / Route Signature authority add 0 render groups
 
-## Input
+Pre-final full validation:
 
-Desktop:
-- W / ↑ — accelerate
-- S / ↓ — brake / reverse
-- A / ← — left
-- D / → — right
-- Space — drift / handbrake
-- Shift — N₂O
-
-Mobile:
-- touch steering
-- GAS / BRAKE
-- DRIFT / N₂O
-
-Gamepad:
-- left stick steering
-- right stick camera
-- triggers throttle / brake
+https://github.com/qookey109-pixel/car/actions/runs/37409007605
 
 ## Submission capture pack
 
-The repository owns a deterministic capture script:
+The deterministic capture script is:
 
-tests/submission-capture.mjs
+`tests/submission-capture.mjs`
 
-It produces:
+V0.9.4 produces:
 
-1. 01-title-screen.png
-2. 02-route-identity.png
-3. 03-first-30-seconds.png
-4. 04-speed-city.png
-5. 05-ghost-pursuit.png
-6. 06-finish-climax.png
-7. 07-mobile-844x390.png
-8. gameplay-showcase.webm
+1. `01-title-screen.png`
+2. `02-route-river.png`
+3. `03-route-neon.png`
+4. `04-route-viaduct.png`
+5. `05-first-30-seconds.png`
+6. `06-speed-city.png`
+7. `07-ghost-pursuit.png`
+8. `08-finish-climax.png`
+9. `09-mobile-844x390.png`
+10. `video/gameplay-showcase.webm`
 
-The capture pack is generated from the exact branch build, not from manually edited screenshots.
+The capture pack comes from the exact branch build, not manually edited screenshots.
 
-## Current accepted gameplay base
+## Current accepted base
 
-Exact V0.9.2 SHA:
+V0.9.3 Submission Package preview:
 
-a84a54f6fcf9fb3e9dcc09c1783e96da218c9dfe
+https://qookey109-pixel.github.io/car/v0.9.3-ad0fa5f/
 
-Immutable preview:
-
-https://qookey109-pixel.github.io/car/v0.9.2-a84a54f/
+V0.9.4 receives a new immutable SHA-specific preview only after the final exact-head gate and regenerated capture artifact pass.
 
 ## Submission freeze checklist
 
 - [x] First-30-second onboarding
 - [x] Award route identity presentation
 - [x] Award HUD hierarchy
+- [x] Three route-specific visual signatures
 - [x] PB Ghost / Replay Momentum
 - [x] Traffic flow / signal behavior
-- [x] Chromium + WebKit automated acceptance
-- [x] Immutable SHA preview
-- [ ] Final capture artifact
-- [ ] Final desktop visual QA
-- [ ] Final mobile visual QA
+- [x] Chromium + WebKit pre-final acceptance
+- [ ] Final exact-head V0.9.4 acceptance
+- [ ] Regenerated 9-frame capture artifact
+- [ ] Immutable V0.9.4 preview
+- [ ] Human hero-frame selection
 - [ ] Real Mac Safari hardware check
-- [ ] Final competition-form wording freeze
+- [ ] Competition-form wording freeze
 - [ ] Submission freeze tag / receipt

@@ -1,0 +1,175 @@
+/* V0.9.5 Submission Visual Convergence
+   Presentation-only layer over the validated V0.9.4 route-signature build.
+   No new WebGL geometry, render groups, physics bodies, colliders or camera occluders. */
+
+#boot .hero-card{
+  width:min(860px,94vw);
+  padding:clamp(28px,4.4vw,54px);
+  background:linear-gradient(180deg,rgba(7,16,26,.70),rgba(4,10,17,.54));
+  border-color:rgba(255,255,255,.07);
+  box-shadow:0 40px 120px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.035);
+}
+#boot .hero-copy{max-width:610px;color:rgba(238,248,255,.66)}
+#boot .route-signatures{gap:8px;margin:22px auto 18px;max-width:690px}
+#boot .route-signatures span{
+  min-width:190px;
+  display:grid;
+  gap:5px;
+  padding:10px 14px;
+  border-color:rgba(118,239,255,.10);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(8,24,35,.34),rgba(4,13,22,.20));
+  color:rgba(237,251,255,.58);
+  font:700 10px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.08em;
+}
+#boot .route-signatures b{
+  color:rgba(222,250,255,.96);
+  font-size:12px;
+  letter-spacing:.18em;
+}
+#boot .tiny-note{letter-spacing:.08em;color:rgba(255,255,255,.34)}
+
+/* Route and finish beats get the whole frame for a moment. */
+#hud .hud-top-left,
+#hud .speed-panel,
+#hud .score-panel,
+#hud .ghost-delta,
+#hud .challenge-toast,
+#mobileControls{
+  transition:opacity .26s ease,transform .26s ease,filter .26s ease;
+}
+body.award-route-active #hud .hud-top-left,
+body.award-route-active #hud .speed-panel,
+body.award-route-active #hud .score-panel,
+body.award-route-active #hud .ghost-delta,
+body.award-route-active #hud .challenge-toast{
+  opacity:0!important;
+  filter:blur(2px);
+}
+body.award-route-active #mobileControls{
+  opacity:.18;
+  filter:saturate(.55);
+}
+.award-presentation::before,
+.award-presentation::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;
+  height:8vh;
+  min-height:24px;
+  opacity:0;
+  background:linear-gradient(180deg,rgba(1,4,8,.78),rgba(1,4,8,0));
+  transition:opacity .24s ease;
+}
+.award-presentation::before{top:0}
+.award-presentation::after{bottom:0;transform:rotate(180deg)}
+body.award-route-active .award-presentation::before,
+body.award-route-active .award-presentation::after,
+body.award-finish-active .award-presentation::before,
+body.award-finish-active .award-presentation::after{opacity:1}
+
+/* Engineering telemetry is available in debug mode, not the normal composition. */
+#hud:not(.debug-visible) #qualityBadge{display:none!important}
+
+/* Mobile controls keep full hit areas but read as controls, not dashboard panels. */
+.mobile-controls button{
+  background:rgba(4,12,20,.36);
+  border-color:rgba(255,255,255,.11);
+  box-shadow:0 8px 24px rgba(0,0,0,.14);
+  backdrop-filter:blur(9px);
+  font-size:14px;
+}
+.mobile-controls .gas{
+  background:linear-gradient(180deg,rgba(73,255,193,.10),rgba(4,12,20,.40));
+  border-color:rgba(74,255,187,.28);
+}
+.mobile-controls .brake{border-color:rgba(255,120,120,.20)}
+.mobile-controls .nitro{border-color:rgba(87,231,255,.24)}
+.mobile-controls .drift{border-color:rgba(255,215,87,.22)}
+.mobile-controls button.active{background:rgba(108,242,255,.12)}
+
+/* Result screen is treated like the final poster frame. */
+#complete{
+  background:radial-gradient(circle at 50% 34%,rgba(23,91,115,.15),rgba(2,5,10,.92) 58%,#02050a);
+}
+#complete .result-card{
+  width:min(900px,94vw);
+  padding:clamp(28px,4vw,52px);
+  border:0;
+  background:linear-gradient(180deg,rgba(7,15,24,.46),rgba(4,9,15,.24));
+  box-shadow:none;
+  backdrop-filter:blur(10px);
+}
+#complete .result-card h1{
+  margin:4px 0 2px;
+  font-size:clamp(48px,7.5vw,78px);
+  letter-spacing:-.055em;
+}
+#complete .result-route{
+  margin-top:4px;
+  color:var(--route-accent,#91f2ff);
+  font:900 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.22em;
+}
+#complete .result-rank{
+  margin:8px 0 14px;
+  font-size:clamp(92px,12vw,138px);
+  line-height:.8;
+  color:var(--route-accent,#79f2ff);
+  text-shadow:0 0 46px color-mix(in srgb,var(--route-accent,#79f2ff) 24%,transparent);
+}
+#complete .result-grid{
+  margin:18px auto;
+  max-width:700px;
+  gap:0;
+  border-top:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+#complete .result-grid div{
+  padding:13px 18px;
+  border:0;
+  border-left:1px solid rgba(255,255,255,.07);
+  border-radius:0;
+  background:transparent;
+}
+#complete .result-grid div:first-child{border-left:0}
+#complete .result-grid span{color:rgba(255,255,255,.34)}
+#complete .result-grid b{font-size:19px}
+#complete #finalRecord{
+  max-width:620px;
+  margin-inline:auto;
+  background:rgba(4,14,21,.22);
+  border-color:color-mix(in srgb,var(--route-accent,#79f2ff) 18%,transparent);
+}
+#complete #replayMomentum{max-width:620px;margin-inline:auto}
+#complete .menu-actions{margin-top:20px}
+
+@media(max-width:760px){
+  #boot .route-signatures span{min-width:0;flex:1 1 30%}
+}
+@media(orientation:landscape) and (max-height:480px){
+  #boot .hero-card{padding:16px 20px}
+  #boot .hero-copy{max-width:560px}
+  #boot .route-signatures{margin:8px auto;gap:6px}
+  #boot .route-signatures span{padding:6px 9px;font-size:8px;border-radius:10px}
+  #boot .route-signatures b{font-size:9px}
+  #boot .tiny-note{margin-top:9px;font-size:9px}
+  #hud .score-panel{display:none!important}
+  .mobile-controls button{
+    background:rgba(4,12,20,.28);
+    box-shadow:0 5px 16px rgba(0,0,0,.12);
+    font-size:13px;
+  }
+  body.award-route-active #mobileControls{opacity:.12}
+  #complete .result-card{padding:14px 18px}
+  #complete .result-card h1{font-size:38px}
+  #complete .result-rank{font-size:70px;margin:5px 0 8px}
+  #complete .result-grid{margin:10px auto}
+  #complete .result-grid div{padding:8px 10px}
+  #complete .result-grid b{font-size:16px}
+  #complete .menu-actions{margin-top:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #hud .hud-top-left,#hud .speed-panel,#hud .score-panel,#hud .ghost-delta,#hud .challenge-toast,#mobileControls,.award-presentation::before,.award-presentation::after{transition-duration:.01ms}
+}

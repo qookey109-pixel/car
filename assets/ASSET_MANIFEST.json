@@ -161,6 +161,51 @@
       "performanceRisk": "medium; use as art-direction reference first",
       "priority": "high",
       "status": "candidate"
+    },
+    {
+      "id": "polyhaven-asphalt-03",
+      "name": "Asphalt 03",
+      "provider": "Poly Haven",
+      "canonicalUrl": "https://polyhaven.com/a/asphalt_03",
+      "author": "Charlotte Baglioni / Dario Barresi",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "pbr-material",
+      "format": "PBR maps / MaterialX / ZIP",
+      "triangleEstimate": 0,
+      "textureResolution": "1K-8K source; target 1K web derivative",
+      "downloadSizeApprox": "87.21 MB source package",
+      "intendedUse": "worn urban road surface reference / future replacement material",
+      "routeFit": [
+        "FLOW",
+        "PRECISION",
+        "RHYTHM"
+      ],
+      "performanceRisk": "low-to-medium if compressed 1K maps and reused material",
+      "priority": "high",
+      "status": "candidate"
+    },
+    {
+      "id": "polyhaven-clean-asphalt",
+      "name": "Clean Asphalt",
+      "provider": "Poly Haven",
+      "canonicalUrl": "https://polyhaven.com/a/clean_asphalt",
+      "author": "Dimitrios Savva",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "pbr-material",
+      "format": "PBR maps / ZIP",
+      "triangleEstimate": 0,
+      "textureResolution": "1K-8K source; target 1K web derivative",
+      "downloadSizeApprox": "78.82 MB source package",
+      "intendedUse": "cleaner elevated-road / commercial-road material reference",
+      "routeFit": [
+        "PRECISION",
+        "RHYTHM"
+      ],
+      "performanceRisk": "low-to-medium if compressed 1K maps and reused material",
+      "priority": "medium",
+      "status": "candidate"
     }
   ]
 }

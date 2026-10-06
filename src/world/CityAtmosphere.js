@@ -4,7 +4,7 @@ import {districtFor} from './DistrictMap.js';
 const ROUTE_SIGNATURES={
   '河岸東環':{
     key:'river',
-    background:0x06111e,fog:0x10283b,fogDensity:.00242,
+    background:0x06111e,fog:0x10283b,fogDensity:.00245,
     hemi:0x9fd7f5,ground:0x102535,ambient:0x345675,sun:0xffc995,rim:0x4ad9ff,fill:0x6b86ff,
     windows:0x82dcff,signs:0x5ccfff,shops:0xffc56d,streetEmissive:0x0d2532,
     edge:0xb9e7ee,dash:0xf6f8ee,css:'#76e7ff'

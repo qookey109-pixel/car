@@ -132,7 +132,7 @@ Exact V0.9.1 SHA:
 
 `8d569a5f9e6414dbe591616a07eae54e025783f6`
 
-V0.9.2 receives its own immutable URL only after the final exact-head gate passes.
+V0.9.2 will receive its own immutable URL after the documentation-synchronized exact-head gate passes.
 
 ## QA
 
@@ -154,7 +154,7 @@ Hard Chromium LOW budget:
 - draw calls <= 60
 - triangles <= 110,000
 
-Pre-final V0.9.2 evidence:
+Final V0.9.2 feature-gate evidence:
 
 - Chromium: 29/29 SUCCESS
 - WebKit: 29/29 SUCCESS
@@ -169,9 +169,9 @@ Pre-final V0.9.2 evidence:
 - Traffic Flow queue gap: 7.50m
 - Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
 
-Pre-final validation run:
+Final feature-gate validation run:
 
-https://github.com/qookey109-pixel/car/actions/runs/36831816336
+https://github.com/qookey109-pixel/car/actions/runs/36832765400
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari hardware FPS testing.
 

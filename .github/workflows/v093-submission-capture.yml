@@ -1,9 +1,9 @@
-name: V0.9.3 Submission Capture
+name: V0.9.4 Submission Capture
 
 on:
   push:
     branches:
-      - feature/v0.9.3-submission-package
+      - feature/v0.9.4-route-signature
   workflow_dispatch:
 
 permissions:
@@ -52,11 +52,11 @@ jobs:
       - name: Inventory capture package
         run: |
           find test-results/submission-package -maxdepth 3 -type f -print | sort
-          test "$(find test-results/submission-package/frames -name '*.png' | wc -l)" -eq 7
+          test "$(find test-results/submission-package/frames -name '*.png' | wc -l)" -eq 9
           test -f test-results/submission-package/video/gameplay-showcase.webm
       - name: Upload submission package
         uses: actions/upload-artifact@v4
         with:
-          name: v093-submission-package
+          name: v094-submission-package
           path: test-results/submission-package
           if-no-files-found: error

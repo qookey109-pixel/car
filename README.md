@@ -1,6 +1,6 @@
 # Neon Racer — 三蘆夜行
 
-V0.9.2 Award Candidate development line for `qookey109-pixel/car`.
+V0.9.4 Route Signature / submission-polish line for `qookey109-pixel/car`.
 
 This version treats the project as a submission-quality playable work rather than a feature prototype. The focus is a memorable first impression, strong route identity, clean driving feel, finish payoff, replay motivation and stable desktop/mobile performance.
 
@@ -13,6 +13,18 @@ This version treats the project as a submission-quality playable work rather tha
 - 高架折返 — 煞車節奏 / RHYTHM
 
 The intended loop is simple: understand the next goal immediately, find the city's rhythm, clear the route, then return for rank, route PB and Ghost pursuit.
+
+## V0.9.4 — Route Signature Art Direction
+
+The same city now carries three route-specific visual signatures without adding geometry or draw groups:
+
+- 河岸東環 / FLOW — cool cyan night + warm street-light balance
+- 霓虹西環 / PRECISION — magenta fog + cyan/magenta facade emphasis
+- 高架折返 / RHYTHM — amber + steel-blue night treatment
+
+The signature system retunes existing scene background, fog, lighting, road markings, facade material colors and one shared DOM `--route-accent`. Award Presentation, Award HUD and FirstRunDirector consume the same route accent authority.
+
+Contract: `0 new geometry / 0 new draw groups / 0 physics bodies / 0 camera occluders`.
 
 ## V0.9.2 — First 30 Seconds
 
@@ -122,17 +134,13 @@ Package/runtime version:
 
 `0.9.2`
 
-## Current rollback preview
+## Current accepted base preview
 
-The last immutable accepted build before V0.9.2 is:
+V0.9.3 Submission Package:
 
-https://qookey109-pixel.github.io/car/v0.9.1-8d569a5/
+https://qookey109-pixel.github.io/car/v0.9.3-ad0fa5f/
 
-Exact V0.9.1 SHA:
-
-`8d569a5f9e6414dbe591616a07eae54e025783f6`
-
-V0.9.2 receives its own immutable URL only after the final exact-head gate passes.
+V0.9.4 receives a new immutable URL only after the final exact-head gameplay gate and regenerated 9-frame submission capture both pass.
 
 ## QA
 
@@ -143,6 +151,7 @@ npm run test:browser
 node tests/award-presentation-smoke.mjs
 node tests/award-hud-smoke.mjs
 node tests/first-30-seconds-smoke.mjs
+node tests/route-signature-smoke.mjs
 node tests/ghost-replay-smoke.mjs
 node tests/ambient-traffic-smoke.mjs
 ```
@@ -154,10 +163,11 @@ Hard Chromium LOW budget:
 - draw calls <= 60
 - triangles <= 110,000
 
-Pre-final V0.9.2 evidence:
+V0.9.4 pre-final evidence:
 
-- Chromium: 29/29 SUCCESS
-- WebKit: 29/29 SUCCESS
+- Chromium: 30/30 SUCCESS
+- WebKit: 30/30 SUCCESS
+- Route Signature: PASS — river / neon / viaduct distinct at stable 58 calls
 - First 30 Seconds: PASS
 - mobile control corridor: PASS
 - Award Presentation: PASS
@@ -171,7 +181,7 @@ Pre-final V0.9.2 evidence:
 
 Pre-final validation run:
 
-https://github.com/qookey109-pixel/car/actions/runs/36831816336
+https://github.com/qookey109-pixel/car/actions/runs/37409007605
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari hardware FPS testing.
 
@@ -188,15 +198,15 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 
 ## Submission status
 
-V0.9.2 is an **Award Candidate**, not yet the final frozen competition package.
+V0.9.4 is the current **Award Candidate / submission-polish** line. Runtime gameplay authority remains based on the validated V0.9.2 systems, while presentation and submission packaging continue to evolve on Draft PRs.
 
 Remaining work after the immutable V0.9.2 preview:
 
 - real Mac Safari hardware verification
 - final visual QA on desktop/mobile
-- representative competition screenshots
-- 30–60 second gameplay showcase
-- concise project statement / design rationale
+- regenerated 9-frame route-signature competition capture
+- refreshed 30–60 second gameplay showcase
+- human hero-frame selection and final design rationale review
 - final submission freeze
 
 ## Repository safety

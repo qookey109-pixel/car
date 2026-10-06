@@ -10,10 +10,11 @@
   padding:12px 14px 11px;
   border-radius:16px;
 }
-.hud-kicker{
+ .hud-kicker{
   font-size:8px;
   letter-spacing:.25em;
   opacity:.72;
+  color:var(--route-accent,#76e7ff);
 }
 .objective-title{
   margin-top:3px;
@@ -47,7 +48,7 @@
   opacity:.72;
 }
 .speed-panel #gear{
-  color:#9af7ff;
+  color:var(--route-accent,#76e7ff);
   opacity:.92;
 }
 .score-panel{
@@ -109,3 +110,6 @@
   }
   .quality-badge{opacity:.12}
 }
+
+.progress-track #progressBar{background:linear-gradient(90deg,var(--route-accent,#76e7ff),#7cf8cf)}
+.ghost-delta{border-color:var(--route-accent,#76e7ff)}

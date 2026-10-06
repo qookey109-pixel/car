@@ -6,6 +6,7 @@ import './checkpoint-feedback.css';
 import './award-presentation.css';
 import './award-hud.css';
 import './first-run.css';
+import './submission-visual.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {StageTransition} from './ui/StageTransition.js';

@@ -1,6 +1,30 @@
 import * as THREE from 'three';
 import {districtFor} from './DistrictMap.js';
 
+const ROUTE_SIGNATURES={
+  '河岸東環':{
+    key:'river',
+    background:0x06111e,fog:0x10283b,fogDensity:.00242,
+    hemi:0x9fd7f5,ground:0x102535,ambient:0x345675,sun:0xffc995,rim:0x4ad9ff,fill:0x6b86ff,
+    windows:0x82dcff,signs:0x5ccfff,shops:0xffc56d,streetEmissive:0x0d2532,
+    edge:0xb9e7ee,dash:0xf6f8ee,css:'#76e7ff'
+  },
+  '霓虹西環':{
+    key:'neon',
+    background:0x10091b,fog:0x2a1239,fogDensity:.00258,
+    hemi:0xd8a8ff,ground:0x1c1328,ambient:0x5a356c,sun:0xffa6d8,rim:0x39e6ff,fill:0x9f6cff,
+    windows:0xa9d6ff,signs:0xff62c7,shops:0xffb45f,streetEmissive:0x2a102d,
+    edge:0xd7b9ef,dash:0xfff3fb,css:'#ff74cc'
+  },
+  '高架折返':{
+    key:'viaduct',
+    background:0x0d1118,fog:0x252d37,fogDensity:.00236,
+    hemi:0xb9cad9,ground:0x171d24,ambient:0x4c5662,sun:0xffc06d,rim:0x7db7d5,fill:0x7a86a5,
+    windows:0x9ec9df,signs:0xffa94d,shops:0xffd087,streetEmissive:0x241b11,
+    edge:0xc7d2d8,dash:0xfff3df,css:'#ffbd68'
+  }
+};
+
 export class CityAtmosphere{
   constructor(city){
     this.city=city;
@@ -53,23 +77,23 @@ export class CityAtmosphere{
     // colliders or draw groups change: the goal is simply a clearer night hierarchy where
     // lane dashes lead the eye, edges define the corridor, and crossings stay readable
     // without becoming the brightest object at every intersection.
-    const groups={road:0,curb:0,walk:0,edge:0,dash:0,cross:0};
+    const groups={road:0,curb:0,walk:0,edge:0,dash:0,cross:0};this.roadMaterials={};
     this.city.group.traverse(obj=>{
       if(!obj?.isInstancedMesh||!obj.material?.color)return;
       const mat=obj.material,hex=mat.color.getHex();
       if(hex===0x172734){
-        groups.road++;mat.color.setHex(0x142633);mat.roughness=.52;mat.metalness=.16;
+        groups.road++;this.roadMaterials.road=mat;mat.color.setHex(0x142633);mat.roughness=.52;mat.metalness=.16;
         if(mat.emissive?.isColor){mat.emissive.setHex(0x081722);mat.emissiveIntensity=.14}
       }else if(hex===0x89939a){
-        groups.curb++;mat.color.setHex(0x93a1a8)
+        groups.curb++;this.roadMaterials.curb=mat;mat.color.setHex(0x93a1a8)
       }else if(hex===0x303a43){
-        groups.walk++;mat.color.setHex(0x2b3740)
+        groups.walk++;this.roadMaterials.walk=mat;mat.color.setHex(0x2b3740)
       }else if(hex===0xaacbd5){
-        groups.edge++;mat.color.setHex(0xb8dce2);mat.opacity=.86
+        groups.edge++;this.roadMaterials.edge=mat;mat.color.setHex(0xb8dce2);mat.opacity=.86
       }else if(hex===0xe7f0ed){
-        groups.dash++;mat.color.setHex(0xf4f6e9)
+        groups.dash++;this.roadMaterials.dash=mat;mat.color.setHex(0xf4f6e9)
       }else if(hex===0xf0f4ee){
-        groups.cross++;mat.color.setHex(0xe5ece8);mat.opacity=.82
+        groups.cross++;this.roadMaterials.cross=mat;mat.color.setHex(0xe5ece8);mat.opacity=.82
       }
     });
     const count=Object.values(groups).reduce((sum,n)=>sum+n,0);
@@ -350,4 +374,31 @@ export class CityAtmosphere{
     this.facadeLightCycle=next;
     if(this.city.stats)this.city.stats.facadeLightCycle=next;
   }
+  setRouteSignature(routeName){
+    const sig=ROUTE_SIGNATURES[routeName]||ROUTE_SIGNATURES['河岸東環'];
+    const scene=this.city.scene;
+    if(scene.background?.isColor)scene.background.setHex(sig.background);
+    if(scene.fog?.isFogExp2){scene.fog.color.setHex(sig.fog);scene.fog.density=sig.fogDensity}
+    if(this.city.hemi){this.city.hemi.color.setHex(sig.hemi);this.city.hemi.groundColor.setHex(sig.ground)}
+    if(this.city.ambient)this.city.ambient.color.setHex(sig.ambient);
+    if(this.city.sun)this.city.sun.color.setHex(sig.sun);
+    if(this.city.rim)this.city.rim.color.setHex(sig.rim);
+    if(this.city.fill)this.city.fill.color.setHex(sig.fill);
+    if(this.facadeLights?.windows?.material?.color)this.facadeLights.windows.material.color.setHex(sig.windows);
+    if(this.facadeLights?.signs?.material?.color)this.facadeLights.signs.material.color.setHex(sig.signs);
+    if(this.facadeLights?.shops?.material?.color)this.facadeLights.shops.material.color.setHex(sig.shops);
+    if(this.streetEdgeDetails?.material?.emissive?.isColor)this.streetEdgeDetails.material.emissive.setHex(sig.streetEmissive);
+    if(this.roadMaterials?.edge?.color)this.roadMaterials.edge.color.setHex(sig.edge);
+    if(this.roadMaterials?.dash?.color)this.roadMaterials.dash.color.setHex(sig.dash);
+    document.documentElement.dataset.routeSignature=sig.key;
+    document.documentElement.style.setProperty('--route-accent',sig.css);
+    this.routeSignature={profile:'route-signature-v1',routeName:routeName||'河岸東環',key:sig.key,accent:sig.css,background:sig.background,fog:sig.fog,renderGroups:0};
+    this.city.stats={...(this.city.stats||{}),routeSignatureProfile:this.routeSignature.profile,routeSignatureKey:sig.key};
+    return this.routeSignature;
+  }
+
+  routeSignatureSnapshot(){
+    return this.routeSignature?{...this.routeSignature}:{profile:'route-signature-v1',routeName:null,key:null,accent:null,renderGroups:0};
+  }
+
 }

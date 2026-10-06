@@ -43,6 +43,7 @@ try{
       award:g.awardPresentation.snapshot(),
       objectiveOpacity:Number(cs('.hud-top-left').opacity),
       speedOpacity:Number(cs('.speed-panel').opacity),
+      compassOpacity:Number(cs('.objective-compass').opacity),
       controlsOpacity:Number(cs('#mobileControls').opacity),
       gasPointer:cs('[data-control="gas"]').pointerEvents,
       scoreDisplay:cs('.score-panel').display,
@@ -52,7 +53,7 @@ try{
     };
   });
   if(intro.award.profile!=='award-presentation-v2'||!intro.award.routeFocus)throw new Error(`Cinematic focus state missing: ${JSON.stringify(intro.award)}`);
-  if(intro.objectiveOpacity>.05||intro.speedOpacity>.05)throw new Error(`HUD not cleared during route intro: ${JSON.stringify(intro)}`);
+  if(intro.objectiveOpacity>.05||intro.speedOpacity>.05||intro.compassOpacity>.05)throw new Error(`HUD not cleared during route intro: ${JSON.stringify(intro)}`);
   if(intro.controlsOpacity>.25)throw new Error(`Mobile controls too visually heavy during intro: ${intro.controlsOpacity}`);
   if(intro.gasPointer==='none')throw new Error('Cinematic focus blocked GAS input');
   if(intro.scoreDisplay!=='none'||intro.qualityDisplay!=='none')throw new Error(`Secondary telemetry visible on compact mobile: ${JSON.stringify({score:intro.scoreDisplay,quality:intro.qualityDisplay})}`);
@@ -80,6 +81,8 @@ try{
     g.renderer.info.reset();g._render();
     return{
       finishFocus:document.body.classList.contains('award-finish-active'),
+      finishHudOpacity:Number(getComputedStyle(document.querySelector('.hud-top-left')).opacity),
+      finishCompassOpacity:Number(getComputedStyle(document.querySelector('.objective-compass')).opacity),
       cardBorder:getComputedStyle(card).borderTopWidth,
       itemBg:getComputedStyle(item).backgroundColor,
       rankSize:parseFloat(getComputedStyle(rank).fontSize),
@@ -89,6 +92,7 @@ try{
     };
   });
   if(!finish.finishFocus)throw new Error('Finish cinematic focus missing');
+  if(finish.finishHudOpacity>.05||finish.finishCompassOpacity>.05)throw new Error(`HUD not cleared during finish cinematic: ${JSON.stringify(finish)}`);
   if(finish.cardBorder!=='0px')throw new Error(`Result card still reads as dashboard panel: ${finish.cardBorder}`);
   if(!/rgba\(0, 0, 0, 0\)|transparent/.test(finish.itemBg))throw new Error(`Result stat cells still boxed: ${finish.itemBg}`);
   if(finish.rankSize<68)throw new Error(`Result rank hierarchy too weak: ${finish.rankSize}`);

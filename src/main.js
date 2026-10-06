@@ -6,6 +6,7 @@ import './checkpoint-feedback.css';
 import './award-presentation.css';
 import './award-hud.css';
 import './first-run.css';
+import './submission-visual.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {StageTransition} from './ui/StageTransition.js';
@@ -35,11 +36,11 @@ const firstRunDirector=new FirstRunDirector(game);
 game.firstRunDirector=firstRunDirector;
 const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
-  version:'0.9.2',
+  version:'0.9.3',
   game,
   compass,
   snapshot:()=>({
-    version:'0.9.2',
+    version:'0.9.3',
     state:game.state,
     speedKmh:game.vehicle.speedKmh,
     position:{x:game.vehicle.position.x,y:game.vehicle.position.y,z:game.vehicle.position.z},

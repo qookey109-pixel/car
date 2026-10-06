@@ -25,4 +25,4 @@ if(challenge.includes('dtForMission'))throw new Error('Legacy fixed drift missio
 const atmosphere=fs.readFileSync('src/world/CityAtmosphere.js','utf8');
 for(const token of ['InstancedMesh','trafficSignals','CityTrafficSignalRed','CityTrafficSignalGreen'])if(!atmosphere.includes(token))throw new Error(`City atmosphere contract missing ${token}`);
 
-console.log(`V0.9.2 static smoke PASS · ${jsFiles.length} JS modules checked`);
+console.log(`V0.9.3 static smoke PASS · ${jsFiles.length} JS modules checked`);

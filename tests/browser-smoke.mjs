@@ -12,7 +12,7 @@ async function runDesktop(browser){
   page.on('console',m=>{if(m.type()==='error')errors.push(`console: ${m.text()}`)});
   await page.addInitScript(()=>{try{localStorage.removeItem('neon-racer-records')}catch{}});
   await page.goto(base,{waitUntil:'networkidle'});
-  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.2');
+  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.3');
   const gl=await page.evaluate(()=>{const c=document.querySelector('canvas');return Boolean(c&&(c.getContext('webgl2')||c.getContext('webgl')))});
   if(!gl)throw new Error('WebGL context unavailable');
   await shot(page,'test-results/menu-desktop.png');
@@ -176,7 +176,7 @@ async function runMobile(browser){
   page.on('console',m=>{if(m.type()==='error')errors.push(`console: ${m.text()}`)});
   await page.addInitScript(()=>{try{localStorage.removeItem('neon-racer-records')}catch{}});
   await page.goto(base,{waitUntil:'networkidle'});
-  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.2');
+  await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().version==='0.9.3');
   await page.click('#startGame');
   await page.waitForFunction(()=>window.__NEON_RACER__.snapshot().state==='running');
   const gas=page.locator('[data-control="gas"]'),drift=page.locator('[data-control="drift"]'),left=page.locator('[data-control="left"]');
@@ -207,5 +207,5 @@ const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshade
 try{
   const desktop=await runDesktop(browser);
   await runMobile(browser);
-  console.log(`V0.9.2 browser smoke PASS · 3s speed ${desktop.speedKmh.toFixed(1)} km/h · score ${desktop.score}`);
+  console.log(`V0.9.3 browser smoke PASS · 3s speed ${desktop.speedKmh.toFixed(1)} km/h · score ${desktop.score}`);
 }finally{await browser.close()}

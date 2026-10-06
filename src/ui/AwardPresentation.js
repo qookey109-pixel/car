@@ -32,7 +32,7 @@ const FINISH_COPY={
 export class AwardPresentation{
   constructor(game){
     this.game=game;
-    this.profile='award-presentation-v1';
+    this.profile='award-presentation-v2';
     this.introCount=0;this.finishCount=0;this.lastRoute=null;this.lastRank=null;this.lastPB=false;
     this.root=document.createElement('div');
     this.root.className='award-presentation';
@@ -80,8 +80,10 @@ export class AwardPresentation{
     this.root.querySelector('.award-route-accent').textContent=copy.accent;
     this.introCount++;this.lastRoute=name||null;
     this.finishCard.classList.remove('show');
+    document.body.classList.remove('award-finish-active');
+    document.body.classList.add('award-route-active');
     this._restart(this.routeCard,'show');
-    this.routeTimer=setTimeout(()=>this.routeCard.classList.remove('show'),2850);
+    this.routeTimer=setTimeout(()=>{this.routeCard.classList.remove('show');document.body.classList.remove('award-route-active')},2850);
   }
 
   finish(summary={},routeResult={}){
@@ -96,13 +98,16 @@ export class AwardPresentation{
     this.root.querySelector('.award-finish-pb').dataset.fresh=fresh?'true':'false';
     this.finishCount++;this.lastRank=rank;this.lastPB=fresh;
     this.routeCard.classList.remove('show');
+    document.body.classList.remove('award-route-active');
+    document.body.classList.add('award-finish-active');
     this._restart(this.finishCard,'show');
-    this.finishTimer=setTimeout(()=>this.finishCard.classList.remove('show'),2150);
+    this.finishTimer=setTimeout(()=>{this.finishCard.classList.remove('show');document.body.classList.remove('award-finish-active')},2150);
   }
 
   hide(){
     clearTimeout(this.routeTimer);clearTimeout(this.finishTimer);
     this.routeCard.classList.remove('show');this.finishCard.classList.remove('show');
+    document.body.classList.remove('award-route-active','award-finish-active');
   }
 
   snapshot(){
@@ -115,6 +120,8 @@ export class AwardPresentation{
       lastPB:this.lastPB,
       routeVisible:this.routeCard.classList.contains('show'),
       finishVisible:this.finishCard.classList.contains('show'),
+      routeFocus:document.body.classList.contains('award-route-active'),
+      finishFocus:document.body.classList.contains('award-finish-active'),
       renderGroups:0
     };
   }

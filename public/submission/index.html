@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>三蘆夜行 — Submission Brief</title>
+<style>
+:root{color-scheme:dark;--bg:#05080d;--panel:#0b1119;--ink:#f5fbff;--muted:#8ea0af;--cyan:#8ef4ff;--amber:#ffc46b}
+*{box-sizing:border-box}html,body{margin:0;background:radial-gradient(circle at 70% 0,#101d2b 0,transparent 36%),var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif}
+body{min-height:100vh}a{color:inherit;text-decoration:none}.wrap{width:min(1120px,calc(100% - 40px));margin:auto}
+nav{display:flex;justify-content:space-between;align-items:center;padding:24px 0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.brand{color:var(--ink);font-weight:900}.play{border:1px solid rgba(142,244,255,.35);padding:10px 14px;border-radius:999px;color:var(--cyan);font-weight:900}
+.hero{padding:10vh 0 8vh;display:grid;grid-template-columns:1.4fr .8fr;gap:64px;align-items:end}.eyebrow{font-size:11px;letter-spacing:.32em;color:var(--cyan);font-weight:900}.hero h1{font-size:clamp(54px,9vw,116px);line-height:.86;letter-spacing:-.07em;margin:18px 0 22px}.hero p{max-width:720px;font-size:clamp(17px,2vw,24px);line-height:1.5;color:#c9d5df}.meta{border-left:1px solid rgba(255,255,255,.12);padding-left:28px;display:grid;gap:18px}.meta b{display:block;font-size:10px;letter-spacing:.22em;color:var(--muted);margin-bottom:4px}.meta span{font-size:16px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0 84px}.card{min-height:210px;padding:24px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));position:relative;overflow:hidden}.card:before{content:"";position:absolute;width:120px;height:120px;border-radius:50%;filter:blur(54px);background:var(--cyan);opacity:.08;right:-30px;top:-30px}.card small{font-size:9px;letter-spacing:.22em;color:var(--muted)}.card h3{font-size:25px;margin:14px 0 8px}.card p{margin:0;color:#aab8c4;line-height:1.55}.section{padding:68px 0;border-top:1px solid rgba(255,255,255,.08)}.section h2{font-size:clamp(36px,5vw,68px);letter-spacing:-.05em;margin:0 0 22px}.section p{max-width:780px;color:#aebdca;line-height:1.7;font-size:16px}.routes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}.route{padding:20px;border-radius:18px;background:#090f16;border:1px solid rgba(255,255,255,.07)}.route b{display:block;font-size:20px;margin-bottom:6px}.route span{font-size:11px;letter-spacing:.2em;color:var(--amber)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:28px}.metric{padding:18px;border-radius:16px;background:rgba(255,255,255,.03)}.metric strong{display:block;font-size:28px}.metric small{color:var(--muted)}footer{padding:52px 0 72px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:20px}.cta{display:inline-flex;margin-top:26px;padding:14px 20px;border-radius:999px;background:var(--cyan);color:#031014;font-weight:1000;letter-spacing:.04em}
+@media(max-width:800px){.hero{grid-template-columns:1fr;gap:34px;padding-top:6vh}.meta{border-left:0;border-top:1px solid rgba(255,255,255,.12);padding:24px 0 0}.grid,.routes{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.wrap{width:min(100% - 26px,1120px)}.hero h1{font-size:58px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><div class="brand">NEON RACER / 三蘆夜行</div><a class="play" href="../">PLAY THE GAME</a></nav>
+<section class="hero">
+<div>
+<div class="eyebrow">AWARD CANDIDATE · V0.9.3</div>
+<h1>三蘆<br>夜行</h1>
+<p>一款把三重／蘆洲夜間城市節奏轉化成短篇駕駛體驗的瀏覽器賽車遊戲。不是追求更大的地圖，而是讓每一條路線都有自己的節奏、記憶與重玩理由。</p>
+<a class="cta" href="../">進入夜行 →</a>
+</div>
+<div class="meta">
+<div><b>FORMAT</b><span>Browser-native driving game</span></div>
+<div><b>CORE LOOP</b><span>Read · Flow · Clear · Replay</span></div>
+<div><b>INPUT</b><span>Keyboard · Touch · Gamepad</span></div>
+<div><b>TECH</b><span>Three.js · cannon-es · Web Audio</span></div>
+</div>
+</section>
+
+<div class="grid">
+<article class="card"><small>01 / IDENTITY</small><h3>城市不是背景</h3><p>號誌、車流、街廓、霓虹與夜間節奏共同構成駕駛閱讀的一部分。</p></article>
+<article class="card"><small>02 / FEEL</small><h3>三條路，三種節奏</h3><p>FLOW、PRECISION、RHYTHM 不是文字標籤，而是不同的路線形狀、速度與決策壓力。</p></article>
+<article class="card"><small>03 / REPLAY</small><h3>跟昨天的自己比</h3><p>Route PB、Ghost Replay 與 Replay Momentum 把短局遊戲轉成可反覆追求的個人節奏。</p></article>
+</div>
+
+<section class="section">
+<h2>Three Routes.<br>Three Personalities.</h2>
+<p>每條路線都以同一座夜城為素材，但要求玩家用不同方式閱讀道路。</p>
+<div class="routes">
+<div class="route"><span>FLOW</span><b>河岸東環</b><small>RIVER EAST LOOP · 高速長彎</small></div>
+<div class="route"><span>PRECISION</span><b>霓虹西環</b><small>NEON WEST LOOP · 密集轉向</small></div>
+<div class="route"><span>RHYTHM</span><b>高架折返</b><small>VIADUCT RETURN · 煞車節奏</small></div>
+</div>
+</section>
+
+<section class="section">
+<h2>Designed for the first 30 seconds.</h2>
+<p>評審不需要先讀說明。路線登場後，首次玩家只會看到短暫的 GO、控制提示與第一個 Gate 確認；提示不暫停遊戲、不攔截輸入，而且第一個 checkpoint 後立即退出。</p>
+<div class="metrics">
+<div class="metric"><strong>29/29</strong><small>Chromium acceptance</small></div>
+<div class="metric"><strong>29/29</strong><small>WebKit acceptance</small></div>
+<div class="metric"><strong>59</strong><small>LOW draw calls</small></div>
+<div class="metric"><strong>95,988</strong><small>LOW triangles</small></div>
+</div>
+</section>
+
+<section class="section">
+<h2>Submission intent.</h2>
+<p>三蘆夜行把限制當成設計材料：低 draw-call 預算迫使車流、燈光與城市節奏用批次化與狀態設計完成；短局結構則把注意力集中在駕駛手感、路線身份與重玩動機。最終目標不是模擬一座完整城市，而是留下「在這座夜城開過一次」的記憶。</p>
+<a class="cta" href="../">PLAY AWARD CANDIDATE →</a>
+</section>
+
+<footer><span>NEON RACER — 三蘆夜行</span><span>V0.9.3 Submission Package</span></footer>
+</div>
+</body>
+</html>

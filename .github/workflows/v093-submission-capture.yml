@@ -1,0 +1,62 @@
+name: V0.9.3 Submission Capture
+
+on:
+  push:
+    branches:
+      - feature/v0.9.3-submission-package
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Static smoke
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Verify submission page in build
+        run: |
+          test -f dist/submission/index.html
+          grep -q "三蘆夜行" dist/submission/index.html
+          grep -q "AWARD CANDIDATE" dist/submission/index.html
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start production preview
+        run: |
+          npm run preview -- --port 4173 > /tmp/neon-preview.log 2>&1 &
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/neon-preview.log
+          exit 1
+      - name: Capture submission frames and gameplay showcase
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+          BROWSER: chromium
+        run: npm run capture:submission
+      - name: Attach submission brief
+        run: |
+          cp docs/SUBMISSION_PACKAGE.md test-results/submission-package/SUBMISSION_PACKAGE.md
+          cp -R dist/submission test-results/submission-package/submission-page
+      - name: Inventory capture package
+        run: |
+          find test-results/submission-package -maxdepth 3 -type f -print | sort
+          test "$(find test-results/submission-package/frames -name '*.png' | wc -l)" -eq 7
+          test -f test-results/submission-package/video/gameplay-showcase.webm
+      - name: Upload submission package
+        uses: actions/upload-artifact@v4
+        with:
+          name: v093-submission-package
+          path: test-results/submission-package
+          if-no-files-found: error

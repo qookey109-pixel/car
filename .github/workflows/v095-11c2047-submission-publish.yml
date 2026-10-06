@@ -1,4 +1,5 @@
 name: V0.9.5 11c2047 Submission Publish
+# Immutable preview publication for validated freeze candidate
 
 on:
   push:

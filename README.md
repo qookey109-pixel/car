@@ -154,7 +154,7 @@ Hard Chromium LOW budget:
 - draw calls <= 60
 - triangles <= 110,000
 
-Final V0.9.2 feature-gate evidence:
+Latest V0.9.2 feature-gate evidence before documentation sync:
 
 - Chromium: 29/29 SUCCESS
 - WebKit: 29/29 SUCCESS
@@ -169,9 +169,13 @@ Final V0.9.2 feature-gate evidence:
 - Traffic Flow queue gap: 7.50m
 - Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
 
-Final feature-gate validation run:
+Validated implementation head before this documentation sync:
 
-https://github.com/qookey109-pixel/car/actions/runs/36832765400
+`9da22108fde50aa2120c9aa4e71b8411b4939c9f`
+
+Validation run:
+
+https://github.com/qookey109-pixel/car/actions/runs/37409902149
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari hardware FPS testing.
 

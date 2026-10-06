@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "pipeline": {
+    "name": "3d-asset-server",
+    "upstream": "https://github.com/arielshad/3d-asset-server",
+    "license": "Apache-2.0",
+    "mode": "discovery-only",
+    "runtimeIntegrationAuthorized": false,
+    "note": "V0.9.5 preserves 0 new geometry / render groups / physics bodies / camera occluders."
+  },
+  "assets": []
+}

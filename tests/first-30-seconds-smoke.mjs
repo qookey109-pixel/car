@@ -3,6 +3,11 @@ import fs from 'node:fs';
 
 const base=process.env.BASE_URL||'http://127.0.0.1:4173/';
 fs.mkdirSync('test-results/first-30-seconds',{recursive:true});
+const diagnostics={};
+const record=(name,data)=>{
+  diagnostics[name]=data;
+  fs.writeFileSync('test-results/first-30-seconds/diagnostics.json',JSON.stringify(diagnostics,null,2));
+};
 
 const browser=await testBrowser.launch({headless:true,args:['--use-angle=swiftshader','--enable-webgl','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required']});
 try{
@@ -16,6 +21,7 @@ try{
   await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().state==='running');
 
   const armed=await page.evaluate(()=>window.__NEON_RACER__.snapshot().firstRun);
+  record('armed',armed);
   if(armed.profile!=='first-30-seconds-v1'||!armed.active||armed.stage!=='armed'||!armed.seenThisSession)throw new Error(`First-run arm failed: ${JSON.stringify(armed)}`);
 
   await page.waitForFunction(()=>{
@@ -37,6 +43,8 @@ try{
     };
   });
   const expectedLaunchInput=launch.coarse?'GAS':'W / ↑';
+  record('launch',launch);
+  await page.screenshot({path:'test-results/first-30-seconds/launch-844x390.png',animations:'disabled'});
   if(!launch.visible||launch.snapshot.stage!=='launch'||launch.title!=='GO'||!launch.line.includes(expectedLaunchInput)||launch.pointer!=='none')throw new Error(`Launch cue failed: ${JSON.stringify({...launch,expectedLaunchInput})}`);
   const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
   if(overlaps(launch.cue,launch.mobile))throw new Error(`First-run cue overlaps mobile controls: ${JSON.stringify(launch)}`);
@@ -46,6 +54,7 @@ try{
     p.startedAt=performance.now()-5000;p.stage='launch';p.update(42,0,0);
     return{snapshot:p.snapshot(),title:p.cue.querySelector('.first-run-title').textContent,line:p.cue.querySelector('.first-run-line').textContent,coarse:matchMedia('(pointer: coarse)').matches};
   });
+  record('speed',speed);
   const expectedSpeedInput=speed.coarse?'N₂O':'Shift';
   if(speed.snapshot.stage!=='speed'||speed.title!=='KEEP IT CLEAN'||!speed.line.includes(expectedSpeedInput))throw new Error(`Speed cue failed: ${JSON.stringify({...speed,expectedSpeedInput})}`);
 
@@ -54,9 +63,11 @@ try{
     dispatchEvent(new CustomEvent('neon-racer-feedback',{detail:{kind:'checkpoint',source:'first-30-seconds-acceptance'}}));
     return{snapshot:p.snapshot(),title:p.cue.querySelector('.first-run-title').textContent,line:p.cue.querySelector('.first-run-line').textContent,visible:p.cue.classList.contains('show')};
   });
+  record('checkpoint',checkpoint);
   if(!checkpoint.snapshot.firstCheckpoint||checkpoint.snapshot.stage!=='checkpoint'||checkpoint.title!=='CLEAN'||!checkpoint.visible)throw new Error(`Checkpoint onboarding finish failed: ${JSON.stringify(checkpoint)}`);
   await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().firstRun?.stage==='done',null,{timeout:3500});
   const done=await page.evaluate(()=>window.__NEON_RACER__.snapshot().firstRun);
+  record('done',done);
   if(done.active||!done.completed||done.stage!=='done')throw new Error(`First-run completion failed: ${JSON.stringify(done)}`);
 
   const replay=await page.evaluate(()=>{
@@ -66,10 +77,12 @@ try{
   });
   if(replay.active||replay.stage!=='returning')throw new Error(`Once-per-session suppression failed: ${JSON.stringify(replay)}`);
 
+  record('replay',replay);
   const render=await page.evaluate(()=>{
     const g=window.__NEON_RACER__.game;g.renderer.info.reset();g._render();
     return{calls:g.renderer.info.render.calls,triangles:g.renderer.info.render.triangles};
   });
+  record('render',render);
   if(render.calls>60||render.triangles>110000)throw new Error(`First-run DOM layer affected render budget: ${JSON.stringify(render)}`);
 
   await page.screenshot({path:'test-results/first-30-seconds/first-run-844x390.png',animations:'disabled'});

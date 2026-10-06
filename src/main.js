@@ -5,6 +5,7 @@ import './district.css';
 import './checkpoint-feedback.css';
 import './award-presentation.css';
 import './award-hud.css';
+import './first-run.css';
 import {Game} from './core/Game.js';
 import {ObjectiveCompass} from './ui/ObjectiveCompass.js';
 import {StageTransition} from './ui/StageTransition.js';
@@ -13,6 +14,7 @@ import {GhostReplay} from './gameplay/GhostReplay.js';
 import {CityAtmosphere} from './world/CityAtmosphere.js';
 import {AmbientTraffic} from './world/AmbientTraffic.js';
 import {AwardPresentation} from './ui/AwardPresentation.js';
+import {FirstRunDirector} from './ui/FirstRunDirector.js';
 
 const app=document.getElementById('app');
 const game=new Game(app);
@@ -29,13 +31,15 @@ const ambientTraffic=new AmbientTraffic(game);
 game.ambientTraffic=ambientTraffic;
 const awardPresentation=new AwardPresentation(game);
 game.awardPresentation=awardPresentation;
+const firstRunDirector=new FirstRunDirector(game);
+game.firstRunDirector=firstRunDirector;
 const compass=new ObjectiveCompass(game);
 window.__NEON_RACER__={
-  version:'0.9.0',
+  version:'0.9.2',
   game,
   compass,
   snapshot:()=>({
-    version:'0.9.0',
+    version:'0.9.2',
     state:game.state,
     speedKmh:game.vehicle.speedKmh,
     position:{x:game.vehicle.position.x,y:game.vehicle.position.y,z:game.vehicle.position.z},
@@ -59,6 +63,7 @@ window.__NEON_RACER__={
     city:game.city.stats,
     traffic:ambientTraffic.snapshot(),
     awardPresentation:awardPresentation.snapshot(),
+    firstRun:firstRunDirector.snapshot(),
     renderer:{calls:game.renderer.info.render.calls,triangles:game.renderer.info.render.triangles}
   })
 };

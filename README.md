@@ -1,8 +1,8 @@
 # Neon Racer — 三蘆夜行
 
-V0.9 Award Candidate development line for `qookey109-pixel/car`.
+V0.9.2 Award Candidate development line for `qookey109-pixel/car`.
 
-This branch turns the validated V0.8.5 technical foundation into the first submission-oriented version of the game. The priority is no longer adding isolated features; it is creating a cohesive, memorable playable work with a clear first impression, strong route identity, satisfying finish payoff and stable cross-device performance.
+This version treats the project as a submission-quality playable work rather than a feature prototype. The focus is a memorable first impression, strong route identity, clean driving feel, finish payoff, replay motivation and stable desktop/mobile performance.
 
 ## Creative direction
 
@@ -12,93 +12,83 @@ This branch turns the validated V0.8.5 technical foundation into the first submi
 - 霓虹西環 — 密集轉向 / PRECISION
 - 高架折返 — 煞車節奏 / RHYTHM
 
-The player should understand the next goal quickly, feel the city and vehicle rhythm within the first seconds, then be pulled into replay through rank, route PB, Ghost pursuit and route mastery.
+The intended loop is simple: understand the next goal immediately, find the city's rhythm, clear the route, then return for rank, route PB and Ghost pursuit.
 
-The award-candidate standard is:
+## V0.9.2 — First 30 Seconds
 
-- recognizable identity in the first 30 seconds
-- clean driving feel
-- clear challenge hierarchy
-- audiovisual cohesion
-- strong finish/payoff
-- replay motivation
-- desktop/mobile usability
-- measurable performance discipline
+The first-run experience is now directed without a tutorial modal.
 
-## Current features
+Flow:
 
-- Three.js + cannon-es RaycastVehicle
-- Stylized Sanchong/Luzhou-inspired night city
-- Third-person dynamic camera with collision avoidance and dynamic FOV
-- Drift, nitro, score and combo systems
-- Three rotating routes with distinct driving identities
-- Route-specific PBs for score / time / combo plus per-route S-rank clears
-- Replay Momentum V3
-- PB Ghost Replay with live AHEAD / BEHIND / EVEN delta
-- Traffic Flow V3:
-  - 9 modeled lanes / 18 visual traffic cars
-  - signal-aware red stop / green release
-  - 7.5m safe queue gap
-  - dynamic brake lights
-  - exactly three traffic render groups
-  - 0 physics bodies / 0 colliders / 0 camera occluders
-- District Awareness V3
-- Objective Compass
-- Checkpoint Feedback
-- Stage Transition
-- Desktop keyboard, mobile multi-touch and gamepad input
-- Progressive touch steering with direct A/D keyboard steering preserved
-- Procedural engine / drift / nitro / feedback audio
-- Adaptive quality + debug HUD
-- Immutable SHA-specific GitHub Pages previews
+1. Route cinematic establishes the current route identity.
+2. A short `GO` cue appears only for a first-ever session.
+3. Input copy adapts to device:
+   - touch: `GAS`
+   - desktop: `W / ↑`
+4. Once speed builds, the cue shifts to the existing nitro control:
+   - touch: `N₂O`
+   - desktop: `Shift`
+5. The first checkpoint returns `CLEAN` and immediately ends onboarding.
 
-## V0.9 Award Presentation
+The layer is DOM/CSS only, uses `pointer-events:none`, never pauses the game and adds zero Three.js render groups.
 
-V0.9 adds a DOM-only cinematic presentation layer without increasing WebGL render cost.
+On 844×390 landscape, the cue uses a 108px bottom safety corridor so it remains visually separated from mobile driving controls on both Chromium and WebKit.
 
-### Route intro
+## Award presentation
 
-Each route receives a dedicated intro identity:
+Each route has a distinct cinematic identity:
 
 - 河岸東環 — `RIVER EAST LOOP` / `FLOW`
-  - 「沿河壓住速度，把整座夜色甩在身後。」
 - 霓虹西環 — `NEON WEST LOOP` / `PRECISION`
-  - 「在最窄的街廓裡，切出最乾淨的節奏。」
 - 高架折返 — `VIADUCT RETURN` / `RHYTHM`
-  - 「晚一點煞車，早一點回正，在高架前封關。」
 
-The intro layer uses `pointer-events:none`, does not lock player controls and adds zero Three.js render groups.
-
-### Finish climax
-
-Completion presentation adapts to rank:
+Finish treatment adapts to rank:
 
 - S — `NIGHT MASTERED`
 - A — `CITY FLOW`
 - B — `NIGHT RUN COMPLETE`
 - C — `ROUTE CLEARED`
 
-A new PB receives a distinct `PERSONAL BEST · NEW NIGHT RECORD` treatment. Ordinary clears point back toward Ghost pursuit.
+New route PBs receive a dedicated `PERSONAL BEST · NEW NIGHT RECORD` treatment. Existing Replay Momentum and Ghost systems remain the replay authority.
 
-The finish layer is explicitly stacked above the result screen so the climax remains visible in the real completion flow.
+## Award HUD
 
-### Award audio
+V0.9.1 established the current HUD hierarchy:
 
-- Route start uses a short three-note procedural identity.
-- Finish uses a rank-dependent root and an additional note for a new PB.
-- Existing engine, drift, wind, nitro, checkpoint and impact audio remain intact.
+- lighter glass treatment
+- stronger speed emphasis
+- tighter objective panel
+- cleaner score/combo block
+- de-emphasized engineering quality badge
+- compact 844×390 landscape layout
 
-## Current validated base preview
+The HUD polish is CSS/DOM-only and does not change WebGL render cost.
 
-V0.9 is based on the fully validated V0.8.5 candidate:
+## Current gameplay
 
-https://qookey109-pixel.github.io/car/v0.8.5-9d41669/
-
-Base exact SHA:
-
-`9d41669c9fb87ee86638d1dbfe90b75102ba193d`
-
-A V0.9 immutable preview is published only after the final exact branch head passes the full Chromium + WebKit matrix.
+- Three.js + cannon-es RaycastVehicle
+- third-person dynamic camera with collision avoidance and speed-reactive FOV
+- drift, nitro, score and combo systems
+- three rotating routes
+- route PBs for score / time / combo
+- per-route S-rank clears
+- Replay Momentum V3
+- PB Ghost Replay with AHEAD / BEHIND / EVEN delta
+- Traffic Flow V3:
+  - 9 modeled lanes / 18 visual cars
+  - traffic-signal red stop / green release
+  - 7.5m queue gap
+  - dynamic brake lights
+  - exactly 3 traffic render groups
+  - 0 physics bodies / 0 colliders / 0 camera occluders
+- District Awareness V3
+- Objective Compass
+- Checkpoint Feedback
+- Stage Transition
+- keyboard, mobile multi-touch and gamepad input
+- progressive touch steering while keyboard A/D remains direct
+- procedural engine / drift / nitro / feedback audio
+- adaptive quality and debug HUD
 
 ## Controls
 
@@ -108,7 +98,7 @@ A V0.9 immutable preview is published only after the final exact branch head pas
 - `D` / `→`: steer right
 - `Space`: handbrake / drift
 - `Shift`: nitro
-- Mouse drag: orbit driving camera
+- Mouse drag: orbit camera
 - `R`: reset vehicle
 - `ESC`: pause / resume
 - `F3`: debug HUD
@@ -130,7 +120,19 @@ npm run preview
 
 Package/runtime version:
 
-`0.9.0`
+`0.9.2`
+
+## Current rollback preview
+
+The last immutable accepted build before V0.9.2 is:
+
+https://qookey109-pixel.github.io/car/v0.9.1-8d569a5/
+
+Exact V0.9.1 SHA:
+
+`8d569a5f9e6414dbe591616a07eae54e025783f6`
+
+V0.9.2 will receive its own immutable URL after the documentation-synchronized exact-head gate passes.
 
 ## QA
 
@@ -139,39 +141,41 @@ npm test
 npm run build
 npm run test:browser
 node tests/award-presentation-smoke.mjs
+node tests/award-hud-smoke.mjs
+node tests/first-30-seconds-smoke.mjs
 node tests/ghost-replay-smoke.mjs
 node tests/ambient-traffic-smoke.mjs
 ```
 
-The V0.9 workflow runs the full gameplay contract on Chromium and WebKit.
+The workflow runs the gameplay/presentation contract on Chromium and WebKit.
 
 Hard Chromium LOW budget:
 
 - draw calls <= 60
 - triangles <= 110,000
 
-V0.9 Award Presentation acceptance verifies:
+Latest V0.9.2 feature-gate evidence before documentation sync:
 
-- all 3 route identities
-- S/B finish copy and PB/non-PB states
-- input transparency
-- finish overlay stacking above result screen
-- route-start and finish audio methods
-- 0 WebGL draw-call delta
-
-First V0.9 code-gate evidence:
-
-- Chromium: 27/27 SUCCESS
-- WebKit: 27/27 SUCCESS
+- Chromium: 29/29 SUCCESS
+- WebKit: 29/29 SUCCESS
+- First 30 Seconds: PASS
+- mobile control corridor: PASS
 - Award Presentation: PASS
-- presentation WebGL delta: 0 calls
+- Award HUD: PASS
+- presentation/onboarding WebGL groups: 0
 - A left: -50.0m
 - D right: +49.4m
 - reverse peak: 41.4 km/h
-- Traffic Flow V3 queue gap: 7.50m
-- red follower: 0.00m/s
-- green follower: 7.46m/s
+- Traffic Flow queue gap: 7.50m
 - Chromium high-speed LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
+
+Validated implementation head before this documentation sync:
+
+`9da22108fde50aa2120c9aa4e71b8411b4939c9f`
+
+Validation run:
+
+https://github.com/qookey109-pixel/car/actions/runs/37409902149
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari hardware FPS testing.
 
@@ -183,25 +187,25 @@ WebKit CI is browser-engine regression evidence only and is not a substitute for
 - `src/gameplay/` — challenges, route logic and Ghost Replay
 - `src/rendering/` — adaptive quality
 - `src/audio/` — procedural Web Audio
-- `src/vfx/` — lightweight particles and speed feedback
-- `src/ui/` — HUD, navigation, stage transition, replay momentum and Award Presentation
+- `src/vfx/` — speed and collision feedback
+- `src/ui/` — HUD, navigation, replay, Award Presentation and FirstRunDirector
 
 ## Submission status
 
-V0.9 is the first **Award Candidate**, not the final frozen submission.
+V0.9.2 is an **Award Candidate**, not yet the final frozen competition package.
 
-Still required before a final competition package:
+Remaining work after the immutable V0.9.2 preview:
 
 - real Mac Safari hardware verification
-- final visual QA pass on desktop and mobile
-- representative screenshots
-- 30–60 second gameplay capture
+- final visual QA on desktop/mobile
+- representative competition screenshots
+- 30–60 second gameplay showcase
 - concise project statement / design rationale
-- final submission build freeze
+- final submission freeze
 
 ## Repository safety
 
 - `main` is not modified directly.
-- PR #1–#7 remain independent and unmerged.
-- PR #8 remains Draft while V0.9 validation is active.
-- Immutable rollback previews must not be overwritten or deleted.
+- Development stays on Draft PRs.
+- No automatic merge.
+- Immutable rollback previews are never overwritten.

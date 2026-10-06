@@ -29,20 +29,23 @@ try{
       line:cue.querySelector('.first-run-line').textContent,
       visible:cue.classList.contains('show'),
       pointer:getComputedStyle(p.root).pointerEvents,
+      coarse:matchMedia('(pointer: coarse)').matches,
       cue:rect(cue),
       mobile:rect(mobile)
     };
   });
-  if(!launch.visible||launch.snapshot.stage!=='launch'||launch.title!=='GO'||!launch.line.includes('GAS')||launch.pointer!=='none')throw new Error(`Launch cue failed: ${JSON.stringify(launch)}`);
+  const expectedLaunchInput=launch.coarse?'GAS':'W / ↑';
+  if(!launch.visible||launch.snapshot.stage!=='launch'||launch.title!=='GO'||!launch.line.includes(expectedLaunchInput)||launch.pointer!=='none')throw new Error(`Launch cue failed: ${JSON.stringify({...launch,expectedLaunchInput})}`);
   const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
   if(overlaps(launch.cue,launch.mobile))throw new Error(`First-run cue overlaps mobile controls: ${JSON.stringify(launch)}`);
 
   const speed=await page.evaluate(()=>{
     const p=window.__NEON_RACER__.game.firstRunDirector;
     p.startedAt=performance.now()-5000;p.stage='launch';p.update(42,0,0);
-    return{snapshot:p.snapshot(),title:p.cue.querySelector('.first-run-title').textContent,line:p.cue.querySelector('.first-run-line').textContent};
+    return{snapshot:p.snapshot(),title:p.cue.querySelector('.first-run-title').textContent,line:p.cue.querySelector('.first-run-line').textContent,coarse:matchMedia('(pointer: coarse)').matches};
   });
-  if(speed.snapshot.stage!=='speed'||speed.title!=='KEEP IT CLEAN'||!speed.line.includes('N₂O'))throw new Error(`Speed cue failed: ${JSON.stringify(speed)}`);
+  const expectedSpeedInput=speed.coarse?'N₂O':'Shift';
+  if(speed.snapshot.stage!=='speed'||speed.title!=='KEEP IT CLEAN'||!speed.line.includes(expectedSpeedInput))throw new Error(`Speed cue failed: ${JSON.stringify({...speed,expectedSpeedInput})}`);
 
   const checkpoint=await page.evaluate(()=>{
     const p=window.__NEON_RACER__.game.firstRunDirector;

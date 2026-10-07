@@ -49,7 +49,7 @@ await page.waitForFunction(()=>{
     && !window.__NEON_RACER__.game.firstRunDirector.cue.classList.contains('show');
 });
 await page.waitForTimeout(220);
-await page.screenshot({path:`${frames}/03-route-neon.png`,animations:'disabled'});
+await page.screenshot({path:`${frames}/03-route-neon.png`});
 
 await page.evaluate(()=>{const g=window.__NEON_RACER__.game;g.cityAtmosphere.setRouteSignature('高架折返');g.awardPresentation.routeIntro({name:'高架折返',style:'煞車節奏',focus:'BRAKE FLOW'});g._render()});
 await page.waitForFunction(()=>{
@@ -58,7 +58,7 @@ await page.waitForFunction(()=>{
     && p?.routeCard?.querySelector('.award-route-title')?.textContent==='高架折返';
 });
 await page.waitForTimeout(220);
-await page.screenshot({path:`${frames}/04-route-viaduct.png`,animations:'disabled'});
+await page.screenshot({path:`${frames}/04-route-viaduct.png`});
 
 await page.evaluate(()=>{
   const g=window.__NEON_RACER__.game;
@@ -102,9 +102,9 @@ await page.evaluate(()=>{
   g.vehicle._syncVisuals();
   gr.routeName=g.challenges.routeName;
   gr.recording=[
-    {t:0,x:0,y:1.2,z:14,yaw:0},
-    {t:1,x:0,y:1.2,z:6,yaw:0},
-    {t:2,x:0,y:1.2,z:-2,yaw:0}
+    {t:0,x:0,y:1.2,z:22,yaw:0},
+    {t:1,x:0,y:1.2,z:18,yaw:0},
+    {t:2,x:0,y:1.2,z:14,yaw:0}
   ];
   gr.finish({routeName:g.challenges.routeName,time:3},true);
   gr.start(g.challenges.routeName);
@@ -112,7 +112,7 @@ await page.evaluate(()=>{
   gr.update();
   g.state='paused';
   g.camera.position.set(4.8,5.2,35);
-  g.camera.lookAt(0,1.15,6);
+  g.camera.lookAt(0,1.15,18);
   g._render();
 });
 await page.waitForTimeout(120);

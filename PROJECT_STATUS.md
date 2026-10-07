@@ -7,12 +7,11 @@ Status date: 2026-10-06 (Asia/Taipei)
 - Repository: `qookey109-pixel/car`
 - `main` remains formal authority and is not modified directly.
 - Earlier development PRs remain Draft / unmerged unless a fresh repository check says otherwise.
-- Current development branch: `feature/v0.9.4-route-signature`.
-- Current PR: #13 — `V0.9.4 — Route Signature Art Direction`.
-- Base: current validated V0.9.3 Submission Package head.
-- Last immutable accepted preview before V0.9.4:
-  - game: https://qookey109-pixel.github.io/car/v0.9.3-ad0fa5f/
-  - submission brief: https://qookey109-pixel.github.io/car/v0.9.3-ad0fa5f/submission/
+- Current development branch: `feature/v0.9.5-submission-convergence`.
+- Current PR: #15 — `V0.9.5 — Submission Visual Convergence`.
+- Base branch: `feature/v0.9.4-route-signature`.
+- Base exact SHA: `47a702bc732439e8de94d996b092625bfc1ebd63`.
+- Keep `main` untouched.
 - No automatic merge.
 - Immutable previews must never be overwritten or deleted.
 
@@ -33,125 +32,74 @@ Primary criteria:
 9. Performance stability
 10. Submission presentation
 
-## V0.9.4 — Route Signature Art Direction
+## V0.9.5 — Submission Visual Convergence
 
-V0.9.4 gives the same procedural city three distinct route-level visual signatures.
+V0.9.5 converges the strongest presentation work onto the validated V0.9.4 route-signature build without introducing a parallel gameplay branch.
 
-### 河岸東環 — FLOW
+### Title / first impression
 
-- cool cyan night
-- warm street-light balance
-- cyan road / HUD / presentation accent
-- baseline fog-density contract remains unchanged
+- Replaces engineering-heavy feature chips with route identities:
+  - FLOW — 河岸東環
+  - PRECISION — 霓虹西環
+  - RHYTHM — 高架折返
+- Reduces implementation copy on the title screen.
+- Strengthens title hierarchy, route color signatures and primary-action hierarchy.
+- Adds keyboard-visible focus states and mobile safe-area handling.
 
-### 霓虹西環 — PRECISION
+### Cinematic gameplay presentation
 
-- magenta fog / background bias
-- cyan + magenta facade emphasis
-- pink HUD / presentation accent
+- Route and finish beats temporarily quiet normal HUD.
+- Mobile controls remain interactive during cinematic focus.
+- Engineering telemetry is hidden from normal player view while debug access is preserved.
+- Compact-landscape HUD density remains reduced.
 
-### 高架折返 — RHYTHM
+### Result / finish payoff
 
-- steel-blue night balance
-- amber facade / road emphasis
-- warm amber HUD / presentation accent
-
-## Single-authority design
-
-`CityAtmosphere.setRouteSignature(routeName)` is the visual authority.
-
-It retunes only existing resources:
-
-- scene background
-- fog color / density
-- hemisphere / ambient / sun / rim / fill colors
-- existing facade material colors
-- existing road edge / dash colors
-- existing street-edge emissive
-- one DOM CSS variable: `--route-accent`
-
-Award Presentation, Award HUD and FirstRunDirector consume the same DOM accent.
+- Result screen is treated as a poster-like final frame.
+- Rank, route accent, PB strip and replay momentum remain the visual focus.
+- Numeric presentation uses tabular figures for cleaner result comparison.
 
 ## Preserved hard contracts
 
-- 0 new geometry
-- 0 new WebGL render groups
-- 0 new physics bodies
-- 0 new colliders
-- 0 new camera occluders
-- A = physical left
-- D = physical right
-- reverse remains ~41.4 km/h with HUD `R`
-- existing route coordinates / scoring / checkpoint thresholds unchanged
-- Replay Momentum V3 preserved
-- PB Ghost Replay preserved
-- Traffic Flow V3 preserved
-- First 30 Seconds preserved
-- Award Presentation / Award HUD preserved
+- No new Three.js geometry.
+- No new WebGL render groups.
+- No new physics bodies.
+- No new colliders.
+- No new camera occluders.
+- A = physical left.
+- D = physical right.
+- Reverse / routes / scoring / PB Ghost / Traffic Flow V3 / First 30 Seconds remain unchanged.
+- Runtime gameplay authority remains the validated V0.9.2 contract.
+- V0.9.4 route-signature art direction remains the visual authority.
+- LOW budget remains <=60 calls / <=110,000 triangles.
 
-## V0.9.4 pre-final evidence
+## Latest verified V0.9.5 evidence
 
-Validated pre-documentation head:
+Verified PR #15 head before final capture-frame refinement:
 
-`6b6c7345bd9cb11d0e4c57450b94c45abe591386`
+`11c2047ae6d11c0cf733487cf8fe42d704c4c2d5`
 
-Main validation:
+All five GitHub checks completed successfully on that exact SHA:
 
-https://github.com/qookey109-pixel/car/actions/runs/37409007605
+- Chromium award-candidate full validation: SUCCESS
+- WebKit award-candidate full validation: SUCCESS
+- Objective Compass validation: SUCCESS
+- Audio validation: SUCCESS
+- Submission Capture: SUCCESS
 
-Results:
+Validation run: https://github.com/qookey109-pixel/car/actions/runs/37500336656
 
-- Chromium: 30/30 SUCCESS
-- WebKit: 30/30 SUCCESS
-- independent Audio Feel: SUCCESS
-- independent Objective Compass: SUCCESS
-- Browser smoke: 103.9 km/h after 3s
-- A left: -50.0m
-- D right: +49.4m
-- reverse peak: 41.4 km/h
-- Award Presentation: PASS
-- Award HUD: PASS
-- First 30 Seconds: PASS
-- Route Signature: PASS
-  - river / neon / viaduct measurably distinct
-  - 0 physics-body delta
-  - 0 camera-occluder delta
-  - stable 58 calls / 95,988 triangles across all signatures
-- Chromium LOW: 59 calls / 95,988 triangles / peak 180.7 km/h
-- hard LOW budget: <=60 calls / <=110,000 triangles
+Capture run: https://github.com/qookey109-pixel/car/actions/runs/37500336610
 
-Pre-final QA artifacts:
+Capture artifact: `v095-submission-package` (artifact ID `11428544656`, 9 PNGs + gameplay WebM).
 
-- Chromium: `11388481489`
-  - SHA256 `b4b00be624f8d49eeb45f664f9c1453463cab77522b90a2d609192111dca2dbe`
-- WebKit: `11388107919`
-  - SHA256 `b661dbea3f1b37b40ff1b5f85153aec15d8b1de9d7922af19205f15474cfdf17`
+Human review of the captured contact sheet found that frame 05 did not distinctly show the onboarding GO cue because the preceding route intro remained layered above it. A capture-only adjustment hides the route intro before recording frame 05; **the revised exact head must be validated again before preview/freeze**.
 
-WebKit remains browser-engine regression evidence, not real Mac Safari hardware FPS.
+Use GitHub PR #15 current head and checks as the live authority rather than treating this evidence SHA as the current head.
 
-## Submission package V0.9.4
+## Final V0.9.5 gate
 
-The deterministic submission capture is expanded from 7 to 9 screenshots:
-
-1. title screen
-2. 河岸東環 signature
-3. 霓虹西環 signature
-4. 高架折返 signature
-5. First 30 Seconds
-6. speed / city
-7. Ghost pursuit
-8. finish climax
-9. 844×390 mobile
-
-Plus:
-
-- deterministic gameplay showcase WebM
-- updated `docs/SUBMISSION_PACKAGE.md`
-- updated public `/submission/` brief page
-
-## Final V0.9.4 gate
-
-The final exact PR #13 head must pass:
+The final exact PR #15 head should pass:
 
 1. static smoke
 2. production build
@@ -165,11 +113,12 @@ The final exact PR #13 head must pass:
 10. Award HUD
 11. First 30 Seconds
 12. Route Signature
-13. Audio
-14. Chromium LOW budget
-15. regenerated V0.9.4 submission capture artifact with 9 PNG frames + WebM
+13. Submission Visual acceptance
+14. Audio
+15. Chromium LOW budget
+16. regenerated V0.9.5 submission capture artifact with 9 PNG frames + WebM
 
-Only after those gates should a new SHA-specific immutable V0.9.4 Pages preview be published.
+Only after those gates should a new SHA-specific immutable V0.9.5 Pages preview be published.
 
 ## Remaining final-submission checks
 

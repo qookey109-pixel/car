@@ -13,6 +13,7 @@ on:
       - feature/v0.9.2-first-30-seconds
       - feature/v0.9.3-submission-package
       - feature/v0.9.4-route-signature
+      - feature/v0.9.5-submission-convergence
   workflow_dispatch:
 
 jobs:
@@ -109,6 +110,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: node tests/route-signature-smoke.mjs
+      - name: Submission visual acceptance
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: node tests/submission-visual-smoke.mjs
       - name: Audio feel acceptance
         env:
           BASE_URL: http://127.0.0.1:4173/

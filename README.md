@@ -185,6 +185,18 @@ https://github.com/qookey109-pixel/car/actions/runs/37409007605
 
 WebKit CI is browser-engine regression evidence only and is not a substitute for real Mac Safari hardware FPS testing.
 
+## 3D asset discovery pipeline
+
+Future asset discovery is now standardized around [arielshad/3d-asset-server](https://github.com/arielshad/3d-asset-server).
+
+- project integration guide: `docs/3D_ASSET_PIPELINE.md`
+- governed intake manifest: `assets/ASSET_MANIFEST.json`
+- current V0.9.5 mode: **discovery-only**
+- no downloaded asset may alter the current runtime until a later branch explicitly authorizes geometry changes
+- every candidate must preserve source URL, creator, licence, attribution, format, polygon/triangle estimate, texture cost and intended use
+
+The server itself is Apache-2.0, while discovered assets retain their own source licences.
+
 ## Architecture
 
 - `src/core/` — game loop and input

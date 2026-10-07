@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "pipeline": {
+    "name": "3d-asset-server",
+    "upstream": "https://github.com/arielshad/3d-asset-server",
+    "license": "Apache-2.0",
+    "mode": "discovery-only",
+    "runtimeIntegrationAuthorized": false,
+    "note": "V0.9.5 preserves 0 new geometry / render groups / physics bodies / camera occluders."
+  },
+  "assets": [
+    {
+      "id": "kenney-city-kit-roads",
+      "name": "City Kit (Roads)",
+      "provider": "Kenney",
+      "canonicalUrl": "https://kenney.nl/assets/city-kit-roads",
+      "author": "Kenney",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "3d-pack",
+      "files": 90,
+      "format": "pack / inspect before integration",
+      "triangleEstimate": null,
+      "textureResolution": null,
+      "intendedUse": "road signs, traffic lights, barriers and road-side city props",
+      "routeFit": [
+        "FLOW",
+        "PRECISION",
+        "RHYTHM"
+      ],
+      "performanceRisk": "unknown until per-mesh audit",
+      "priority": "high",
+      "status": "candidate"
+    },
+    {
+      "id": "kenney-city-kit-commercial",
+      "name": "City Kit (Commercial)",
+      "provider": "Kenney",
+      "canonicalUrl": "https://kenney.nl/assets/city-kit-commercial",
+      "author": "Kenney",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "3d-pack",
+      "files": 50,
+      "format": "pack / inspect before integration",
+      "triangleEstimate": null,
+      "textureResolution": null,
+      "intendedUse": "commercial facades and skyline vocabulary for NEON WEST LOOP",
+      "routeFit": [
+        "PRECISION"
+      ],
+      "performanceRisk": "unknown until per-mesh audit",
+      "priority": "high",
+      "status": "candidate"
+    },
+    {
+      "id": "kenney-city-kit-industrial",
+      "name": "City Kit (Industrial)",
+      "provider": "Kenney",
+      "canonicalUrl": "https://kenney.nl/assets/city-kit-industrial",
+      "author": "Kenney",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "3d-pack",
+      "files": 40,
+      "format": "pack / inspect before integration",
+      "triangleEstimate": null,
+      "textureResolution": null,
+      "intendedUse": "warehouse and industrial silhouettes for VIADUCT RETURN",
+      "routeFit": [
+        "RHYTHM"
+      ],
+      "performanceRisk": "unknown until per-mesh audit",
+      "priority": "medium",
+      "status": "candidate"
+    },
+    {
+      "id": "kenney-city-kit-suburban",
+      "name": "City Kit (Suburban)",
+      "provider": "Kenney",
+      "canonicalUrl": "https://kenney.nl/assets/city-kit-suburban",
+      "author": "Kenney",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "3d-pack",
+      "files": 40,
+      "format": "pack / inspect before integration",
+      "triangleEstimate": null,
+      "textureResolution": null,
+      "intendedUse": "lower-density residential edge vocabulary for RIVER EAST LOOP",
+      "routeFit": [
+        "FLOW"
+      ],
+      "performanceRisk": "unknown until per-mesh audit",
+      "priority": "medium",
+      "status": "candidate"
+    },
+    {
+      "id": "polyhaven-street-lamp-02",
+      "name": "Street Lamp 02",
+      "provider": "Poly Haven",
+      "canonicalUrl": "https://polyhaven.com/a/street_lamp_02",
+      "author": "Josh Dean",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "3d-model",
+      "format": "glTF available",
+      "triangleEstimate": 20000,
+      "textureResolution": "up to 8K source; downscale required",
+      "downloadSizeApprox": "26.6 MB source package",
+      "intendedUse": "hero street-light reference or selectively optimized prop",
+      "routeFit": [
+        "FLOW",
+        "PRECISION",
+        "RHYTHM"
+      ],
+      "performanceRisk": "high as-is; requires decimation / texture downsizing / instancing study",
+      "priority": "medium",
+      "status": "candidate"
+    },
+    {
+      "id": "polyhaven-modern-buildings-night",
+      "name": "Modern Buildings Night",
+      "provider": "Poly Haven",
+      "canonicalUrl": "https://polyhaven.com/a/modern_buildings_night",
+      "author": "Greg Zaal",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "hdri",
+      "format": "HDR / EXR",
+      "triangleEstimate": 0,
+      "textureResolution": "1K-16K source; evaluate 1K/2K only for web",
+      "downloadSizeApprox": "21.46 MB source EXR listing",
+      "intendedUse": "night lighting/color reference; future environment lighting candidate",
+      "routeFit": [
+        "FLOW",
+        "PRECISION"
+      ],
+      "performanceRisk": "medium; GPU memory dependent, use low-resolution derivative only",
+      "priority": "high",
+      "status": "candidate"
+    },
+    {
+      "id": "polyhaven-hansaplatz",
+      "name": "Hansaplatz",
+      "provider": "Poly Haven",
+      "canonicalUrl": "https://polyhaven.com/a/hansaplatz",
+      "author": "Greg Zaal",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "hdri",
+      "format": "HDR / EXR",
+      "triangleEstimate": 0,
+      "textureResolution": "1K-16K source; evaluate 1K/2K only for web",
+      "downloadSizeApprox": "26.69 MB source EXR listing",
+      "intendedUse": "warm street-light vs cool night contrast reference for city atmosphere",
+      "routeFit": [
+        "PRECISION",
+        "RHYTHM"
+      ],
+      "performanceRisk": "medium; use as art-direction reference first",
+      "priority": "high",
+      "status": "candidate"
+    },
+    {
+      "id": "polyhaven-asphalt-03",
+      "name": "Asphalt 03",
+      "provider": "Poly Haven",
+      "canonicalUrl": "https://polyhaven.com/a/asphalt_03",
+      "author": "Charlotte Baglioni / Dario Barresi",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "pbr-material",
+      "format": "PBR maps / MaterialX / ZIP",
+      "triangleEstimate": 0,
+      "textureResolution": "1K-8K source; target 1K web derivative",
+      "downloadSizeApprox": "87.21 MB source package",
+      "intendedUse": "worn urban road surface reference / future replacement material",
+      "routeFit": [
+        "FLOW",
+        "PRECISION",
+        "RHYTHM"
+      ],
+      "performanceRisk": "low-to-medium if compressed 1K maps and reused material",
+      "priority": "high",
+      "status": "candidate"
+    },
+    {
+      "id": "polyhaven-clean-asphalt",
+      "name": "Clean Asphalt",
+      "provider": "Poly Haven",
+      "canonicalUrl": "https://polyhaven.com/a/clean_asphalt",
+      "author": "Dimitrios Savva",
+      "license": "CC0",
+      "attributionRequired": false,
+      "assetType": "pbr-material",
+      "format": "PBR maps / ZIP",
+      "triangleEstimate": 0,
+      "textureResolution": "1K-8K source; target 1K web derivative",
+      "downloadSizeApprox": "78.82 MB source package",
+      "intendedUse": "cleaner elevated-road / commercial-road material reference",
+      "routeFit": [
+        "PRECISION",
+        "RHYTHM"
+      ],
+      "performanceRisk": "low-to-medium if compressed 1K maps and reused material",
+      "priority": "medium",
+      "status": "candidate"
+    }
+  ]
+}

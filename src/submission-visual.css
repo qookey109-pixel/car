@@ -1,0 +1,363 @@
+/* V0.9.5 Submission Visual Convergence
+   Presentation-only layer over the validated V0.9.4 route-signature build.
+   No new WebGL geometry, render groups, physics bodies, colliders or camera occluders. */
+
+#boot{
+  background:radial-gradient(circle at 50% 42%,rgba(3,13,22,.28),rgba(1,5,9,.66) 72%,rgba(1,3,6,.82));
+}
+#boot .hero-card{
+  width:min(900px,94vw);
+  padding:clamp(28px,4.4vw,54px);
+  background:radial-gradient(ellipse at 50% 46%,rgba(3,12,20,.64),rgba(3,10,17,.28) 66%,transparent 100%);
+  border-color:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+}
+#boot .hero-copy{max-width:610px;color:rgba(238,248,255,.66)}
+#boot .route-signatures{gap:8px;margin:22px auto 18px;max-width:690px}
+#boot .route-signatures span{
+  min-width:190px;
+  display:grid;
+  gap:5px;
+  padding:10px 14px;
+  border-color:rgba(118,239,255,.10);
+  border-radius:10px;
+  background:linear-gradient(180deg,rgba(8,24,35,.26),rgba(4,13,22,.12));
+  color:rgba(237,251,255,.58);
+  font:700 10px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.08em;
+}
+#boot .route-signatures b{
+  color:rgba(222,250,255,.96);
+  font-size:12px;
+  letter-spacing:.18em;
+}
+#boot .tiny-note{letter-spacing:.08em;color:rgba(255,255,255,.34)}
+
+/* Route and finish beats get the whole frame for a moment. */
+#hud .hud-top-left,
+#hud .speed-panel,
+#hud .score-panel,
+#hud .ghost-delta,
+#hud .challenge-toast,
+#hud .objective-compass,
+#mobileControls{
+  transition:opacity .26s ease,transform .26s ease,filter .26s ease;
+}
+body.award-route-active #hud .hud-top-left,
+body.award-route-active #hud .speed-panel,
+body.award-route-active #hud .score-panel,
+body.award-route-active #hud .ghost-delta,
+body.award-route-active #hud .challenge-toast,
+body.award-route-active #hud .objective-compass,
+body.award-finish-active #hud .hud-top-left,
+body.award-finish-active #hud .speed-panel,
+body.award-finish-active #hud .score-panel,
+body.award-finish-active #hud .ghost-delta,
+body.award-finish-active #hud .challenge-toast,
+body.award-finish-active #hud .objective-compass{
+  opacity:0!important;
+  filter:blur(2px);
+}
+body.award-route-active #mobileControls,
+body.award-finish-active #mobileControls{
+  opacity:.18;
+  filter:saturate(.55);
+}
+.award-presentation::before,
+.award-presentation::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;
+  height:8vh;
+  min-height:24px;
+  opacity:0;
+  background:linear-gradient(180deg,rgba(1,4,8,.78),rgba(1,4,8,0));
+  transition:opacity .24s ease;
+}
+.award-presentation::before{top:0}
+.award-presentation::after{bottom:0;transform:rotate(180deg)}
+body.award-route-active .award-presentation::before,
+body.award-route-active .award-presentation::after,
+body.award-finish-active .award-presentation::before,
+body.award-finish-active .award-presentation::after{opacity:1}
+
+/* Engineering telemetry is available in debug mode, not the normal composition. */
+#hud:not(.debug-visible) #qualityBadge{display:none!important}
+
+/* Mobile controls keep full hit areas but read as controls, not dashboard panels. */
+.mobile-controls button{
+  background:rgba(4,12,20,.36);
+  border-color:rgba(255,255,255,.11);
+  box-shadow:0 8px 24px rgba(0,0,0,.14);
+  backdrop-filter:blur(9px);
+  font-size:14px;
+}
+.mobile-controls .gas{
+  background:linear-gradient(180deg,rgba(73,255,193,.10),rgba(4,12,20,.40));
+  border-color:rgba(74,255,187,.28);
+}
+.mobile-controls .brake{border-color:rgba(255,120,120,.20)}
+.mobile-controls .nitro{border-color:rgba(87,231,255,.24)}
+.mobile-controls .drift{border-color:rgba(255,215,87,.22)}
+.mobile-controls button.active{background:rgba(108,242,255,.12)}
+
+/* Result screen is treated like the final poster frame. */
+#complete{
+  background:radial-gradient(circle at 50% 34%,rgba(23,91,115,.15),rgba(2,5,10,.92) 58%,#02050a);
+}
+#complete .result-card{
+  width:min(900px,94vw);
+  padding:clamp(28px,4vw,52px);
+  border:0;
+  background:linear-gradient(180deg,rgba(7,15,24,.46),rgba(4,9,15,.24));
+  box-shadow:none;
+  backdrop-filter:blur(10px);
+}
+#complete .result-card h1{
+  margin:4px 0 2px;
+  font-size:clamp(48px,7.5vw,78px);
+  letter-spacing:-.055em;
+}
+#complete .result-route{
+  margin-top:4px;
+  color:var(--route-accent,#91f2ff);
+  font:900 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.22em;
+}
+#complete .result-rank{
+  margin:8px 0 14px;
+  font-size:clamp(92px,12vw,138px);
+  line-height:.8;
+  color:var(--route-accent,#79f2ff);
+  text-shadow:0 0 46px color-mix(in srgb,var(--route-accent,#79f2ff) 24%,transparent);
+}
+#complete .result-grid{
+  margin:18px auto;
+  max-width:700px;
+  gap:0;
+  border-top:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+#complete .result-grid div{
+  padding:13px 18px;
+  border:0;
+  border-left:1px solid rgba(255,255,255,.07);
+  border-radius:0;
+  background:transparent;
+}
+#complete .result-grid div:first-child{border-left:0}
+#complete .result-grid span{color:rgba(255,255,255,.34)}
+#complete .result-grid b{font-size:19px}
+#complete #finalRecord{
+  max-width:620px;
+  margin-inline:auto;
+  background:rgba(4,14,21,.22);
+  border-color:color-mix(in srgb,var(--route-accent,#79f2ff) 18%,transparent);
+}
+#complete #replayMomentum{max-width:620px;margin-inline:auto}
+#complete .menu-actions{margin-top:20px}
+
+@media(max-width:760px){
+  #boot .route-signatures span{min-width:0;flex:1 1 30%}
+}
+@media(orientation:landscape) and (max-height:480px){
+  #boot .hero-card{padding:14px 20px}
+  .first-run-director{padding-bottom:max(116px,env(safe-area-inset-bottom))}
+  .first-run-cue{min-width:min(390px,50vw);max-width:420px;padding:9px 14px 10px;border-radius:12px;background:linear-gradient(180deg,rgba(3,11,18,.58),rgba(2,7,12,.34))}
+  #boot .hero-copy{max-width:560px}
+  #boot .route-signatures{margin:8px auto;gap:6px}
+  #boot .route-signatures span{padding:6px 9px;font-size:8px;border-radius:10px}
+  #boot .route-signatures b{font-size:9px}
+  #boot .tiny-note{margin-top:9px;font-size:9px}
+  #hud .score-panel{display:none!important}
+  .mobile-controls button{
+    background:rgba(4,12,20,.28);
+    box-shadow:0 5px 16px rgba(0,0,0,.12);
+    font-size:13px;
+  }
+  body.award-route-active #mobileControls{opacity:.12}
+  #complete .result-card{padding:14px 18px}
+  #complete .result-card h1{font-size:38px}
+  #complete .result-rank{font-size:70px;margin:5px 0 8px}
+  #complete .result-grid{margin:10px auto}
+  #complete .result-grid div{padding:8px 10px}
+  #complete .result-grid b{font-size:16px}
+  #complete .menu-actions{margin-top:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #hud .hud-top-left,#hud .speed-panel,#hud .score-panel,#hud .ghost-delta,#hud .challenge-toast,#hud .objective-compass,#mobileControls,.award-presentation::before,.award-presentation::after{transition-duration:.01ms}
+}
+
+/* V0.9.5 polish pass — clearer hierarchy without touching gameplay/render cost. */
+#boot .eyebrow{
+  color:rgba(214,247,255,.52);
+  letter-spacing:.24em;
+}
+#boot h1{
+  margin:.12em 0 .18em;
+  font-size:clamp(58px,10vw,116px);
+  line-height:.82;
+  letter-spacing:-.075em;
+  text-wrap:balance;
+  text-shadow:0 10px 42px rgba(0,0,0,.34);
+}
+#boot .hero-copy{
+  margin-inline:auto;
+  font-size:clamp(14px,1.35vw,17px);
+  line-height:1.7;
+  text-wrap:balance;
+}
+#boot .route-signatures span:nth-child(1){border-top-color:rgba(101,242,255,.48)}
+#boot .route-signatures span:nth-child(2){border-top-color:rgba(255,105,232,.48)}
+#boot .route-signatures span:nth-child(3){border-top-color:rgba(255,193,92,.50)}
+#boot .route-signatures span:nth-child(1) b{color:#baf9ff}
+#boot .route-signatures span:nth-child(2) b{color:#ffd0f8}
+#boot .route-signatures span:nth-child(3) b{color:#ffe0aa}
+
+#boot .menu-actions button,
+#complete .menu-actions button{
+  min-height:46px;
+  transform:translateY(0);
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+#boot .menu-actions .primary{
+  box-shadow:0 12px 36px rgba(62,221,255,.12);
+}
+@media(hover:hover) and (pointer:fine){
+  #boot .menu-actions button:hover,
+  #complete .menu-actions button:hover{
+    transform:translateY(-2px);
+    border-color:rgba(183,246,255,.34);
+  }
+  #boot .menu-actions .primary:hover{
+    box-shadow:0 16px 44px rgba(62,221,255,.19);
+  }
+}
+#boot .menu-actions button:focus-visible,
+#complete .menu-actions button:focus-visible,
+.mobile-controls button:focus-visible{
+  outline:2px solid var(--route-accent,#79f2ff);
+  outline-offset:3px;
+}
+
+#bootRecord{
+  opacity:.72;
+  letter-spacing:.09em;
+}
+#complete .eyebrow{
+  letter-spacing:.22em;
+  opacity:.64;
+}
+#complete .result-grid div{
+  min-width:0;
+}
+#complete .result-grid b{
+  font-variant-numeric:tabular-nums;
+}
+#complete .record-strip{
+  font-variant-numeric:tabular-nums;
+}
+
+@media(max-width:760px){
+  #boot{
+    padding-left:max(12px,env(safe-area-inset-left));
+    padding-right:max(12px,env(safe-area-inset-right));
+  }
+  #boot h1{font-size:clamp(52px,16vw,78px)}
+  #boot .hero-copy{font-size:14px;line-height:1.55}
+  #boot .route-signatures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+  #boot .route-signatures span{min-width:0;padding:9px 7px}
+  #boot .route-signatures b{font-size:10px;letter-spacing:.12em}
+}
+@media(orientation:landscape) and (max-height:480px){
+  #boot h1{font-size:clamp(42px,9vh,64px);margin:.05em 0 .1em}
+  #boot .hero-copy{font-size:11px;line-height:1.4}
+  #bootRecord{font-size:9px}
+  #boot .menu-actions button{min-height:38px}
+  #complete{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+}
+@media(prefers-reduced-motion:reduce){
+  #boot .menu-actions button,
+  #complete .menu-actions button{transition-duration:.01ms;transform:none!important}
+}
+
+/* Submission framing pass — one visual grammar from title to finish. */
+#boot .hero-card,
+#complete .result-card{
+  position:relative;
+  isolation:isolate;
+}
+#boot .hero-card::before,
+#complete .result-card::before{
+  content:"";
+  position:absolute;
+  left:clamp(18px,4vw,44px);
+  right:clamp(18px,4vw,44px);
+  top:0;
+  height:1px;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent 0%,rgba(101,242,255,.46) 18%,rgba(255,105,232,.34) 50%,rgba(255,193,92,.42) 82%,transparent 100%);
+  opacity:.72;
+}
+#boot .hero-card::after,
+#complete .result-card::after{
+  content:"";
+  position:absolute;
+  inset:10px;
+  pointer-events:none;
+  border-left:1px solid rgba(190,245,255,.08);
+  border-right:1px solid rgba(190,245,255,.08);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 18%,#000 82%,transparent 100%);
+}
+#boot .menu-actions{
+  position:relative;
+  z-index:2;
+}
+#boot .menu-actions .primary,
+#complete .menu-actions .primary{
+  position:relative;
+  overflow:hidden;
+}
+#boot .menu-actions .primary::after,
+#complete .menu-actions .primary::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 22%,rgba(255,255,255,.12) 49%,transparent 74%);
+  transform:translateX(-140%);
+  transition:transform .55s cubic-bezier(.2,.7,.2,1);
+}
+@media(hover:hover) and (pointer:fine){
+  #boot .menu-actions .primary:hover::after,
+  #complete .menu-actions .primary:hover::after{transform:translateX(140%)}
+}
+#complete .result-rank{
+  position:relative;
+  display:inline-block;
+  min-width:1.1em;
+}
+#complete .result-rank::after{
+  content:"";
+  position:absolute;
+  left:12%;
+  right:12%;
+  bottom:-8px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--route-accent,#79f2ff),transparent);
+  opacity:.6;
+}
+#complete .result-route{
+  text-transform:uppercase;
+  text-wrap:balance;
+}
+@media(orientation:landscape) and (max-height:480px){
+  #boot .hero-card::after,
+  #complete .result-card::after{inset:6px}
+  #complete .result-rank::after{bottom:-4px}
+}
+@media(prefers-reduced-motion:reduce){
+  #boot .menu-actions .primary::after,
+  #complete .menu-actions .primary::after{display:none}
+}

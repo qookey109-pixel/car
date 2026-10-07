@@ -29,21 +29,54 @@ await page.screenshot({path:`${frames}/01-title-screen.png`,animations:'disabled
 await page.click('#startGame');
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().state==='running');
 await page.waitForFunction(()=>window.__NEON_RACER__?.snapshot?.().awardPresentation?.routeVisible===true);
+// Freeze gameplay progression while art-directed route identity frames are captured.
+// Live onboarding and route timers otherwise race the later route screenshots.
+await page.evaluate(()=>{
+  const g=window.__NEON_RACER__.game;
+  g.state='paused';
+  g.firstRunDirector.active=false;
+  g.firstRunDirector.hide();
+});
 await page.evaluate(()=>{const g=window.__NEON_RACER__.game;for(let i=0;i<45;i++)g._camera(1/60);g.cityAtmosphere.setRouteSignature('河岸東環');g.awardPresentation.routeIntro({name:'河岸東環',style:'高速長彎',focus:'HIGH SPEED'})});
 await page.waitForTimeout(480);
 await page.screenshot({path:`${frames}/02-route-river.png`});
 
 await page.evaluate(()=>{const g=window.__NEON_RACER__.game;g.cityAtmosphere.setRouteSignature('霓虹西環');g.awardPresentation.routeIntro({name:'霓虹西環',style:'密集轉向',focus:'TECHNICAL'});g._render()});
+await page.waitForFunction(()=>{
+  const p=window.__NEON_RACER__?.game?.awardPresentation;
+  return p?.routeCard?.classList?.contains('show')
+    && p?.routeCard?.querySelector('.award-route-title')?.textContent==='霓虹西環'
+    && !window.__NEON_RACER__.game.firstRunDirector.cue.classList.contains('show');
+});
 await page.waitForTimeout(220);
-await page.screenshot({path:`${frames}/03-route-neon.png`,animations:'disabled'});
+await page.screenshot({path:`${frames}/03-route-neon.png`});
 
 await page.evaluate(()=>{const g=window.__NEON_RACER__.game;g.cityAtmosphere.setRouteSignature('高架折返');g.awardPresentation.routeIntro({name:'高架折返',style:'煞車節奏',focus:'BRAKE FLOW'});g._render()});
+await page.waitForFunction(()=>{
+  const p=window.__NEON_RACER__?.game?.awardPresentation;
+  return p?.routeCard?.classList?.contains('show')
+    && p?.routeCard?.querySelector('.award-route-title')?.textContent==='高架折返';
+});
 await page.waitForTimeout(220);
-await page.screenshot({path:`${frames}/04-route-viaduct.png`,animations:'disabled'});
+await page.screenshot({path:`${frames}/04-route-viaduct.png`});
 
-await page.evaluate(()=>{const g=window.__NEON_RACER__.game;g.cityAtmosphere.setRouteSignature('河岸東環');g.awardPresentation.routeIntro({name:'河岸東環',style:'高速長彎',focus:'HIGH SPEED'});const p=g.firstRunDirector;p.active=true;p.completed=false;p.firstCheckpoint=false;p._show('launch',5000)});
-await page.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'));
-await page.waitForTimeout(900);
+await page.evaluate(()=>{
+  const g=window.__NEON_RACER__.game;
+  g.cityAtmosphere.setRouteSignature('河岸東環');
+  // The onboarding frame must show GO, not the preceding route-intro card.
+  g.awardPresentation.hide();
+  g.state='running';
+  const p=g.firstRunDirector;
+  p.active=true;p.completed=false;p.firstCheckpoint=false;
+  p._show('launch',5000);
+});
+await page.waitForFunction(()=>{
+  const g=window.__NEON_RACER__?.game;
+  return g?.firstRunDirector?.cue?.classList?.contains('show')
+    && !g?.awardPresentation?.routeCard?.classList?.contains('show')
+    && !document.body.classList.contains('award-route-active');
+});
+await page.waitForTimeout(280);
 await page.screenshot({path:`${frames}/05-first-30-seconds.png`,animations:'disabled'});
 
 await page.keyboard.down('w');
@@ -69,9 +102,9 @@ await page.evaluate(()=>{
   g.vehicle._syncVisuals();
   gr.routeName=g.challenges.routeName;
   gr.recording=[
-    {t:0,x:0,y:1.2,z:14,yaw:0},
-    {t:1,x:0,y:1.2,z:6,yaw:0},
-    {t:2,x:0,y:1.2,z:-2,yaw:0}
+    {t:0,x:0,y:1.2,z:22,yaw:0},
+    {t:1,x:0,y:1.2,z:18,yaw:0},
+    {t:2,x:0,y:1.2,z:14,yaw:0}
   ];
   gr.finish({routeName:g.challenges.routeName,time:3},true);
   gr.start(g.challenges.routeName);
@@ -79,7 +112,7 @@ await page.evaluate(()=>{
   gr.update();
   g.state='paused';
   g.camera.position.set(4.8,5.2,35);
-  g.camera.lookAt(0,1.15,6);
+  g.camera.lookAt(0,1.15,18);
   g._render();
 });
 await page.waitForTimeout(120);

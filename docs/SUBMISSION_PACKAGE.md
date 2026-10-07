@@ -115,26 +115,36 @@ V0.9.4 produces:
 
 The capture pack comes from the exact branch build, not manually edited screenshots.
 
-## Current accepted base
+## V0.9.5 submission review
 
-V0.9.3 Submission Package preview:
+Full validation on exact SHA `11c2047ae6d11c0cf733487cf8fe42d704c4c2d5` passed Chromium, WebKit, Objective, Audio and Submission Capture.
+
+- Capture artifact: `v095-submission-package` (ID `11428544656`).
+- Asset inventory independently inspected: 9 PNG frames, `video/gameplay-showcase.webm`, submission brief/page.
+- Contact-sheet human review: frame 05 was obscured by an overlapping route-intro card; the capture-only correction hides that card before the onboarding frame.
+- **A new exact-head artifact and fresh review are required** before selecting the hero frame or publishing an immutable V0.9.5 preview.
+
+## Accepted earlier preview
+
+V0.9.3 immutable candidate:
 
 https://qookey109-pixel.github.io/car/v0.9.3-ad0fa5f/
 
-V0.9.4 receives a new immutable SHA-specific preview only after the final exact-head gate and regenerated capture artifact pass.
+Do not overwrite earlier immutable previews. V0.9.5 needs its own SHA-specific URL after the corrected 9-frame capture and full matrix pass.
 
-## Submission freeze checklist
+## V0.9.5 submission freeze checklist
 
-- [x] First-30-second onboarding
+- [x] First-30-second onboarding feature
 - [x] Award route identity presentation
 - [x] Award HUD hierarchy
 - [x] Three route-specific visual signatures
 - [x] PB Ghost / Replay Momentum
 - [x] Traffic flow / signal behavior
-- [x] Chromium + WebKit pre-final acceptance
-- [ ] Final exact-head V0.9.4 acceptance
-- [ ] Regenerated 9-frame capture artifact
-- [ ] Immutable V0.9.4 preview
+- [x] Chromium + WebKit full acceptance on `11c2047...`
+- [x] V0.9.5 9-frame + WebM inventory on `11c2047...`
+- [ ] Corrected frame 05 captured and visually reviewed on the final head
+- [ ] Full matrix passes on the final head
+- [ ] Immutable V0.9.5 preview
 - [ ] Human hero-frame selection
 - [ ] Real Mac Safari hardware check
 - [ ] Competition-form wording freeze

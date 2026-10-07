@@ -73,22 +73,29 @@ V0.9.5 converges the strongest presentation work onto the validated V0.9.4 route
 - V0.9.4 route-signature art direction remains the visual authority.
 - LOW budget remains <=60 calls / <=110,000 triangles.
 
-## Current V0.9.5 head
+## Latest verified V0.9.5 evidence
 
-Latest authored polish commit:
+Verified PR #15 head before final capture-frame refinement:
 
-`aa02d3397fea16d89f260aefbd6d273dd0c96a94`
+`11c2047ae6d11c0cf733487cf8fe42d704c4c2d5`
 
-Previous fully observed V0.9.5 validation head:
+All five GitHub checks completed successfully on that exact SHA:
 
-`b71add3b6feb6a1f62b736269f3230f7b5f0a81d`
+- Chromium award-candidate full validation: SUCCESS
+- WebKit award-candidate full validation: SUCCESS
+- Objective Compass validation: SUCCESS
+- Audio validation: SUCCESS
+- Submission Capture: SUCCESS
 
-Observed at that head:
+Validation run: https://github.com/qookey109-pixel/car/actions/runs/37500336656
 
-- Objective Compass Validation: SUCCESS
-- Submission visual acceptance was included in the city-atmosphere validation matrix.
-- Submission capture workflow targets `feature/v0.9.5-submission-convergence`.
-- Submission artifact name: `v095-submission-package`.
+Capture run: https://github.com/qookey109-pixel/car/actions/runs/37500336610
+
+Capture artifact: `v095-submission-package` (artifact ID `11428544656`, 9 PNGs + gameplay WebM).
+
+Human review of the captured contact sheet found that frame 05 did not distinctly show the onboarding GO cue because the preceding route intro remained layered above it. A capture-only adjustment hides the route intro before recording frame 05; **the revised exact head must be validated again before preview/freeze**.
+
+Use GitHub PR #15 current head and checks as the live authority rather than treating this evidence SHA as the current head.
 
 ## Final V0.9.5 gate
 

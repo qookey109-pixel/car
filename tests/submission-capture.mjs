@@ -41,9 +41,22 @@ await page.evaluate(()=>{const g=window.__NEON_RACER__.game;g.cityAtmosphere.set
 await page.waitForTimeout(220);
 await page.screenshot({path:`${frames}/04-route-viaduct.png`,animations:'disabled'});
 
-await page.evaluate(()=>{const g=window.__NEON_RACER__.game;g.cityAtmosphere.setRouteSignature('河岸東環');g.awardPresentation.routeIntro({name:'河岸東環',style:'高速長彎',focus:'HIGH SPEED'});const p=g.firstRunDirector;p.active=true;p.completed=false;p.firstCheckpoint=false;p._show('launch',5000)});
-await page.waitForFunction(()=>window.__NEON_RACER__?.game?.firstRunDirector?.cue?.classList?.contains('show'));
-await page.waitForTimeout(900);
+await page.evaluate(()=>{
+  const g=window.__NEON_RACER__.game;
+  g.cityAtmosphere.setRouteSignature('河岸東環');
+  // The onboarding frame must show GO, not the preceding route-intro card.
+  g.awardPresentation.hide();
+  const p=g.firstRunDirector;
+  p.active=true;p.completed=false;p.firstCheckpoint=false;
+  p._show('launch',5000);
+});
+await page.waitForFunction(()=>{
+  const g=window.__NEON_RACER__?.game;
+  return g?.firstRunDirector?.cue?.classList?.contains('show')
+    && !g?.awardPresentation?.routeCard?.classList?.contains('show')
+    && !document.body.classList.contains('award-route-active');
+});
+await page.waitForTimeout(280);
 await page.screenshot({path:`${frames}/05-first-30-seconds.png`,animations:'disabled'});
 
 await page.keyboard.down('w');
